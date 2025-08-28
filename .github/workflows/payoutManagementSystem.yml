@@ -1,14 +1,6 @@
-name: Go
+name: Payout Management System
 
-on:
-  push:
-    branches:
-      - main
-      - payee
-      - postgres
-  pull_request:
-    branches:
-      - main
+on: [push, pull_request]
 
 jobs:
   build:
