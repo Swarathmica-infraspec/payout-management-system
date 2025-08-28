@@ -12,16 +12,16 @@ Clone this repo: <a href = "https://github.com/Swarathmica-infraspec/payoutManag
 
 GO-VERSION: 1.22.2 and above
 
-The project contains payoutmanagementsystem/ <br>
-    - .github/workflows/payoutManagementSystem.yml <br>
+The project contains payoutmanagementsystem/
+    - .github/workflows/payoutManagementSystem.yml
     - payoutmanagementsystem/
         - payee.go <br>
-        - payee_test.go <br>
-    - go.mod <br>
-    - go.sum <br>
-    - main.go <br>
-    - main_test.go <br>
-    - README.md <br>
+        - payee_test.go
+    - go.mod
+    - go.sum
+    - main.go
+    - main_test.go
+    - README.md
 
 NOTE: Only email ids with .com are supported.
 
