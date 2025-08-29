@@ -3,11 +3,10 @@ package payoutmanagementsystem
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/gin-gonic/gin"
 )
 
 func setupRouter() *gin.Engine {
@@ -15,12 +14,11 @@ func setupRouter() *gin.Engine {
 	r := gin.Default()
 
 	r.GET("/payees", func(c *gin.Context) {
-    payees := []map[string]interface{}{
-        {"id": 1, "name": "Alice"},
-    }
-    c.JSON(http.StatusOK, payees)
+		payees := []map[string]interface{}{
+			{"id": 1, "name": "Alice"},
+		}
+		c.JSON(http.StatusOK, payees)
 	})
-
 
 	r.POST("/payees", func(c *gin.Context) {
 		var req struct {
