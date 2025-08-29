@@ -5,6 +5,13 @@ name: Payout Management System
 on: [push, pull_request]
 
 jobs:
+  format:
+    name: Check format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: test -z "$(gofmt -l .)"
+
   lint:
     runs-on: ubuntu-latest
     steps:
