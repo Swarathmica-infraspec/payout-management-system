@@ -77,7 +77,7 @@ func (s *PayeePostgresDB) List(context context.Context) ([]payee, error) {
     var payees []payee
     for rows.Next() {
         var p payee
-        err := rows.Scan(&p.id,&p.beneficiaryName, &p.beneficiaryCode, &p.accNo, &p.ifsc,
+        err := rows.Scan(&p.beneficiaryName, &p.beneficiaryCode, &p.accNo, &p.ifsc,
             &p.bankName,
             &p.email,
             &p.mobile,

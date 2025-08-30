@@ -29,8 +29,7 @@ func TestInsertAndGetPayee(t *testing.T) {
 
 	id, err := store.Insert(context.Background(), p)
 	if err != nil {
-		// t.Fatalf("failed to insert payee: %v", err)
-		t.Skip("skipping Insertion")
+		t.Fatalf("failed to insert payee: %v", err)
 	}
 
 	defer func() {
