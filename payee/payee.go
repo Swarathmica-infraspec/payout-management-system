@@ -73,6 +73,6 @@ func checkIFSC(ifsc string) bool {
 	if ifsc[4] != '0' {
 		return false
 	}
-	matchNumForLastFiveChars, _ := regexp.MatchString("[1-9]{5}", ifsc[5:])
+	matchNumForLastFiveChars, _ := regexp.MatchString("[0-9]{5}", ifsc[5:])
 	return matchNumForLastFiveChars
 }
