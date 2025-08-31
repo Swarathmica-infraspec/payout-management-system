@@ -118,7 +118,6 @@ func PayeeGetOneApi(c *gin.Context) {
 		return
 	}
 
-	
 	resp := PayeeGETResponse{
 		BeneficiaryName: p.beneficiaryName,
 		BeneficiaryCode: p.beneficiaryCode,
