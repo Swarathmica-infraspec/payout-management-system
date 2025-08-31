@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	payee "payoutmanagementsystem/payee"
 )
 
@@ -10,5 +11,8 @@ func Print(s string) string {
 
 func main() {
 	r := payee.SetupRouter()
-	r.Run(":8080")
+	if err := r.Run(":8080"); err != nil {
+		log.Fatalf("failed to run server: %v", err)
+	}
+
 }
