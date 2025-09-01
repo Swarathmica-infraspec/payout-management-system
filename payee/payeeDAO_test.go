@@ -12,15 +12,23 @@ func setupTestDB(t *testing.T) *sql.DB {
 	dsn := "postgres://postgres:postgres@db:5432/postgres?sslmode=disable"
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
-		// t.Fatalf("failed to connect to DB: %v", err)
-		t.Skip("skipping connection")
+		t.Fatalf("failed to connect to DB: %v", err)
+		// t.Skip("skipping connection")
 	}
 	return db
 }
+func clearPayees(t *testing.T, db *sql.DB) {
+    _, err := db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
+    if err != nil {
+        t.Fatalf("failed to clear table: %v", err)
+    }
+}
+
 
 func TestInsertAndGetPayee(t *testing.T) {
 	db := setupTestDB(t)
 	store := PostgresPayeeDB(db)
+	defer clearPayees(t,db)
 
 	p, err := NewPayee("Abc", "123", 1234567890123456, "CBIN012345", "CBI", "abc@gmail.com", 9123456780, "Employee")
 	if err != nil {
@@ -51,6 +59,7 @@ func TestInsertAndGetPayee(t *testing.T) {
 func TestListPayees(t *testing.T) {
 	db := setupTestDB(t)
 	store := PostgresPayeeDB(db)
+	defer clearPayees(t,db)
 
 	p, err := NewPayee("Xyz", "456", 1234567890123456, "HDFC000123", "HDFC", "xyz@gmail.com", 9876543210, "Vendor")
 	if err != nil {
