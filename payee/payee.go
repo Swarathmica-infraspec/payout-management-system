@@ -15,6 +15,7 @@ var ErrInvalidIFSC = errors.New("payoutmanagementsystem.NewPayee: invalid ifsc c
 var ErrInvalidBankName = errors.New("payoutmanagementsystem.NewPayee: invalid bank name")
 
 type payee struct {
+	id              int
 	beneficiaryName string
 	beneficiaryCode string
 	accNo           int

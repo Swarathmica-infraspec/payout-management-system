@@ -88,6 +88,7 @@ func PayeeGetApi(c *gin.Context) {
 	var resp []PayeeGETResponse
 	for _, p := range payees {
 		resp = append(resp, PayeeGETResponse{
+			ID:              p.id,
 			BeneficiaryName: p.beneficiaryName,
 			BeneficiaryCode: p.beneficiaryCode,
 			AccNo:           p.accNo,
@@ -119,6 +120,7 @@ func PayeeGetOneApi(c *gin.Context) {
 	}
 
 	resp := PayeeGETResponse{
+		ID:              p.id,
 		BeneficiaryName: p.beneficiaryName,
 		BeneficiaryCode: p.beneficiaryCode,
 		AccNo:           p.accNo,
