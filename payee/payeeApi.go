@@ -133,11 +133,53 @@ func PayeeGetOneApi(c *gin.Context) {
 
 	c.JSON(http.StatusOK, resp)
 }
+func PayeeUpdateApi(c *gin.Context) {
+	store := initStore()
+
+	var req struct {
+		Name     string `json:"name"`
+		Code     string `json:"code"`
+		AccNo    int    `json:"account_number"`
+		IFSC     string `json:"ifsc"`
+		Bank     string `json:"bank"`
+		Email    string `json:"email"`
+		Mobile   int    `json:"mobile"`
+		Category string `json:"category"`
+	}
+
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ID"})
+		return
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body", "details": err.Error()})
+		return
+	}
+
+	p, err := NewPayee(req.Name, req.Code, req.AccNo, req.IFSC, req.Bank, req.Email, req.Mobile, req.Category)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "validation failed", "details": err.Error()})
+		return
+	}
+	p.id = id
+
+	_, err = store.Update(context.Background(), p)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "DB update failed", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "updated"})
+}
 
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 	r.POST("/payees", PayeePostAPI)
 	r.GET("/payees", PayeeGetApi)
 	r.GET("/payees/:id", PayeeGetOneApi)
+	r.PUT("/payees/:id", PayeeUpdateApi)
 	return r
 }
