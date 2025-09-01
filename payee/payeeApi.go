@@ -175,11 +175,30 @@ func PayeeUpdateApi(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "updated"})
 }
 
+func PayeeDeleteApi(c *gin.Context) {
+	store := initStore()
+
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ID"})
+		return
+	}
+
+	err = store.Delete(context.Background(), id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "DB delete failed", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "deleted"})
+}
+
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 	r.POST("/payees", PayeePostAPI)
 	r.GET("/payees", PayeeGetApi)
 	r.GET("/payees/:id", PayeeGetOneApi)
 	r.PUT("/payees/:id", PayeeUpdateApi)
+	r.DELETE("/payees/:id", PayeeDeleteApi)
 	return r
 }

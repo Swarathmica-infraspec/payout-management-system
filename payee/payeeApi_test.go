@@ -60,6 +60,10 @@ func setupRouter() *gin.Engine {
 		c.JSON(http.StatusOK, gin.H{"status": "updated"})
 	})
 
+	r.DELETE("/payees/:id", func(c *gin.Context) {
+
+	})
+
 	return r
 }
 
@@ -152,4 +156,36 @@ func TestPayeeUpdateAPI(t *testing.T) {
 	if w2.Code != http.StatusOK {
 		t.Fatalf("expected status %d, got %d, body=%s", http.StatusOK, w2.Code, w2.Body.String())
 	}
+}
+
+func TestPayeeDeleteAPI(t *testing.T) {
+	router := setupRouter()
+
+	payee := map[string]interface{}{
+		"name":           "adef",
+		"code":           "1211",
+		"account_number": 1134567090,
+		"ifsc":           "SBI000111",
+		"bank":           "SBI",
+		"email":          "adef@example.com",
+		"mobile":         9876503210,
+		"category":       "Employee",
+	}
+	body, _ := json.Marshal(payee)
+	req, _ := http.NewRequest("POST", "/payees", bytes.NewBuffer(body))
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusCreated {
+		t.Fatalf("failed to create payee, got status %d", w.Code)
+	}
+
+	req2, _ := http.NewRequest("DELETE", "/payees/1", bytes.NewBuffer(body))
+	w2 := httptest.NewRecorder()
+	router.ServeHTTP(w2, req2)
+
+	if w2.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d, body=%s", http.StatusOK, w2.Code, w2.Body.String())
+	}
+
 }
