@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 name: Payout Management System
 
 on: [push, pull_request]
@@ -37,4 +35,3 @@ jobs:
         run: go get .
       - name: Run tests
         run: go test -v ./...
->>>>>>> 31479cc (Fix workflow)
