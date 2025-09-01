@@ -83,3 +83,32 @@ func TestListPayees(t *testing.T) {
 		// t.Skip("skipping error check for List")
 	}
 }
+
+func TestUpdatePayee(t *testing.T) {
+	ctx := context.Background()
+	db := setupTestDB(t)
+	defer clearPayees(t, db)
+
+	store := PostgresPayeeDB(db)
+
+	p, _ := NewPayee("Abc", "123", 1234567890123456, "CBIN012345", "CBI", "abc@gmail.com", 9123456780, "Employee")
+	id, err := store.Insert(ctx, p)
+	if err != nil {
+		t.Fatalf("failed to insert payee: %v", err)
+	}
+
+	originalPayee, _ := store.GetByID(ctx, id)
+
+	updatedName := "cat"
+
+	originalPayee.beneficiaryName = updatedName
+
+	updated, err := store.Update(ctx, originalPayee)
+	if err != nil {
+		t.Fatalf("Update failed: %v", err)
+	}
+
+	if updated.beneficiaryName != updatedName {
+		t.Errorf("expected name %q, got %q", updatedName, originalPayee.beneficiaryName)
+	}
+}
