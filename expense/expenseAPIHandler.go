@@ -37,10 +37,33 @@ func (r *ExpensePostgresDB) Insert(ctx context.Context, e *expense) (int, error)
 	return id, err
 }
 
+func (s *ExpensePostgresDB) List(context context.Context) ([]expense, error) {
+	rows, err := s.db.QueryContext(context, `
+        SELECT title, amount, dateIncurred, category, notes, payeeID, receiptURI
+        FROM expense
+    `)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var expenses []expense
+	for rows.Next() {
+		var e expense
+		err := rows.Scan(&e.title, e.amount, e.dateIncurred, e.category, e.notes, e.payeeID, e.receiptURI)
+		if err != nil {
+			return nil, err
+		}
+		expenses = append(expenses, e)
+	}
+
+	return expenses, nil
+}
+
 func (r *ExpensePostgresDB) GetByID(ctx context.Context, id int) (*expense, error) {
 	query := `
 		SELECT title, amount, date_incurred, category, notes, payee_id, receipt_uri 
-		FROM expenses WHERE id=$1`
+		FROM expenses WHERE payee_id=$1`
 	row := r.db.QueryRowContext(ctx, query, id)
 	var e expense
 	err := row.Scan(

@@ -72,8 +72,34 @@ func ExpensePostAPI(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"id": id})
 }
 
+func ExpenseGetAPI(c *gin.Context) {
+	expense := initStore()
+
+	expenseData, err := expense.List(context.Background())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "DB query failed", "details": err.Error()})
+		return
+	}
+
+	var resp []ExpenseGETResponse
+	for _, e := range expenseData {
+		resp = append(resp, ExpenseGETResponse{
+			Title:        e.title,
+			Amount:       int(e.amount),
+			DateIncurred: e.dateIncurred,
+			Category:     e.category,
+			Notes:        e.notes,
+			PayeeID:      e.payeeID,
+			ReceiptURI:   e.receiptURI,
+		})
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 	r.POST("/expense", ExpensePostAPI)
+	r.GET("/expense", ExpenseGetAPI)
 	return r
 }
