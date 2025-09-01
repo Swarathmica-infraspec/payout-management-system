@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -97,9 +98,40 @@ func ExpenseGetAPI(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+func ExpenseGetAPIByID(c *gin.Context) {
+	expense := initStore()
+
+	idParam := c.Param("id")
+
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+
+	e, err := expense.GetByID(context.Background(), id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "record not found"})
+		return
+	}
+
+	resp := ExpenseGETResponse{
+		Title:        e.title,
+		Amount:       int(e.amount),
+		DateIncurred: e.dateIncurred,
+		Category:     e.category,
+		Notes:        e.notes,
+		PayeeID:      e.payeeID,
+		ReceiptURI:   e.receiptURI,
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 	r.POST("/expense", ExpensePostAPI)
 	r.GET("/expense", ExpenseGetAPI)
+	r.GET("/expense/:id", ExpenseGetAPIByID)
 	return r
 }
