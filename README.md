@@ -107,3 +107,24 @@ expected response: {'id':1}
 3. GET request
 curl -X GET http://localhost:8080/payees \
   -H "Content-Type: application/json"
+
+4. GET by id request
+curl -X GET http://localhost:8080/payees/1 \
+  -H "Content-Type: application/json"
+
+5. PUT request
+
+<!-- SUPPOSE THE ROW GIVEN IN POST IS PRESENT IN DB -->
+curl -X PUT http://localhost:8080/payees/1
+  -d '{
+    "name":"ABCD",
+    "code":"123",
+    "account_number":1234567890,
+    "ifsc":"CBIN012345",
+    "bank":"CBI",
+    "email":"abc@example.com",
+    "mobile":9876543210,
+    "category":"Employee"
+  }'
+
+  expected response: {"status":"updated"}
