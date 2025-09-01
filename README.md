@@ -107,3 +107,7 @@ expected response: {'id':1}
 3. GET request
 curl -X GET http://localhost:8080/payees \
   -H "Content-Type: application/json"
+
+4. GET by id request
+curl -X GET http://localhost:8080/payees/1 \
+  -H "Content-Type: application/json"
