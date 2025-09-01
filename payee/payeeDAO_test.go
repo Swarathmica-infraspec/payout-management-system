@@ -111,3 +111,23 @@ func TestUpdatePayee(t *testing.T) {
 		t.Errorf("expected name %q, got %q", updatedName, originalPayee.beneficiaryName)
 	}
 }
+
+func TestDeletePayee(t *testing.T) {
+	ctx := context.Background()
+	db := setupTestDB(t)
+	defer clearPayees(t, db)
+
+	store := PostgresPayeeDB(db)
+
+	p, _ := NewPayee("Abc", "123", 1234567890123456, "CBIN012345", "CBI", "abc@gmail.com", 9123456780, "Employee")
+	id, err := store.Insert(ctx, p)
+	if err != nil {
+		t.Fatalf("failed to insert payee: %v", err)
+	}
+
+	err = store.Delete(ctx, id)
+	if err != nil {
+		t.Fatalf("delete failed: %v", err)
+	}
+
+}
