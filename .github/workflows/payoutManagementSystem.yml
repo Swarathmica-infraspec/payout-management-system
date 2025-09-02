@@ -5,13 +5,13 @@ on: [push, pull_request]
 jobs:
   format:
     name: Check format
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - run: test -z "$(gofmt -l .)"
 
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - name: Run linter
@@ -20,7 +20,7 @@ jobs:
           version: v1.64.8
   test:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - name: Setup Go
