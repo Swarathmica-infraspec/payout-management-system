@@ -1,4 +1,4 @@
-package payoutmanagementsystem
+package payee
 import (
 	"context"
 	"database/sql"
