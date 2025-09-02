@@ -8,6 +8,10 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22.2'
+          cache-dependency-path: go.sum
       - run: test -z "$(gofmt -l .)"
 
   lint:
