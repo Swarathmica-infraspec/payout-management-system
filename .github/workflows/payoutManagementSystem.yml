@@ -23,7 +23,7 @@ jobs:
 
   lint:
     runs-on: ubuntu-24.04
-    needs: setup
+    needs: [setup,format]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -39,7 +39,7 @@ jobs:
 
   test:
     runs-on: ubuntu-24.04
-    needs: setup
+    needs: [setup,lint]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
