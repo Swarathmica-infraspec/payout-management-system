@@ -26,8 +26,8 @@ jobs:
         uses: golangci/golangci-lint-action@v7
         with:
           version: v2.4.0
+          
   test:
-
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
