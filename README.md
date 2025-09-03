@@ -10,7 +10,7 @@ Clone this repo: <a href = "https://github.com/Swarathmica-infraspec/payoutManag
 
 # Requirements
 
-GO-VERSION: 1.22.2 and above
+GO-VERSION: 1.25.0
 
 The project contains payoutmanagementsystem/ <br>
     - .github/workflows/payoutManagementSystem.yml <br>
@@ -37,6 +37,7 @@ NOTE: this project is still under development and hence does not have HTTP API n
 <<<<<<< HEAD
 The workflow is triggered on every push and pull request.
 It runs the following checks automatically:
+- Format with `test -z "$(gofmt -l .)"`
 - Linting with `golangci-lint`
 - Tests with `go test`
 =======
