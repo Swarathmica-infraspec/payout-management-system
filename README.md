@@ -34,44 +34,8 @@ NOTE: this project is still under development and hence does not have HTTP API n
 
 # CI
 
-<<<<<<< HEAD
 The workflow is triggered on every push and pull request.
 It runs the following checks automatically:
 - Format with `test -z "$(gofmt -l .)"`
 - Linting with `golangci-lint`
 - Tests with `go test`
-=======
-From the project root, run:
-
-docker compose up -d db
-
-
-This will:
-
-Start a container named devcontainer-db-1 (from .devcontainer/docker-compose.yml)
-
-
-## 2. Create Payees Table
-
-Copy the SQL file into the container:
-
-docker cp payee/payee_db.sql devcontainer-db-1:/payee_db.sql
-
-
-Then apply it:
-
-docker exec -it devcontainer-db-1 psql -U postgres -d postgres -f /payee_db.sql
-
-
-# Data Access Object
-
-1. payeeDAO contains database query for payee and payeeDAO_test contains relevant tests
-
-To run tests:
-
-docker exec -it devcontainer-app-1 bash
-
-cd /workspaces/payoutManagementSystem
-
-go test -v ./...
->>>>>>> a7f9e42 (Update README.md file)
