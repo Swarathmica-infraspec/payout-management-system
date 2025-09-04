@@ -2,6 +2,9 @@ name: Payout Management System
 
 on: [push, pull_request]
 
+env:
+  GO-VERSION: 1.25.0
+
 jobs:
   setup:
     runs-on: ubuntu-24.04
@@ -11,7 +14,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25.0'
+          go-version: ${{ env.GO-VERSION }}
           cache-dependency-path: go.sum
 
   format:
@@ -30,7 +33,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25.0'
+          go-version: ${{ env.GO-VERSION }}
           cache-dependency-path: go.sum
       - name: Run linter
         uses: golangci/golangci-lint-action@v7
@@ -46,7 +49,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25.0'
+          go-version: ${{ env.GO-VERSION }}
           cache-dependency-path: go.sum
       - name: Install dependencies
         run: go mod tidy
