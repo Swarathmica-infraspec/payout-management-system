@@ -51,7 +51,7 @@ jobs:
         with:
           go-version: ${{ env.GO-VERSION }}
           cache-dependency-path: go.sum
-      - name: Install dependencies
-        run: go mod tidy
+      - name: Download dependencies
+        run: go mod download
       - name: Run tests
         run: go test -v ./...
