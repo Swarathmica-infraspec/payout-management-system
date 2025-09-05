@@ -1,3 +1,4 @@
 module payoutmanagementsystem
 
-go 1.22.2
+go 1.25.0
+
