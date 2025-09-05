@@ -3,26 +3,15 @@ name: Go
 on:
   push:
     branches:
-      - main
-      - payee
+      - expense
   pull_request:
     branches:
-      - main
+      - master
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:latest
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: postgres
-        ports:
-          - 5432:5432
 
     steps:
       - uses: actions/checkout@v4
@@ -34,6 +23,6 @@ jobs:
       - name: Display Go version
         run: go version
       - name: Install dependencies
-        run: go get .
+        run: go mod download
       - name: Run tests
         run: go test -v ./...
