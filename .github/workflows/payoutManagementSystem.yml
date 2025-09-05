@@ -1,28 +1,57 @@
-name: Go
+name: Payout Management System
 
-on:
-  push:
-    branches:
-      - expense
-  pull_request:
-    branches:
-      - master
+on: [push, pull_request]
+
+env:
+  GO-VERSION: 1.25.0
 
 jobs:
-  build:
-
-    runs-on: ubuntu-latest
-
+  setup:
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22.2'
+          go-version: ${{ env.GO-VERSION }}
           cache-dependency-path: go.sum
-      - name: Display Go version
-        run: go version
-      - name: Install dependencies
+
+  format:
+    name: Check format
+    runs-on: ubuntu-24.04
+    needs: setup
+    steps:
+      - run: test -z "$(gofmt -l .)"
+
+  lint:
+    runs-on: ubuntu-24.04
+    needs: format
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO-VERSION }}
+          cache-dependency-path: go.sum
+      - name: Run linter
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: v2.4.0
+
+  test:
+    runs-on: ubuntu-24.04
+    needs: lint
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO-VERSION }}
+          cache-dependency-path: go.sum
+      - name: Download dependencies
         run: go mod download
       - name: Run tests
         run: go test -v ./...
