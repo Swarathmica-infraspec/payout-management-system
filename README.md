@@ -58,10 +58,7 @@ Then apply it:
 
 docker exec -it devcontainer-db-1 psql -U postgres -d postgres -f /payee_db.sql
 
-
-# Data Access Object
-
-1. payeeDAO contains database query for payee and payeeDAO_test contains relevant tests
+# Run tests
 
 To run tests:
 
