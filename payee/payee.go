@@ -13,6 +13,14 @@ var ErrEmptyName = errors.New("payoutmanagementsystem.NewPayee: name should not 
 var ErrEmptyCode = errors.New("payoutmanagementsystem.NewPayee: code should not be empty")
 var ErrInvalidIFSC = errors.New("payoutmanagementsystem.NewPayee: invalid ifsc code")
 var ErrInvalidBankName = errors.New("payoutmanagementsystem.NewPayee: invalid bank name")
+var ErrInvalidCategory = errors.New("payoutmanagementsystem.NewPayee: invalid payee category")
+
+var allowedCategories = map[string]bool{
+	"Employee":   true,
+	"Vendor":     true,
+	"Contractor": true,
+	"Other":      true,
+}
 
 type payee struct {
 	beneficiaryName string
@@ -48,6 +56,10 @@ func NewPayee(name string, code string, accNumber int, ifsc string, bankName str
 	if len(bankName) > 50 {
 		return nil, ErrInvalidBankName
 	}
+	if !allowedCategories[payeeCategory] {
+		return nil, ErrInvalidCategory
+	}
+
 	return &payee{beneficiaryName: name, beneficiaryCode: code, accNo: accNumber, ifsc: ifsc,
 		bankName: bankName, email: email, mobile: mobile, payeeCategory: payeeCategory}, nil
 }
