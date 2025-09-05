@@ -1,5 +1,6 @@
 # PayoutManagementSystem
 
+
 This project is about the payout management system built using golang.
 
 # Project Setup
@@ -23,6 +24,7 @@ The project contains payoutmanagementsystem/ <br>
 - main.go <br>
 - main_test.go <br>
 - README.md <br>
+
 
 NOTE: Only email ids with .com are supported.
 
@@ -64,6 +66,15 @@ docker exec -it devcontainer-app-1 bash
 cd /workspaces/payoutManagementSystem
 
 go test -v ./...
+
+
+# Run Tests
+
+Test can be run by executing the below command in the terminal
+  go test -v ./...
+
+NOTE: this project is still under development and hence does not have HTTP API now.
+
 
 # CI
 
