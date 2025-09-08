@@ -74,11 +74,6 @@ cd /workspaces/payoutManagementSystem
 go test -v ./...
 
 
-# Run Tests
-
-Test can be run by executing the below command in the terminal
-  go test -v ./...
-
 NOTE: this project is still under development and hence does not have HTTP API now.
 
 
