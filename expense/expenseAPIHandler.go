@@ -6,7 +6,7 @@ import (
 )
 
 type ExpenseRepository interface {
-	Create(ctx context.Context, e *expense) (int, error)
+	Insert(ctx context.Context, e *expense) (int, error)
 	GetByID(ctx context.Context, id int) (*expense, error)
 }
 
