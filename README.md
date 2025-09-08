@@ -58,16 +58,6 @@ Then apply it:
 
 docker exec -it devcontainer-db-1 psql -U postgres -d postgres -f /payee_db.sql
 
-# Run tests
-
-To run tests:
-
-docker exec -it devcontainer-app-1 bash
-
-cd /workspaces/payoutManagementSystem
-
-go test -v ./...
-
 
 # HTTP API Usage
 
@@ -89,7 +79,7 @@ curl -X POST http://localhost:8080/payees \
   -d '{
     "name":"Abc",
     "code":"123",
-    "account_number":123456789,
+    "account_number":1234567890,
     "ifsc":"CBIN012345",
     "bank":"CBI",
     "email":"abc@example.com",
@@ -128,8 +118,13 @@ curl -X PUT http://localhost:8080/payees/1
 
 # Run Tests
 
-Test can be run by executing the below command in the terminal
-  go test -v ./...
+To run tests:
+
+docker exec -it devcontainer-app-1 bash
+
+cd /workspaces/payoutManagementSystem
+
+go test -v ./...
 
 # CI
 
