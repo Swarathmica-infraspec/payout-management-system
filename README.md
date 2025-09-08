@@ -19,6 +19,8 @@ The project contains payoutmanagementsystem/ <br>
   - payee.go <br>
   - payee_test.go <br>
   - payee_db.sql <br>
+  - payeeDAO.go <br>
+  - payeeDAO_test.go <br>
 - go.mod <br>
 - go.sum <br>
 - main.go <br>
@@ -56,6 +58,10 @@ docker cp payee/payee_db.sql devcontainer-db-1:/payee_db.sql
 Then apply it:
 
 docker exec -it devcontainer-db-1 psql -U postgres -d postgres -f /payee_db.sql
+
+# Data Access Object
+
+payeeDAO contains database query for payee and payeeDAO_test contains relevant tests
 
 # Run tests
 
