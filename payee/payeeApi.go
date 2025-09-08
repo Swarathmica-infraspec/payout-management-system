@@ -22,7 +22,11 @@ func PayeePostAPI() {
 	if err != nil {
 		panic(err)
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Printf("failed to close db: %v", err)
+		}
+	}()
 
 	store := PostgresPayeeDB(db)
 
