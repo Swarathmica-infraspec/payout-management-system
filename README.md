@@ -61,16 +61,7 @@ docker exec -it devcontainer-db-1 psql -U postgres -d postgres -f /payee_db.sql
 
 # Data Access Object
 
-1. payeeDAO contains database query for payee and payeeDAO_test contains relevant tests
-
-To run tests:
-
-docker exec -it devcontainer-app-1 bash
-
-cd /workspaces/payoutManagementSystem
-
-go test -v ./...
-
+payeeDAO contains database query for payee and payeeDAO_test contains relevant tests
 
 # HTTP API Usage
 
@@ -102,17 +93,15 @@ curl -X POST http://localhost:8080/payees \
 
 expected response: {'id':1}
 
-2. for test: go test ./...  #run inside docker env as above
-
-3. GET request
+2. GET request
 curl -X GET http://localhost:8080/payees \
   -H "Content-Type: application/json"
 
-4. GET by id request
+3. GET by id request
 curl -X GET http://localhost:8080/payees/1 \
   -H "Content-Type: application/json"
 
-5. PUT request
+4. PUT request
 
 <!-- SUPPOSE THE ROW GIVEN IN POST IS PRESENT IN DB -->
 curl -X PUT http://localhost:8080/payees/1
@@ -128,3 +117,19 @@ curl -X PUT http://localhost:8080/payees/1
   }'
 
   expected response: {"status":"updated"}
+
+# Run Tests
+To run tests:
+
+docker exec -it devcontainer-app-1 bash
+
+cd /workspaces/payoutManagementSystem
+
+go test -v ./...
+
+# CI
+The workflow is triggered on every push and pull request. It runs the following checks automatically:
+
+Format with test -z "$(gofmt -l .)"
+Linting with golangci-lint
+Tests with go test
