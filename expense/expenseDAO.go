@@ -1,4 +1,4 @@
-package payoutmanagementsystem
+package expense
 
 import (
 	"context"
