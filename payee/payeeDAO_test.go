@@ -47,4 +47,3 @@ func TestInsertAndGetPayee(t *testing.T) {
 		t.Errorf("expected beneficiary code: %s, got: %s", p.beneficiaryCode, got.beneficiaryCode)
 	}
 }
-
