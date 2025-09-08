@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 # PayoutManagementSystem
-=======
-# payoutManagementSystem
->>>>>>> main
 
 This project is about the payout management system built using golang.
 
@@ -64,20 +60,11 @@ Then apply it:
 docker exec -it devcontainer-db-1 psql -U postgres -d postgres -f /payee_db.sql
 
 
-# Data Access Object
+## 3. Data Access Object
 
-1. payeeDAO contains database query for payee and payeeDAO_test contains relevant tests
+payeeDAO contains database query for payee and payeeDAO_test contains relevant tests
 
-To run tests:
-
-docker exec -it devcontainer-app-1 bash
-
-cd /workspaces/payoutManagementSystem
-
-go test -v ./...
-
-
-# HTTP API Usage
+## 4. HTTP API Usage
 
 since postgres is run from docker, 
 
@@ -107,14 +94,16 @@ curl -X POST http://localhost:8080/payees \
 
 expected response: {'id':1}
 
-2. for test: go test ./...  #run inside docker env as above
-
 # Run Tests
 
-Test can be run by executing the below command in the terminal
-  go test -v ./...
+To run tests:
 
-NOTE: this project is still under development and hence does not have HTTP API now.
+docker exec -it devcontainer-app-1 bash
+
+cd /workspaces/payoutManagementSystem
+
+go test -v ./...
+
 
 # CI
 
