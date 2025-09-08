@@ -3,6 +3,7 @@ package payoutmanagementsystem
 import (
 	"context"
 	"database/sql"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -38,7 +39,14 @@ func initStore() *PayeePostgresDB {
 		panic(err)
 	}
 	store = PostgresPayeeDB(db)
+
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Printf("failed to close db: %v", err)
+		}
+	}()
 	return store
+
 }
 
 func PayeePostAPI(c *gin.Context) {
