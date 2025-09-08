@@ -1,18 +1,14 @@
 name: Go
 
-on:
-  push:
-    branches:
-      - main
-      - payee
-  pull_request:
-    branches:
-      - main
+on: [push, pull_request]
+
+env:
+  GO-VERSION: 1.25.0
 
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     services:
       postgres:
@@ -29,7 +25,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22.2'
+          go-version: ${{ env.GO-VERSION }}
           cache-dependency-path: go.sum
       - name: Display Go version
         run: go version
