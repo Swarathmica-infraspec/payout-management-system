@@ -10,7 +10,7 @@ Clone this repo: <a href = "https://github.com/Swarathmica-infraspec/payoutManag
 
 # Requirements
 
-GO-VERSION: 1.22.2 and above
+GO-VERSION: 1.25.0
 
 The project contains payoutmanagementsystem/ <br>
 - .github/workflows/payoutManagementSystem.yml <br>
@@ -59,11 +59,11 @@ Then apply it:
 docker exec -it devcontainer-db-1 psql -U postgres -d postgres -f /payee_db.sql
 
 
-# Data Access Object
+## 3. Data Access Object
 
 payeeDAO contains database query for payee and payeeDAO_test contains relevant tests
 
-# HTTP API Usage
+## 4. HTTP API Usage
 
 since postgres is run from docker, 
 
@@ -127,9 +127,11 @@ cd /workspaces/payoutManagementSystem
 
 go test -v ./...
 
-# CI
-The workflow is triggered on every push and pull request. It runs the following checks automatically:
 
-Format with test -z "$(gofmt -l .)"
-Linting with golangci-lint
-Tests with go test
+# CI
+
+The workflow is triggered on every push and pull request.
+It runs the following checks automatically:
+- Format with `test -z "$(gofmt -l .)"`
+- Linting with `golangci-lint`
+- Tests with `go test`

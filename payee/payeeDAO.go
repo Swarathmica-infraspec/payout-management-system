@@ -1,8 +1,9 @@
-package payoutmanagementsystem
+package payee
 
 import (
 	"context"
 	"database/sql"
+	"log"
 )
 
 type PayeeRepository interface {
@@ -72,7 +73,11 @@ func (s *PayeePostgresDB) List(context context.Context) ([]payee, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("failed to close rows: %v", err)
+		}
+	}()
 
 	var payees []payee
 	for rows.Next() {
