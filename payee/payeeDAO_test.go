@@ -119,7 +119,7 @@ func TestDeletePayee(t *testing.T) {
 
 	store := PostgresPayeeDB(db)
 
-	p, _ := NewPayee("Abc", "123", 1234567890123456, "CBIN012345", "CBI", "abc@gmail.com", 9123456780, "Employee")
+	p, _ := NewPayee("Abc", "123", 1234567890123456, "CBIN0123456", "CBI", "abc@gmail.com", 9123456780, "Employee")
 	id, err := store.Insert(ctx, p)
 	if err != nil {
 		t.Fatalf("failed to insert payee: %v", err)
