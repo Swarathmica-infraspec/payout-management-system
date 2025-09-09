@@ -3,7 +3,6 @@ package payee
 import (
 	"context"
 	"database/sql"
-	"log"
 )
 
 type PayeeRepository interface {
@@ -60,36 +59,4 @@ func (r *PayeePostgresDB) GetByID(context context.Context, id int) (*payee, erro
 		return nil, err
 	}
 	return &p, nil
-}
-
-func (s *PayeePostgresDB) List(context context.Context) ([]payee, error) {
-	rows, err := s.db.QueryContext(context, `
-        SELECT id, beneficiary_name, beneficiary_code, account_number, ifsc_code, bank_name, email, mobile, payee_category
-        FROM payees
-        ORDER BY id ASC
-    `)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if err := rows.Close(); err != nil {
-			log.Printf("failed to close rows: %v", err)
-		}
-	}()
-
-	var payees []payee
-	for rows.Next() {
-		var p payee
-		err := rows.Scan(&p.id, &p.beneficiaryName, &p.beneficiaryCode, &p.accNo, &p.ifsc,
-			&p.bankName,
-			&p.email,
-			&p.mobile,
-			&p.payeeCategory)
-		if err != nil {
-			return nil, err
-		}
-		payees = append(payees, p)
-	}
-
-	return payees, nil
 }
