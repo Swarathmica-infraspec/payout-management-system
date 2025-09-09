@@ -59,11 +59,11 @@ Then apply it:
 docker exec -it devcontainer-db-1 psql -U postgres -d postgres -f /payee_db.sql
 
 
-# Data Access Object
+## 3. Data Access Object
 
 payeeDAO contains database query for payee and payeeDAO_test contains relevant tests
 
-# HTTP API Usage
+## 4. HTTP API Usage
 
 since postgres is run from docker, 
 

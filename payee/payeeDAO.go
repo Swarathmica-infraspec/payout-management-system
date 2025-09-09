@@ -1,4 +1,4 @@
-package payoutmanagementsystem
+package payee
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 type PayeeRepository interface {
 	Insert(context context.Context, p *payee) (int, error)
 	GetByID(context context.Context, id int) (*payee, error)
-	List(ctx context.Context) ([]payee, error)
+	List(context context.Context) ([]payee, error)
 }
 
 type PayeePostgresDB struct {
