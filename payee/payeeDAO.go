@@ -15,11 +15,11 @@ type PayeeRepository interface {
 }
 
 type PayeePostgresDB struct {
-	db *sql.DB
+	Db *sql.DB
 }
 
 func PostgresPayeeDB(db *sql.DB) *PayeePostgresDB {
-	return &PayeePostgresDB{db: db}
+	return &PayeePostgresDB{Db: db}
 }
 
 func (r *PayeePostgresDB) Insert(context context.Context, p *payee) (int, error) {
@@ -27,7 +27,7 @@ func (r *PayeePostgresDB) Insert(context context.Context, p *payee) (int, error)
 		INSERT INTO payees (beneficiary_name, beneficiary_code, account_number,ifsc_code, bank_name, email, mobile, payee_category)
 		VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`
 	var id int
-	err := r.db.QueryRowContext(context, query,
+	err := r.Db.QueryRowContext(context, query,
 		p.beneficiaryName,
 		p.beneficiaryCode,
 		p.accNo,
@@ -45,7 +45,7 @@ func (r *PayeePostgresDB) GetByID(context context.Context, id int) (*payee, erro
 		SELECT beneficiary_name, beneficiary_code, account_number,
 		       ifsc_code, bank_name, email, mobile, payee_category
 		FROM payees WHERE id=$1`
-	row := r.db.QueryRowContext(context, query, id)
+	row := r.Db.QueryRowContext(context, query, id)
 
 	var p payee
 	err := row.Scan(
@@ -66,7 +66,7 @@ func (r *PayeePostgresDB) GetByID(context context.Context, id int) (*payee, erro
 }
 
 func (s *PayeePostgresDB) List(context context.Context) ([]payee, error) {
-	rows, err := s.db.QueryContext(context, `
+	rows, err := s.Db.QueryContext(context, `
         SELECT id, beneficiary_name, beneficiary_code, account_number, ifsc_code, bank_name, email, mobile, payee_category
         FROM payees
         ORDER BY id ASC
@@ -113,7 +113,7 @@ func (s *PayeePostgresDB) Update(ctx context.Context, p *payee) (*payee, error) 
     `
 
 	var updatedPayee payee
-	err := s.db.QueryRowContext(ctx, query,
+	err := s.Db.QueryRowContext(ctx, query,
 		p.beneficiaryName,
 		p.beneficiaryCode,
 		p.accNo,
@@ -142,6 +142,6 @@ func (s *PayeePostgresDB) Update(ctx context.Context, p *payee) (*payee, error) 
 }
 
 func (r *PayeePostgresDB) Delete(context context.Context, id int) error {
-	_, err := r.db.ExecContext(context, "DELETE FROM payees WHERE id=$1", id)
+	_, err := r.Db.ExecContext(context, "DELETE FROM payees WHERE id=$1", id)
 	return err
 }

@@ -29,7 +29,7 @@ func TestInsertAndGetPayee(t *testing.T) {
 	store := PostgresPayeeDB(db)
 	defer clearPayees(t, db)
 
-	p, err := NewPayee("Abc", "13", 1234567890123456, "CBIN012345", "CBI", "abc@gmail.com", 9123456780, "Employee")
+	p, err := NewPayee("Abc", "136", 1234567890123456, "CBIN0123459", "CBI", "abc@gmail.com", 9123456780, "Employee")
 	if err != nil {
 		t.Fatalf("validation failed: %v", err)
 	}
@@ -60,7 +60,7 @@ func TestListPayees(t *testing.T) {
 	store := PostgresPayeeDB(db)
 	defer clearPayees(t, db)
 
-	p, err := NewPayee("Xyz", "456", 1234567890123456, "HDFC000123", "HDFC", "xyz@gmail.com", 9876543210, "Vendor")
+	p, err := NewPayee("Xyz", "456", 1234567890123456, "HDFC0001213", "HDFC", "xyz@gmail.com", 9876543210, "Vendor")
 	if err != nil {
 		t.Fatalf("validation failed: %v", err)
 	}
@@ -90,7 +90,7 @@ func TestUpdatePayee(t *testing.T) {
 
 	store := PostgresPayeeDB(db)
 
-	p, _ := NewPayee("Abc", "123", 1234567890123456, "CBIN012345", "CBI", "abc@gmail.com", 9123456780, "Employee")
+	p, _ := NewPayee("Abc", "123", 1234567890123456, "CBIN0124345", "CBI", "abc@gmail.com", 9123456780, "Employee")
 	id, err := store.Insert(ctx, p)
 	if err != nil {
 		t.Fatalf("failed to insert payee: %v", err)
@@ -108,7 +108,7 @@ func TestUpdatePayee(t *testing.T) {
 	}
 
 	if updated.beneficiaryName != updatedName {
-		t.Errorf("expected name %q, got %q", updatedName, originalPayee.beneficiaryName)
+		t.Errorf("expected name %q, got %q", updatedName, updated.beneficiaryName)
 	}
 }
 
