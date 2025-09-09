@@ -6,7 +6,7 @@ This project is about the payout management system built using golang.
 
 ## Clone the repository
 
-Clone this repo: <a href = "https://github.com/Swarathmica-infraspec/payoutManagementSystem"> source link  </a>
+Clone this repo: <a href = "https://github.com/Swarathmica-infraspec/payout-management-system"> source link  </a>
 
 # Requirements
 
