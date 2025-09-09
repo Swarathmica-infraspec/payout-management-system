@@ -21,8 +21,6 @@ The project contains payoutmanagementsystem/ <br>
   - payee_db.sql <br>
 - go.mod <br>
 - go.sum <br>
-- main.go <br>
-- main_test.go <br>
 - README.md <br>
 
 
