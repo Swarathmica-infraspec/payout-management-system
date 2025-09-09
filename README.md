@@ -10,7 +10,7 @@ Clone this repo: <a href = "https://github.com/Swarathmica-infraspec/payout-mana
 
 # Requirements
 
-GO-VERSION: 1.22.2 and above
+GO-VERSION: 1.25
 
 The project contains payoutmanagementsystem/ <br>
 - .github/workflows/payoutManagementSystem.yml <br>
