@@ -2,37 +2,26 @@ package expense
 
 import (
 	"context"
-	"database/sql"
-	"log"
 	"net/http"
-	"os"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 )
 
-func ExpensePostAPI() {
+type ExpenseGETResponse struct {
+	Title        string `json:"title"`
+	Amount       int    `json:"amount"`
+	DateIncurred string `json:"dateIncurred"`
+	Category     string `json:"category"`
+	Notes        string `json:"notes"`
+	PayeeID      int    `json:"payeeID"`
+	ReceiptURI   string `json:"receiptURI"`
+}
 
-	dsn := os.Getenv("DATABASE_URL")
-	if dsn == "" {
-		dsn = "postgres://postgres:postgres@db:5432/postgres?sslmode=disable"
-	}
-
-	db, err := sql.Open("postgres", dsn)
-	if err != nil {
-		panic(err)
-	}
-	defer func() {
-		if err := db.Close(); err != nil {
-			log.Printf("failed to close db: %v", err)
-		}
-	}()
-
-	store := NewPostgresExpenseDB(db)
-
-	router := gin.Default()
-
-	router.POST("/expense", func(c *gin.Context) {
+func ExpensePostAPI(store *ExpensePostgresDB) gin.HandlerFunc {
+	
+	return func(c *gin.Context) {
 		var req struct {
 			Title        string `json:"title"`
 			Amount       int    `json:"amount"`
@@ -61,9 +50,67 @@ func ExpensePostAPI() {
 		}
 
 		c.JSON(http.StatusCreated, gin.H{"id": id})
-	})
-	if err := router.Run(":8080"); err != nil {
-		log.Fatalf("failed to start server: %v", err)
 	}
+}
 
+func ExpenseGetApi(store *ExpensePostgresDB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		expenses, err := store.List(context.Background())
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "DB query failed", "details": err.Error()})
+			return
+		}
+
+		var resp []ExpenseGETResponse
+		for _, e := range expenses {
+			resp = append(resp, ExpenseGETResponse{
+				Title: e.title,
+				Amount: int(e.amount),
+				DateIncurred: e.dateIncurred,
+				Category: e.category,
+				Notes: e.notes,
+				PayeeID: e.payeeID,
+				ReceiptURI: e.receiptURI,
+			})
+		}
+
+		c.JSON(http.StatusOK, resp)
+	}
+}
+
+func ExpenseGetOneApi(store *ExpensePostgresDB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		idParam := c.Param("id")
+		id, err := strconv.Atoi(idParam)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			return
+		}
+
+		e, err := store.GetByID(context.Background(), id)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "record not found"})
+			return
+		}
+
+		resp := ExpenseGETResponse{
+			Title: e.title,
+			Amount: int(e.amount),
+			DateIncurred: e.dateIncurred,
+			Category: e.category,
+			Notes: e.notes,
+			PayeeID: e.payeeID,
+			ReceiptURI: e.receiptURI,
+		}
+
+		c.JSON(http.StatusOK, resp)
+	}
+}
+
+func SetupRouter(store *ExpensePostgresDB) *gin.Engine {
+	r := gin.Default()
+	r.POST("/expense", ExpensePostAPI(store))
+	r.GET("/expense", ExpenseGetApi(store))
+	r.GET("/expense/:id", ExpenseGetOneApi(store))
+	return r
 }

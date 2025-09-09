@@ -3,11 +3,13 @@ package expense
 import (
 	"context"
 	"database/sql"
+	"log"
 )
 
 type ExpenseRepository interface {
 	Insert(ctx context.Context, e *expense) (int, error)
 	GetByID(ctx context.Context, id int) (*expense, error)
+	List(context context.Context) ([]expense, error)
 }
 
 type ExpensePostgresDB struct {
@@ -56,4 +58,38 @@ func (r *ExpensePostgresDB) GetByID(ctx context.Context, id int) (*expense, erro
 		return nil, err
 	}
 	return &e, nil
+}
+
+func (s *ExpensePostgresDB) List(context context.Context) ([]expense, error) {
+	rows, err := s.db.QueryContext(context, `
+        SELECT title, amount, date_incurred, category, notes, payee_id, receipt_uri 
+		FROM expenses
+        ORDER BY payee_id ASC
+    `)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("failed to close rows: %v", err)
+		}
+	}()
+
+	var expenses []expense
+	for rows.Next() {
+		var e expense
+		err := rows.Scan(&e.title, 
+			&e.amount, 
+			&e.dateIncurred, 
+			&e.category, 
+			&e.notes,
+			&e.payeeID,
+			&e.receiptURI)
+		if err != nil {
+			return nil, err
+		}
+		expenses = append(expenses, e)
+	}
+
+	return expenses, nil
 }

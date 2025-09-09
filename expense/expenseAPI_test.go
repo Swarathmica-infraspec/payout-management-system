@@ -70,3 +70,16 @@ func TestExpensePostAPIInvalidJSON(t *testing.T) {
 		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, w.Code)
 	}
 }
+
+func TestExpenseGetAPISuccess(t *testing.T) {
+	router := setupRouter()
+
+	req, _ := http.NewRequest("GET", "/expense", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d, body=%s", http.StatusOK, w.Code, w.Body.String())
+	}
+
+}
