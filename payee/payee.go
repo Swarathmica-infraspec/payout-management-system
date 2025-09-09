@@ -76,7 +76,7 @@ func checkEmailFormat(email string) bool {
 }
 
 func checkIFSC(ifsc string) bool {
-	if len(ifsc) != 10 {
+	if len(ifsc) != 11 {
 		return false
 	}
 	matchAlphaForFirstFourChars, _ := regexp.MatchString("[A-Z]{4}", ifsc[:4])

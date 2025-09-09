@@ -23,8 +23,6 @@ The project contains payoutmanagementsystem/ <br>
   - payeeDAO_test.go <br>
 - go.mod <br>
 - go.sum <br>
-- main.go <br>
-- main_test.go <br>
 - README.md <br>
 
 
