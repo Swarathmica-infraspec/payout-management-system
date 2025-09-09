@@ -1,12 +1,11 @@
 package payee
-package payee
 
 import (
 	"context"
 	"database/sql"
+	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -78,7 +77,7 @@ func PayeePostAPI(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "validation failed", "details": err.Error()})
 		return
 	}
-	p, err := NewPayee(req.Name, req.Code, req.AccNo, req.IFSC, req.Bank, req.Email, req.Mobile, req.Category)
+	p, err = NewPayee(req.Name, req.Code, req.AccNo, req.IFSC, req.Bank, req.Email, req.Mobile, req.Category)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "validation failed", "details": err.Error()})
 		return
@@ -89,7 +88,7 @@ func PayeePostAPI(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "DB insert failed", "details": err.Error()})
 		return
 	}
-	id, err := store.Insert(context.Background(), p)
+	id, err = store.Insert(context.Background(), p)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "DB insert failed", "details": err.Error()})
 		return
