@@ -7,7 +7,7 @@ import (
 )
 
 func setupTestDB(t *testing.T) *sql.DB {
-	dsn := "postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable"
+	dsn := "postgres://postgres:postgres@db:5432/postgres?sslmode=disable"
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		t.Skip("skipping DB connection due to error:", err)
