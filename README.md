@@ -24,8 +24,6 @@ The project contains payoutmanagementsystem/ <br>
   - payeeApi_test.go <br>
 - go.mod <br>
 - go.sum <br>
-- main.go <br>
-- main_test.go <br>
 - README.md <br>
 
 NOTE: Only email ids with .com are supported.
