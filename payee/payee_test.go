@@ -1,4 +1,4 @@
-package payoutmanagementsystem
+package payee
 
 import (
 	"testing"
@@ -30,6 +30,7 @@ var errTests = []struct {
 	{"TestIFSCContainsLowercaseLettersReturnsErrInvalidIFSC", "invalid ifsc: there are lowercase alphabets", "abc", "123", 6700345678, "cbin045667", "cbi", "abc@gmail.com", 9123456666, "Employee", ErrInvalidIFSC},
 	{"TestIFSCBranchCodeContainsAlphabetsReturnsErrInvalidIFSC", "invalid ifsc: the alphabets is used as part of branch code", "abc", "123", 6700345678, "CBIN0456ab", "cbi", "abc@gmail.com", 9123456666, "Employee", ErrInvalidIFSC},
 	{"TestInvalidBankNameOfLengthGreaterThan50", "invalid bank name: bank name exceeds 50 characters", "abc", "123", 6700345678, "CBIN045667", "cbicbicbicbicbicbicbicbicbicbicbicbicbicbicbicbicbicbicbicbicbicbicbicbicbi", "abc@gmail.com", 9123456666, "Employee", ErrInvalidBankName},
+	{"TestInvalidPayeeCategory", "invalid payee category: given category is not listed", "abc", "123", 6700543678, "CBIN012345", "cbi", "abc@gmail.com", 9123456780, "Student", ErrInvalidCategory},
 }
 
 func TestValidatePayee(t *testing.T) {

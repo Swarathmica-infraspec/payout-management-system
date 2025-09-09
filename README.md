@@ -1,4 +1,8 @@
 # PayoutManagementSystem
+<<<<<<< HEAD
+=======
+
+>>>>>>> payeeDao
 
 This project is about the payout management system built using golang.
 
@@ -20,14 +24,21 @@ The project contains payoutmanagementsystem/ <br>
   - payee_db.sql <br>
   - payeeDAO.go <br>
   - payeeDAO_test.go <br>
+<<<<<<< HEAD
   - payeeAPI.go <br>
   - payeeApi_test.go <br>
+=======
+>>>>>>> payeeDao
 - go.mod <br>
 - go.sum <br>
 - main.go <br>
 - main_test.go <br>
 - README.md <br>
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> payeeDao
 NOTE: Only email ids with .com are supported.
 
 
@@ -103,6 +114,7 @@ docker exec -it devcontainer-app-1 bash
 cd /workspaces/payoutManagementSystem
 
 go test -v ./...
+
 
 
 # CI

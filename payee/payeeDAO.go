@@ -1,4 +1,4 @@
-package payoutmanagementsystem
+package payee
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 type PayeeRepository interface {
 	Insert(context context.Context, p *payee) (int, error)
 	GetByID(context context.Context, id int) (*payee, error)
-	List(ctx context.Context) ([]payee, error)
 }
 
 type PayeePostgresDB struct {
@@ -45,17 +44,17 @@ func (r *PayeePostgresDB) GetByID(context context.Context, id int) (*payee, erro
 	row := r.db.QueryRowContext(context, query, id)
 
 	var p payee
-	var accNo, mobile int
 	err := row.Scan(
 		&p.beneficiaryName,
 		&p.beneficiaryCode,
-		&accNo,
+		&p.accNo,
 		&p.ifsc,
 		&p.bankName,
 		&p.email,
-		&mobile,
+		&p.mobile,
 		&p.payeeCategory,
 	)
+	p.id = id
 	if err != nil {
 		return nil, err
 	}
