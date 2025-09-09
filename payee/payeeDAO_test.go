@@ -29,7 +29,7 @@ func TestInsertAndGetPayee(t *testing.T) {
 	store := PostgresPayeeDB(db)
 	defer clearPayees(t, db)
 
-	p, err := NewPayee("Abc", "13", 1234567890123456, "CBIN012345", "CBI", "abc@gmail.com", 9123456780, "Employee")
+	p, err := NewPayee("Abc", "136", 1234567890123456, "CBIN0123459", "CBI", "abc@gmail.com", 9123456780, "Employee")
 	if err != nil {
 		t.Fatalf("validation failed: %v", err)
 	}
@@ -60,7 +60,7 @@ func TestListPayees(t *testing.T) {
 	store := PostgresPayeeDB(db)
 	defer clearPayees(t, db)
 
-	p, err := NewPayee("Xyz", "456", 1234567890123456, "HDFC000123", "HDFC", "xyz@gmail.com", 9876543210, "Vendor")
+	p, err := NewPayee("Xyz", "456", 1234567890123456, "HDFC0001213", "HDFC", "xyz@gmail.com", 9876543210, "Vendor")
 	if err != nil {
 		t.Fatalf("validation failed: %v", err)
 	}
