@@ -1,10 +1,12 @@
 package payee
+package payee
 
 import (
 	"context"
 	"database/sql"
 	"net/http"
 	"os"
+	"strconv"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -25,6 +27,7 @@ type PayeeGETResponse struct {
 	PayeeCategory   string `json:"payee_category"`
 }
 
+
 func initStore() *PayeePostgresDB {
 	if store != nil {
 		return store
@@ -38,6 +41,11 @@ func initStore() *PayeePostgresDB {
 		panic(err)
 	}
 	store = PostgresPayeeDB(db)
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Printf("failed to close db: %v", err)
+		}
+	}()
 	return store
 }
 
@@ -60,13 +68,27 @@ func PayeePostAPI(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body", "details": err.Error()})
 		return
 	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body", "details": err.Error()})
+		return
+	}
 
 	p, err := NewPayee(req.Name, req.Code, req.AccNo, req.IFSC, req.Bank, req.Email, req.Mobile, req.Category)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "validation failed", "details": err.Error()})
 		return
 	}
+	p, err := NewPayee(req.Name, req.Code, req.AccNo, req.IFSC, req.Bank, req.Email, req.Mobile, req.Category)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "validation failed", "details": err.Error()})
+		return
+	}
 
+	id, err := store.Insert(context.Background(), p)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "DB insert failed", "details": err.Error()})
+		return
+	}
 	id, err := store.Insert(context.Background(), p)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "DB insert failed", "details": err.Error()})
