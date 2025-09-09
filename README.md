@@ -14,21 +14,48 @@ GO-VERSION: 1.22.2 and above
 
 The project contains payoutmanagementsystem/ <br>
 - .github/workflows/payoutManagementSystem.yml <br>
-- payoutmanagementsystem/
-  - payee.go <br>
-  - payee_test.go <br>
-  - go.mod <br>
-  - go.sum <br>
-  - main.go <br>
-  - main_test.go <br>
-  - README.md <br>
+- expense/
+  - expense.go <br>
+  - expense_test.go <br>
+  - expense_db.sql <br>
+- go.mod <br>
+- go.sum <br>
+- main.go <br>
+- main_test.go <br>
+- README.md <br>
 
 NOTE: Only email ids with .com are supported.
 
-# Run Tests
+# Database Setup
+We use PostgreSQL running inside Docker for persistant storage.
 
-Test can be run by executing the below command in the terminal
-  go test -v ./...
+1. Start Postgres with Docker Compose
+From the project root, run:
+
+docker compose up -d db
+
+This will:
+
+Start a container named devcontainer-db-1 (from .devcontainer/docker-compose.yml)
+
+2. Create Expense Table
+Copy the SQL file into the container:
+
+docker cp expense/expense_db.sql devcontainer-db-1:/expense_db.sql
+
+Then apply it:
+
+docker exec -it devcontainer-db-1 psql -U postgres -d postgres -f /expense_db.sql
+
+# Run tests
+To run tests:
+
+docker exec -it devcontainer-app-1 bash
+
+cd /workspaces/payoutManagementSystem
+
+go test -v ./...
+
 
 NOTE: this project is still under development and hence does not have HTTP API now.
 
