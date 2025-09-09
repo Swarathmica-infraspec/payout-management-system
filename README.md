@@ -117,7 +117,12 @@ curl -X PUT http://localhost:8080/payees/1
   expected response: {"status":"updated"}
 
   5. DELETE request
+<!-- SUPPOSE THE ROW GIVEN IN POST IS PRESENT IN DB -->
   
+curl -X DELETE http://localhost:8080/payees/1
+
+expected response: {"status":"deleted"}
+
 
 # Run Tests
 To run tests:
