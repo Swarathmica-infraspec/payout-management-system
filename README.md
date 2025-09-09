@@ -6,7 +6,7 @@ This project is about the payout management system built using golang.
 
 ## Clone the repository
 
-Clone this repo: <a href = "https://github.com/Swarathmica-infraspec/payoutManagementSystem"> source link  </a>
+Clone this repo: <a href = "https://github.com/Swarathmica-infraspec/payout-management-system"> source link  </a>
 
 # Requirements
 
@@ -46,6 +46,10 @@ docker cp expense/expense_db.sql devcontainer-db-1:/expense_db.sql
 Then apply it:
 
 docker exec -it devcontainer-db-1 psql -U postgres -d postgres -f /expense_db.sql
+
+# API Handler
+
+expenseAPIHandler contains database query for expense and expenseAPIHandler_test contains relevant tests
 
 # Run tests
 To run tests:
