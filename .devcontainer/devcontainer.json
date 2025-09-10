@@ -2,6 +2,5 @@
 	"name": "Go & PostgreSQL",
 	"dockerComposeFile": "docker-compose.yml",
 	"service": "app",
-	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
-	"forwardPorts": [5432]
+	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}"
 }
