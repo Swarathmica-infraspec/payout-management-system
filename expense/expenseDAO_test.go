@@ -15,12 +15,20 @@ func setupTestDB(t *testing.T) *sql.DB {
     return db
 }
 
-func TestCreateAndGetExpense(t *testing.T) {
+func clearExpenses(t *testing.T, db *sql.DB) {
+	_, err := db.Exec("TRUNCATE expenses RESTART IDENTITY CASCADE")
+	if err != nil {
+		t.Fatalf("failed to clear table: %v", err)
+	}
+}
+
+func TestInsertAndGetExpense(t *testing.T) {
     db := setupTestDB(t)
     if db == nil {
         t.Fatal("db connection failed")
     }
     store := NewPostgresExpenseDB(db)
+    defer clearExpenses(t, db)
 
     e, err := NewExpense("Lunch", 450.00, "2025-08-27", "Food", "Team lunch", 1, "/lunch.jpg")
     if err != nil {
@@ -61,4 +69,31 @@ func TestCreateAndGetExpense(t *testing.T) {
     if got.receiptURI != e.receiptURI {
         t.Errorf("expected receiptURI %q, got %q", e.receiptURI, got.receiptURI)
     }
+}
+
+func TestListExpenses(t *testing.T) {
+	db := setupTestDB(t)
+	store := NewPostgresExpenseDB(db)
+	defer clearExpenses(t, db)
+
+	p, err := NewExpense("Lunch", 450.00, "2025-08-27", "Food", "Team lunch", 1, "/lunch.jpg")
+	if err != nil {
+		t.Fatalf("validation failed: %v", err)
+	}
+
+	id, err := store.Insert(context.Background(), p)
+	if err != nil {
+		t.Fatal("Insertion failed")
+	}
+
+	defer func() {
+		if _, err := db.Exec("DELETE FROM expenses WHERE payee_id = $1", id); err != nil {
+			t.Errorf("warning: failed to clean up payee id %d: %v", id, err)
+		}
+	}()
+
+	_, err = store.List(context.Background())
+	if err != nil {
+		t.Fatalf("failed to list payees: %v", err)
+	}
 }
