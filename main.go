@@ -5,11 +5,15 @@ import (
 	"log"
 	"os"
 	payee "payoutmanagementsystem/payee"
+	expense "payoutmanagementsystem/expense"
 )
 
-var store *payee.PayeePostgresDB
+var payee_store *payee.PayeePostgresDB
 
-func initStore() *payee.PayeePostgresDB {
+
+var expense_store *expense.ExpensePostgresDB
+
+func initStore() (*payee.PayeePostgresDB,*expense.ExpensePostgresDB) {
 	if store != nil {
 		return store
 	}
@@ -21,25 +25,35 @@ func initStore() *payee.PayeePostgresDB {
 	if err != nil {
 		panic(err)
 	}
-	store = payee.PostgresPayeeDB(db)
+	payee_store = payee.PostgresPayeeDB(db)
+	expense_store = expense.NewPostgresExpenseDB(db)
 
-	return store
+	return payee_store,expense_store
 
 }
 
-func close(store *payee.PayeePostgresDB) {
-	err := store.Db.Close()
+func close(payee_store *payee.PayeePostgresDB, expense_store *expense.ExpensePostgresDB) {
+	err := payee_store.Db.Close()
 	if err != nil {
 		log.Println("failed to close DB")
 	}
-
+	err = expense_store.Db.Close()
+	if err != nil {
+		log.Println("failed to close DB")
+	}
 }
 
 func main() {
-	store := initStore()
-	r := payee.SetupRouter(store)
+	payee_store,expense_store := initStore()
+	r := payee.SetupRouter(payee_store)
+	r1 := expense.SetupRouter(expense_store)
+
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("failed to run server: %v", err)
 	}
-	close(store)
+
+	if err := r1.Run(":8080"); err != nil {
+		log.Fatalf("failed to run server: %v", err)
+	}
+	close(payee_store,expense_store)
 }

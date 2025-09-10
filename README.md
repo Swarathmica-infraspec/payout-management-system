@@ -13,7 +13,18 @@ Clone this repo: <a href = "https://github.com/Swarathmica-infraspec/payout-mana
 GO-VERSION: 1.25.0
 
 The project contains payoutmanagementsystem/ <br>
+- .devcontainer/ <br>
+  - .env <br>
+  - devcontainer.json <br>
+  - docker-compose.yml <br>
+  - Dockerfile
 - .github/workflows/payoutManagementSystem.yml <br>
+- expense/
+  - expense.go <br>
+  - expense_test.go <br>
+  - expense_db.sql <br>
+  - expenseDAO.go <br>
+  - expenseDAO_test.go <br>
 - payee/
   - payee.go <br>
   - payee_test.go <br>
@@ -28,6 +39,21 @@ The project contains payoutmanagementsystem/ <br>
 
 NOTE: Only email ids with .com are supported.
 
+
+Clone this repo: <a href = "https://github.com/Swarathmica-infraspec/payoutManagementSystem"> source link  </a>
+
+# Requirements
+
+GO-VERSION: 1.22.2 and above
+
+The project contains payoutmanagementsystem/ <br>
+- .github/workflows/payoutManagementSystem.yml <br>
+
+- go.mod <br>
+- go.sum <br>
+- main.go <br>
+- main_test.go <br>
+- README.md <br>
 
 # Database Setup
 
@@ -50,16 +76,20 @@ Start a container named devcontainer-db-1 (from .devcontainer/docker-compose.yml
 Copy the SQL file into the container:
 
 docker cp payee/payee_db.sql devcontainer-db-1:/payee_db.sql
+docker cp expense/expense_db.sql devcontainer-db-1:/expense_db.sql
 
 
 Then apply it:
 
 docker exec -it devcontainer-db-1 psql -U postgres -d postgres -f /payee_db.sql
+docker exec -it devcontainer-db-1 psql -U postgres -d postgres -f /expense_db.sql
 
 
 ## 3. Data Access Object
 
 payeeDAO contains database query for payee and payeeDAO_test contains relevant tests
+expenseDAO contains database query for expense and expenseDAO_test contains relevant tests
+
 
 ## 4. HTTP API Usage
 
@@ -71,9 +101,8 @@ cd /workspaces/payoutManagementSystem
 
 then run: go run main.go #entry point
 
-payeeApi.go has the code for API while payeeAPI_test.go has test code
-
-NOTE: Supports only POST request
+payeeApi.go has the code for API while payeeAPI_test.go has test code.
+expenseApi.go has the code for API while expenseAPI_test.go has test code.
 
 1. POST request 
 curl -X POST http://localhost:8080/payees \
@@ -90,6 +119,8 @@ curl -X POST http://localhost:8080/payees \
   }'
 
 expected response: {'id':1}
+
+<!-- TODO: ADD FOR EXPENSE -->
 
 2. GET request
 curl -X GET http://localhost:8080/payees \
@@ -125,13 +156,8 @@ expected response: {"status":"deleted"}
 
 
 # Run Tests
-To run tests:
 
-docker exec -it devcontainer-app-1 bash
 
-cd /workspaces/payoutManagementSystem
-
-go test -v ./...
 
 # CI
 
