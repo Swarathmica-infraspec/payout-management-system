@@ -13,7 +13,6 @@ func setupTestDB(t *testing.T) *sql.DB {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		t.Fatalf("failed to connect to DB: %v", err)
-		// t.Skip("skipping connection")
 	}
 	return db
 }
@@ -67,7 +66,7 @@ func TestListPayees(t *testing.T) {
 
 	id, err := store.Insert(context.Background(), p)
 	if err != nil {
-		t.Skip("skipping insertion due to DB issue")
+		t.Fatal("Insertion failed")
 	}
 
 	defer func() {
@@ -79,6 +78,5 @@ func TestListPayees(t *testing.T) {
 	_, err = store.List(context.Background())
 	if err != nil {
 		t.Fatalf("failed to list payees: %v", err)
-		// t.Skip("skipping error check for List")
 	}
 }
