@@ -105,6 +105,8 @@ payeeApi.go has the code for API while payeeAPI_test.go has test code.
 expenseApi.go has the code for API while expenseAPI_test.go has test code.
 
 1. POST request 
+
+Payee:
 curl -X POST http://localhost:8080/payees \
   -H "Content-Type: application/json" \
   -d '{
@@ -120,15 +122,40 @@ curl -X POST http://localhost:8080/payees \
 
 expected response: {'id':1}
 
-<!-- TODO: ADD FOR EXPENSE -->
+Expense:
+curl -X POST http://localhost:8080/expense   -H "Content-Type: application/json"   -d '{
+    "title": "Lunch",
+    "amount": 500,
+    "dateIncurred": "2025-09-10",
+    "category": "Food",
+    "notes": "Team lunch",
+    "payeeID": 1,
+    "receiptURI": "/receipt.jpg"
+  }'
 
 2. GET request
+
+Payee:
 curl -X GET http://localhost:8080/payees \
   -H "Content-Type: application/json"
 
+Expense:
+curl -X GET http://localhost:8080/expense \
+  -H "Content-Type: application/json"   
+
+
 3. GET by id request
+
+Payee:
 curl -X GET http://localhost:8080/payees/1 \
   -H "Content-Type: application/json"
+
+Expense:
+
+curl -X GET http://localhost:8080/expense/1 \
+  -H "Content-Type: application/json"   
+
+NOTE: expense supports only POST and GET methods.
 
 4. PUT request
 
@@ -157,7 +184,13 @@ expected response: {"status":"deleted"}
 
 # Run Tests
 
+To run tests:
 
+docker exec -it devcontainer-app-1 bash
+
+cd /workspaces/payoutManagementSystem
+
+go test -v ./...
 
 # CI
 
