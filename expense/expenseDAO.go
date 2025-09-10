@@ -13,11 +13,11 @@ type ExpenseRepository interface {
 }
 
 type ExpensePostgresDB struct {
-	db *sql.DB
+	Db *sql.DB
 }
 
 func NewPostgresExpenseDB(db *sql.DB) *ExpensePostgresDB {
-	return &ExpensePostgresDB{db: db}
+	return &ExpensePostgresDB{Db: db}
 }
 
 func (r *ExpensePostgresDB) Insert(ctx context.Context, e *expense) (int, error) {
@@ -27,7 +27,7 @@ func (r *ExpensePostgresDB) Insert(ctx context.Context, e *expense) (int, error)
 		VALUES ($1,$2,$3,$4,$5,$6,$7)
 		RETURNING id`
 	var id int
-	err := r.db.QueryRowContext(ctx, query,
+	err := r.Db.QueryRowContext(ctx, query,
 		e.title,
 		e.amount,
 		e.dateIncurred,
@@ -43,7 +43,7 @@ func (r *ExpensePostgresDB) GetByID(ctx context.Context, id int) (*expense, erro
 	query := `
 		SELECT title, amount, date_incurred, category, notes, payee_id, receipt_uri 
 		FROM expenses WHERE id=$1`
-	row := r.db.QueryRowContext(ctx, query, id)
+	row := r.Db.QueryRowContext(ctx, query, id)
 	var e expense
 	err := row.Scan(
 		&e.title,
@@ -61,7 +61,7 @@ func (r *ExpensePostgresDB) GetByID(ctx context.Context, id int) (*expense, erro
 }
 
 func (s *ExpensePostgresDB) List(context context.Context) ([]expense, error) {
-	rows, err := s.db.QueryContext(context, `
+	rows, err := s.Db.QueryContext(context, `
         SELECT title, amount, date_incurred, category, notes, payee_id, receipt_uri 
 		FROM expenses
         ORDER BY payee_id ASC
