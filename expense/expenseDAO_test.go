@@ -7,10 +7,10 @@ import (
 )
 
 func setupTestDB(t *testing.T) *sql.DB {
-    dsn := "postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable"
+    dsn := "postgres://postgres:postgres@db:5432/postgres?sslmode=disable"
     db, err := sql.Open("postgres", dsn)
     if err != nil {
-        t.Skip("skipping DB connection due to error:", err)
+        t.Fatal("database conncetion error")
     }
     return db
 }
@@ -18,7 +18,7 @@ func setupTestDB(t *testing.T) *sql.DB {
 func TestCreateAndGetExpense(t *testing.T) {
     db := setupTestDB(t)
     if db == nil {
-        t.Skip("db connection not available, skipping test")
+        t.Fatal("db connection failed")
     }
     store := NewPostgresExpenseDB(db)
 
@@ -29,7 +29,7 @@ func TestCreateAndGetExpense(t *testing.T) {
 
     id, err := store.Insert(context.Background(), e)
     if err != nil {
-        t.Skip("skipping insertion due to error:", err)
+        t.Fatal("db connection failed")
     }
 
     defer func() {
