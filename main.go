@@ -1,5 +1,10 @@
-package payoutmanagementsystem
+package main
 
-func Print(s string) string {
-	return s
+import (
+	payee "payoutmanagementsystem/payee"
+)
+
+func main() {
+	payee.PayeePostAPI()
+
 }
