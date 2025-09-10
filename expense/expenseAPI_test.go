@@ -14,6 +14,13 @@ func setupRouter() *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.Default()
 
+	r.GET("/expense", func(c *gin.Context) {
+		expenses := []map[string]interface{}{
+			{"payee_id": 1, "title": "Food"},
+		}
+		c.JSON(http.StatusOK, expenses)
+	})
+
 	r.POST("/expense", func(c *gin.Context) {
 		var req struct {
 			Title        string `json:"title"`
