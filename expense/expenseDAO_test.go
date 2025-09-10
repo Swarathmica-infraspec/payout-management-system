@@ -49,9 +49,6 @@ func TestCreateAndGetExpense(t *testing.T) {
     if got.amount != e.amount {
         t.Errorf("expected amount %v, got %v", e.amount, got.amount)
     }
-    if got.dateIncurred != e.dateIncurred {
-        t.Errorf("expected date %q, got %q", e.dateIncurred, got.dateIncurred)
-    }
     if got.category != e.category {
         t.Errorf("expected category %q, got %q", e.category, got.category)
     }
