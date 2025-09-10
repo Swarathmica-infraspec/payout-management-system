@@ -1,5 +1,6 @@
 # PayoutManagementSystem
 
+
 This project is about the payout management system built using golang.
 
 # Project Setup
@@ -10,7 +11,7 @@ Clone this repo: <a href = "https://github.com/Swarathmica-infraspec/payoutManag
 
 # Requirements
 
-GO-VERSION: 1.22.2 and above
+GO-VERSION: 1.25.0
 
 The project contains payoutmanagementsystem/ <br>
 - .github/workflows/payoutManagementSystem.yml <br>
@@ -22,8 +23,6 @@ The project contains payoutmanagementsystem/ <br>
   - expenseDAO_test.go <br>
 - go.mod <br>
 - go.sum <br>
-- main.go <br>
-- main_test.go <br>
 - README.md <br>
 
 # Database Setup
@@ -66,11 +65,10 @@ cd /workspaces/payoutManagementSystem
 
 go test -v ./...
 
-2. for test: go test ./...  #run inside docker env as above
 
 # Run Tests
 
-Test can be run by executing the below command in the terminal
+Test can be run by executing the below command in the docker terminal
   go test -v ./...
 
 NOTE: this project is still under development and hence does not have HTTP API now.
@@ -79,5 +77,6 @@ NOTE: this project is still under development and hence does not have HTTP API n
 
 The workflow is triggered on every push and pull request.
 It runs the following checks automatically:
+- Format with `test -z "$(gofmt -l .)"`
 - Linting with `golangci-lint`
 - Tests with `go test`

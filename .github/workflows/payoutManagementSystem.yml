@@ -1,4 +1,4 @@
-name: Go
+name: Payout Management System
 
 on: [push, pull_request]
 
