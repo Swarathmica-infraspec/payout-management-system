@@ -4,13 +4,14 @@ import (
     "context"
     "database/sql"
     "testing"
+    _ "github.com/lib/pq"
 )
 
 func setupTestDB(t *testing.T) *sql.DB {
     dsn := "postgres://postgres:postgres@db:5432/postgres?sslmode=disable"
     db, err := sql.Open("postgres", dsn)
     if err != nil {
-        t.Skip("skipping DB connection due to error:", err)
+        t.Fatal("database connection error")
     }
     return db
 }
@@ -18,7 +19,7 @@ func setupTestDB(t *testing.T) *sql.DB {
 func TestCreateAndGetExpense(t *testing.T) {
     db := setupTestDB(t)
     if db == nil {
-        t.Skip("db connection not available, skipping test")
+        t.Fatal("database connection error")
     }
     store := NewPostgresExpenseDB(db)
 
@@ -29,7 +30,7 @@ func TestCreateAndGetExpense(t *testing.T) {
 
     id, err := store.Insert(context.Background(), e)
     if err != nil {
-        t.Skip("skipping insertion due to error:", err)
+        t.Fatalf("insert operation failed: %v", err)
     }
 
     defer func() {
