@@ -1,5 +1,9 @@
-package payoutmanagementsystem
+package main
 
-func Print(s string) string {
-	return s
+import (
+	expense "payoutmanagementsystem/expense"
+)
+
+func main() {
+	expense.ExpensePostAPI()
 }
