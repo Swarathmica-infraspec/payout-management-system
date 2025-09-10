@@ -107,10 +107,8 @@ func ExpenseGetOneApi(store *ExpensePostgresDB) gin.HandlerFunc {
 	}
 }
 
-func SetupRouter(store *ExpensePostgresDB) *gin.Engine {
-	r := gin.Default()
+func SetupRouter(r *gin.RouterGroup,store *ExpensePostgresDB) {
 	r.POST("/expense", ExpensePostAPI(store))
 	r.GET("/expense", ExpenseGetApi(store))
 	r.GET("/expense/:id", ExpenseGetOneApi(store))
-	return r
 }

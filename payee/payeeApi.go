@@ -174,13 +174,11 @@ func PayeeDeleteApi(store *PayeePostgresDB) gin.HandlerFunc {
 	}
 }
 
-func SetupRouter(store *PayeePostgresDB) *gin.Engine {
-	r := gin.Default()
+func SetupRouter(r *gin.RouterGroup, store *PayeePostgresDB) {
 	r.POST("/payees", PayeePostAPI(store))
 	r.GET("/payees", PayeeGetApi(store))
 	r.GET("/payees/:id", PayeeGetOneApi(store))
 	r.PUT("/payees/:id", PayeeUpdateApi(store))
 	r.DELETE("/payees/:id", PayeeDeleteApi(store))
 
-	return r
 }

@@ -78,10 +78,10 @@ func (s *ExpensePostgresDB) List(context context.Context) ([]expense, error) {
 	var expenses []expense
 	for rows.Next() {
 		var e expense
-		err := rows.Scan(&e.title, 
-			&e.amount, 
-			&e.dateIncurred, 
-			&e.category, 
+		err := rows.Scan(&e.title,
+			&e.amount,
+			&e.dateIncurred,
+			&e.category,
 			&e.notes,
 			&e.payeeID,
 			&e.receiptURI)

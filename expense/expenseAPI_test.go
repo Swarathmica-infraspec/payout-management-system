@@ -47,13 +47,13 @@ func TestExpensePostAPISuccess(t *testing.T) {
 	router := setupRouter()
 
 	payload := map[string]interface{}{
-		"title":          "Food",
-		"amount":         100,
-		"dateIncurred":   "2025-09-06",
-		"category":       "bill",
-		"notes":          "dinner",
-		"payeeID":        1,
-		"receiptURI":     "/food_bill.jpg",
+		"title":        "Food",
+		"amount":       100,
+		"dateIncurred": "2025-09-06",
+		"category":     "bill",
+		"notes":        "dinner",
+		"payeeID":      1,
+		"receiptURI":   "/food_bill.jpg",
 	}
 	body, _ := json.Marshal(payload)
 

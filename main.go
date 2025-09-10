@@ -4,18 +4,19 @@ import (
 	"database/sql"
 	"log"
 	"os"
-	payee "payoutmanagementsystem/payee"
 	expense "payoutmanagementsystem/expense"
+	payee "payoutmanagementsystem/payee"
+
+	"github.com/gin-gonic/gin"
 )
 
 var payee_store *payee.PayeePostgresDB
 
-
 var expense_store *expense.ExpensePostgresDB
 
-func initStore() (*payee.PayeePostgresDB,*expense.ExpensePostgresDB) {
-	if store != nil {
-		return store
+func initStore() (*payee.PayeePostgresDB, *expense.ExpensePostgresDB) {
+	if payee_store != nil && expense_store != nil {
+		return payee_store, expense_store
 	}
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
@@ -28,7 +29,7 @@ func initStore() (*payee.PayeePostgresDB,*expense.ExpensePostgresDB) {
 	payee_store = payee.PostgresPayeeDB(db)
 	expense_store = expense.NewPostgresExpenseDB(db)
 
-	return payee_store,expense_store
+	return payee_store, expense_store
 
 }
 
@@ -44,16 +45,18 @@ func close(payee_store *payee.PayeePostgresDB, expense_store *expense.ExpensePos
 }
 
 func main() {
-	payee_store,expense_store := initStore()
-	r := payee.SetupRouter(payee_store)
-	r1 := expense.SetupRouter(expense_store)
+	payee_store, expense_store := initStore()
+	defer close(payee_store, expense_store)
+
+	r := gin.Default()
+
+	payeeGroup := r.Group("/")
+	payee.SetupRouter(payeeGroup, payee_store)
+
+	expenseGroup := r.Group("/")
+	expense.SetupRouter(expenseGroup, expense_store)
 
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("failed to run server: %v", err)
 	}
-
-	if err := r1.Run(":8080"); err != nil {
-		log.Fatalf("failed to run server: %v", err)
-	}
-	close(payee_store,expense_store)
 }
