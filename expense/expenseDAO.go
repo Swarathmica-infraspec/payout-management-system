@@ -23,8 +23,8 @@ func NewPostgresExpenseDB(db *sql.DB) *ExpensePostgresDB {
 func (r *ExpensePostgresDB) Insert(ctx context.Context, e *expense) (int, error) {
 	query := `
 		INSERT INTO expenses 
-		(title, amount, date_incurred, category, notes, payee_id, receipt_uri)
-		VALUES ($1,$2,$3,$4,$5,$6,$7)
+		(title, amount, date_incurred, category, notes, payee_id, receipt_uri,status)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
 		RETURNING id`
 	var id int
 	err := r.Db.QueryRowContext(ctx, query,
@@ -35,6 +35,7 @@ func (r *ExpensePostgresDB) Insert(ctx context.Context, e *expense) (int, error)
 		e.notes,
 		e.payeeID,
 		e.receiptURI,
+		e.status,
 	).Scan(&id)
 	return id, err
 }

@@ -13,6 +13,7 @@ type expense struct {
 	notes        string
 	payeeID      int
 	receiptURI   string
+	status       string
 }
 
 var ErrInvalidTitle = errors.New("payoutmanagementsystem.NewExpense: title should not be empty")
@@ -49,6 +50,7 @@ func NewExpense(title string, amount float64, dateIncurred string, category stri
 		notes:        notes,
 		payeeID:      payeeID,
 		receiptURI:   receiptURI,
+		status:       "Pending",
 	}, nil
 }
 
