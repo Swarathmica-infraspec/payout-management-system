@@ -62,3 +62,31 @@ func checkReceiptURI(uri string) bool {
 	match2, _ := regexp.MatchString(`^/`, uri)
 	return match2
 }
+
+func (e *expense) Title() string {
+	return e.title
+}
+
+func (e *expense) Amount() float64 {
+	return e.amount
+}
+
+func (e *expense) DateIncurred() string {
+	return e.dateIncurred
+}
+
+func (e *expense) Category() string {
+	return e.category
+}
+
+func (e *expense) Notes() string {
+	return e.notes
+}
+
+func (e *expense) PayeeID() int {
+	return e.payeeID
+}
+
+func (e *expense) ReceiptURI() string {
+	return e.receiptURI
+}
