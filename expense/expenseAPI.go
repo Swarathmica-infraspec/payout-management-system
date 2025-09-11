@@ -20,7 +20,7 @@ type ExpenseGETResponse struct {
 }
 
 func ExpensePostAPI(store *ExpensePostgresDB) gin.HandlerFunc {
-	
+
 	return func(c *gin.Context) {
 		var req struct {
 			Title        string `json:"title"`
@@ -64,13 +64,13 @@ func ExpenseGetApi(store *ExpensePostgresDB) gin.HandlerFunc {
 		var resp []ExpenseGETResponse
 		for _, e := range expenses {
 			resp = append(resp, ExpenseGETResponse{
-				Title: e.title,
-				Amount: int(e.amount),
+				Title:        e.title,
+				Amount:       int(e.amount),
 				DateIncurred: e.dateIncurred,
-				Category: e.category,
-				Notes: e.notes,
-				PayeeID: e.payeeID,
-				ReceiptURI: e.receiptURI,
+				Category:     e.category,
+				Notes:        e.notes,
+				PayeeID:      e.payeeID,
+				ReceiptURI:   e.receiptURI,
 			})
 		}
 
@@ -94,20 +94,20 @@ func ExpenseGetOneApi(store *ExpensePostgresDB) gin.HandlerFunc {
 		}
 
 		resp := ExpenseGETResponse{
-			Title: e.title,
-			Amount: int(e.amount),
+			Title:        e.title,
+			Amount:       int(e.amount),
 			DateIncurred: e.dateIncurred,
-			Category: e.category,
-			Notes: e.notes,
-			PayeeID: e.payeeID,
-			ReceiptURI: e.receiptURI,
+			Category:     e.category,
+			Notes:        e.notes,
+			PayeeID:      e.payeeID,
+			ReceiptURI:   e.receiptURI,
 		}
 
 		c.JSON(http.StatusOK, resp)
 	}
 }
 
-func SetupRouter(r *gin.RouterGroup,store *ExpensePostgresDB) {
+func SetupRouter(r *gin.RouterGroup, store *ExpensePostgresDB) {
 	r.POST("/expense", ExpensePostAPI(store))
 	r.GET("/expense", ExpenseGetApi(store))
 	r.GET("/expense/:id", ExpenseGetOneApi(store))
