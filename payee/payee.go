@@ -89,3 +89,39 @@ func checkIFSC(ifsc string) bool {
 	matchNumForLastFiveChars, _ := regexp.MatchString("[0-9]{5}", ifsc[5:])
 	return matchNumForLastFiveChars
 }
+
+func (p *payee) ID() int {
+	return p.id
+}
+
+func (p *payee) BeneficiaryName() string {
+	return p.beneficiaryName
+}
+
+func (p *payee) BeneficiaryCode() string {
+	return p.beneficiaryCode
+}
+
+func (p *payee) AccountNumber() int {
+	return p.accNo
+}
+
+func (p *payee) IFSC() string {
+	return p.ifsc
+}
+
+func (p *payee) BankName() string {
+	return p.bankName
+}
+
+func (p *payee) Email() string {
+	return p.email
+}
+
+func (p *payee) Mobile() int {
+	return p.mobile
+}
+
+func (p *payee) PayeeCategory() string {
+	return p.payeeCategory
+}
