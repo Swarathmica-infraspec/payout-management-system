@@ -94,3 +94,56 @@ func (s *ExpensePostgresDB) List(context context.Context) ([]expense, error) {
 
 	return expenses, nil
 }
+
+type ExpenseWithPayee struct {
+	ExpenseID       int
+	Title           string
+	Amount          float64
+	DateIncurred    string
+	Notes           string
+	BeneficiaryName string
+	BeneficiaryCode string
+	AccountNumber   int
+	IFSCCode        string
+	BankName        string
+	Email           string
+}
+
+func (r *ExpensePostgresDB) ListExpensesForPayout(ctx context.Context) ([]ExpenseWithPayee, float64, error) {
+	query := `
+        SELECT e.id, e.title, e.amount, e.date_incurred, e.notes, p.beneficiary_name, p.beneficiary_code, p.account_number, p.ifsc_code, p.bank_name, p.email
+        FROM expenses e
+        JOIN payees p ON e.payee_id = p.id
+        WHERE e.status= 'Pending'
+        ORDER BY e.date_incurred DESC;
+    `
+	rows, err := r.Db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var list []ExpenseWithPayee
+	var total float64
+	for rows.Next() {
+		var ew ExpenseWithPayee
+		if err := rows.Scan(
+			&ew.ExpenseID,
+			&ew.Title,
+			&ew.Amount,
+			&ew.DateIncurred,
+			&ew.Notes,
+			&ew.BeneficiaryName,
+			&ew.BeneficiaryCode,
+			&ew.AccountNumber,
+			&ew.IFSCCode,
+			&ew.BankName,
+			&ew.Email,
+		); err != nil {
+			return nil, 0, err
+		}
+		total += ew.Amount
+		list = append(list, ew)
+	}
+	return list, total, nil
+}
