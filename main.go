@@ -6,6 +6,7 @@ import (
 	"os"
 	expense "payoutmanagementsystem/expense"
 	payee "payoutmanagementsystem/payee"
+	payout "payoutmanagementsystem/payout"
 
 	"github.com/gin-gonic/gin"
 )
@@ -56,6 +57,8 @@ func main() {
 	expenseGroup := r.Group("/")
 	expense.SetupRouter(expenseGroup, expense_store)
 
+	payoutGroup:=r.Group("/")
+	payout.SetupPayoutRoutes(payoutGroup,expense_store)
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("failed to run server: %v", err)
 	}
