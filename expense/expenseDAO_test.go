@@ -16,8 +16,8 @@ func setupTestDB(t *testing.T) *sql.DB {
 	return db
 }
 
-func clearExpenses(t *testing.T, db *sql.DB) {
-	_, err := db.Exec("TRUNCATE expenses RESTART IDENTITY CASCADE")
+func clearTestDB(t *testing.T, db *sql.DB) {
+	_, err := db.Exec("TRUNCATE expenses,payees RESTART IDENTITY CASCADE")
 	if err != nil {
 		t.Fatalf("failed to clear table: %v", err)
 	}
@@ -29,7 +29,7 @@ func TestInsertAndGetExpense(t *testing.T) {
 		t.Fatal("db connection failed")
 	}
 	store := NewPostgresExpenseDB(db)
-	defer clearExpenses(t, db)
+	defer clearTestDB(t, db)
 
 	e, err := NewExpense("Lunch", 450.00, "2025-08-27", "Food", "Team lunch", 1, "/lunch.jpg")
 	if err != nil {
@@ -75,7 +75,7 @@ func TestInsertAndGetExpense(t *testing.T) {
 func TestListExpenses(t *testing.T) {
 	db := setupTestDB(t)
 	store := NewPostgresExpenseDB(db)
-	defer clearExpenses(t, db)
+	defer clearTestDB(t, db)
 
 	p, err := NewExpense("Lunch", 450.00, "2025-08-27", "Food", "Team lunch", 1, "/lunch.jpg")
 	if err != nil {
@@ -102,7 +102,7 @@ func TestListExpensesForPayout(t *testing.T) {
 	db := setupTestDB(t)
 	expenseStore := NewPostgresExpenseDB(db)
 	payeeStore := payee.PostgresPayeeDB(db)
-	defer clearExpenses(t, db)
+	defer clearTestDB(t, db)
 
 	payee1, err := payee.NewPayee("Abdef", "1901", 1934067090123856, "CBIN0123459", "CBI", "abdef@gmail.com", 9127960780, "Employee")
 	if err != nil {
