@@ -1,4 +1,4 @@
-# payoutManagementSystem
+# PayoutManagementSystem
 
 This project is about the payout management system built using golang.
 
@@ -6,27 +6,198 @@ This project is about the payout management system built using golang.
 
 ## Clone the repository
 
-Clone this repo: <a href = "https://github.com/Swarathmica-infraspec/payoutManagementSystem"> source link  </a>
+Clone this repo: <a href = "https://github.com/Swarathmica-infraspec/payout-management-system"> source link  </a>
 
 # Requirements
 
 GO-VERSION: 1.25.0
 
 The project contains payoutmanagementsystem/ <br>
+- .devcontainer/ <br>
+  - .env <br>
+  - devcontainer.json <br>
+  - docker-compose.yml <br>
+  - Dockerfile
 - .github/workflows/payoutManagementSystem.yml <br>
+- expense/
+  - expense.go <br>
+  - expense_test.go <br>
+  - expense_db.sql <br>
+  - expenseDAO.go <br>
+  - expenseDAO_test.go <br>
+- payee/
+  - payee.go <br>
+  - payee_test.go <br>
+  - payee_db.sql <br>
+  - payeeDAO.go <br>
+  - payeeDAO_test.go <br>
+  - payeeAPI.go <br>
+  - payeeApi_test.go <br>
+- go.mod <br>
+- go.sum <br>
+- README.md <br>
+
+NOTE: Only email ids with .com are supported.
+
+
+Clone this repo: <a href = "https://github.com/Swarathmica-infraspec/payoutManagementSystem"> source link  </a>
+
+# Requirements
+
+GO-VERSION: 1.22.2 and above
+
+The project contains payoutmanagementsystem/ <br>
+- .github/workflows/payoutManagementSystem.yml <br>
+
 - go.mod <br>
 - go.sum <br>
 - main.go <br>
 - main_test.go <br>
 - README.md <br>
 
+# Database Setup
+
+We use PostgreSQL running inside Docker for persistant storage.
+
+## 1. Start Postgres with Docker Compose
+
+From the project root, run:
+
+docker compose up -d db
+
+
+This will:
+
+Start a container named devcontainer-db-1 (from .devcontainer/docker-compose.yml)
+
+
+## 2. Create Payees Table
+
+Copy the SQL file into the container:
+
+docker cp payee/payee_db.sql devcontainer-db-1:/payee_db.sql
+docker cp expense/expense_db.sql devcontainer-db-1:/expense_db.sql
+
+
+Then apply it:
+
+docker exec -it devcontainer-db-1 psql -U postgres -d postgres -f /payee_db.sql
+docker exec -it devcontainer-db-1 psql -U postgres -d postgres -f /expense_db.sql
+
+
+## 3. Data Access Object
+
+payeeDAO contains database query for payee and payeeDAO_test contains relevant tests
+expenseDAO contains database query for expense and expenseDAO_test contains relevant tests
+
+
+## 4. HTTP API Usage
+
+since postgres is run from docker, 
+
+docker exec -it devcontainer-app-1 bash
+
+cd /workspaces/payoutManagementSystem
+
+then run: go run main.go #entry point
+
+payeeApi.go has the code for API while payeeAPI_test.go has test code.
+expenseApi.go has the code for API while expenseAPI_test.go has test code.
+
+1. POST request 
+
+Payee:
+curl -X POST http://localhost:8080/payees \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name":"Abc",
+    "code":"123",
+    "account_number":1234567890,
+    "ifsc":"CBIN012345",
+    "bank":"CBI",
+    "email":"abc@example.com",
+    "mobile":9876543210,
+    "category":"Employee"
+  }'
+
+expected response: {'id':1}
+
+Expense:
+curl -X POST http://localhost:8080/expense   -H "Content-Type: application/json"   -d '{
+    "title": "Lunch",
+    "amount": 500,
+    "dateIncurred": "2025-09-10",
+    "category": "Food",
+    "notes": "Team lunch",
+    "payeeID": 1,
+    "receiptURI": "/receipt.jpg"
+  }'
+
+2. GET request
+
+Payee:
+curl -X GET http://localhost:8080/payees \
+  -H "Content-Type: application/json"
+
+Expense:
+curl -X GET http://localhost:8080/expense \
+  -H "Content-Type: application/json"   
+
+
+3. GET by id request
+
+Payee:
+curl -X GET http://localhost:8080/payees/1 \
+  -H "Content-Type: application/json"
+
+Expense:
+
+curl -X GET http://localhost:8080/expense/1 \
+  -H "Content-Type: application/json"   
+
+NOTE: expense supports only POST and GET methods.
+
+4. PUT request
+
+<!-- SUPPOSE THE ROW GIVEN IN POST IS PRESENT IN DB -->
+curl -X PUT http://localhost:8080/payees/1
+  -d '{
+    "name":"ABCD",
+    "code":"123",
+    "account_number":1234567890,
+    "ifsc":"CBIN012345",
+    "bank":"CBI",
+    "email":"abc@example.com",
+    "mobile":9876543210,
+    "category":"Employee"
+  }'
+
+  expected response: {"status":"updated"}
+
+  5. DELETE request
+<!-- SUPPOSE THE ROW GIVEN IN POST IS PRESENT IN DB -->
+  
+curl -X DELETE http://localhost:8080/payees/1
+
+expected response: {"status":"deleted"}
+
+  6. Preview payout selection - GET request
+
+curl -X GET http://localhost:8080/payouts/preview \
+
+-H "Content-Type: application/json"
+
+
 
 # Run Tests
 
-Test can be run by executing the below command in the terminal
-  go test -v ./...
+To run tests:
 
-NOTE: this project is still under development and hence does not have HTTP API now.
+docker exec -it devcontainer-app-1 bash
+
+cd /workspaces/payoutManagementSystem
+
+go test -v ./...
 
 # CI
 
