@@ -181,6 +181,13 @@ curl -X DELETE http://localhost:8080/payees/1
 
 expected response: {"status":"deleted"}
 
+  6. Preview payout selection - GET request
+
+curl -X GET http://localhost:8080/payouts/preview \
+
+-H "Content-Type: application/json"
+
+
 
 # Run Tests
 
