@@ -121,7 +121,11 @@ func (r *ExpensePostgresDB) ListExpensesForPayout(ctx context.Context) ([]Expens
 	if err != nil {
 		return nil, 0, err
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("failed to close rows: %v", err)
+		}
+	}()
 
 	var list []ExpenseWithPayee
 	var total float64
