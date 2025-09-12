@@ -33,7 +33,7 @@ var errTests = []struct {
 	{"TestInvalidPayeeCategory", "invalid payee category: given category is not listed", "abc", "123", 6700543678, "CBIN0123451", "cbi", "abc@gmail.com", 9123456780, "Student", ErrInvalidCategory},
 }
 
-func TestValidatePayee(t *testing.T) {
+func TestInvalidPayee(t *testing.T) {
 	for _, tt := range errTests {
 		t.Run(tt.testName, func(t *testing.T) {
 			_, err := NewPayee(tt.beneficiaryName, tt.beneficiaryCode, tt.accNo, tt.ifsc, tt.bankName, tt.email, tt.mobile, tt.payeeCategory)
