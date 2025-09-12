@@ -109,32 +109,32 @@ func TestListExpensesForPayout(t *testing.T) {
 		t.Fatalf("validation failed: %v", err)
 	}
 
-	_, err = payeeStore.Insert(context.Background(), payee1)
+	payeeId1, err := payeeStore.Insert(context.Background(), payee1)
 	if err != nil {
 		t.Fatalf("failed to insert payee: %v", err)
 	}
 
-	expense1, err := NewExpense("Lunch", 150.00, "2025-09-10", "food", "Team lunch", 1, "/lunch.jpg")
+	expense1, err := NewExpense("Lunch", 150.00, "2025-09-10", "food", "Team lunch", payeeId1, "/lunch.jpg")
 	if err != nil {
 		t.Fatalf("validation failed: %v", err)
 	}
 
-	_, err = expenseStore.Insert(context.Background(), expense1)
+	expenseId1, err := expenseStore.Insert(context.Background(), expense1)
 	if err != nil {
 		t.Fatal("Insertion failed")
 	}
 
-	expense2, err := NewExpense("Taxi", 50.00, "2025-09-09", "travel", "Airport Drop", 1, "/taxi.jpg")
+	expense2, err := NewExpense("Taxi", 50.00, "2025-09-09", "travel", "Airport Drop", expenseId1, "/taxi.jpg")
 	if err != nil {
 		t.Fatalf("validation failed: %v", err)
 	}
 
-	_, err = expenseStore.Insert(context.Background(), expense2)
+	expenseId2, err := expenseStore.Insert(context.Background(), expense2)
 	if err != nil {
 		t.Fatal("Insertion failed")
 	}
 
-	expense3, err := NewExpense("Taxi", 70.00, "2025-09-09", "travel", "Airport Drop", 1, "/taxi.jpg")
+	expense3, err := NewExpense("Taxi", 70.00, "2025-09-09", "travel", "Airport Drop", expenseId2, "/taxi.jpg")
 	if err != nil {
 		t.Fatalf("validation failed: %v", err)
 	}
