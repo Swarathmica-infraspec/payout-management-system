@@ -14,20 +14,13 @@ Clone this repo: <a href = "https://github.com/Swarathmica-infraspec/payout-mana
 GO-VERSION: 1.25.0
 
 The project contains payoutmanagementsystem/ <br>
-<<<<<<< HEAD
-=======
-
->>>>>>> a8ea28b (Introduce db for payee)
 - .github/workflows/payoutManagementSystem.yml <br>
 - payee/
   - payee.go <br>
   - payee_test.go <br>
   - payee_db.sql <br>
-<<<<<<< HEAD
   - payeeDAO.go <br>
   - payeeDAO_test.go <br>
-=======
->>>>>>> a8ea28b (Introduce db for payee)
 - go.mod <br>
 - go.sum <br>
 - README.md <br>
