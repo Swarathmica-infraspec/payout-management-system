@@ -10,15 +10,15 @@ type PayeeRepository interface {
 	GetByID(context context.Context, id int) (*payee, error)
 }
 
-type PayeeDB struct {
+type payeeDB struct {
 	db *sql.DB
 }
 
-func PostgresPayeeDB(db *sql.DB) *PayeeDB { //check function name and struct name
-	return &PayeeDB{db: db}
+func PayeeDB(db *sql.DB) *payeeDB {
+	return &payeeDB{db: db}
 }
 
-func (r *PayeeDB) Insert(context context.Context, p *payee) (int, error) {
+func (r *payeeDB) Insert(context context.Context, p *payee) (int, error) {
 	query := `
 		INSERT INTO payees (beneficiary_name, beneficiary_code, account_number,ifsc_code, bank_name, email, mobile, payee_category)
 		VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`
@@ -36,7 +36,7 @@ func (r *PayeeDB) Insert(context context.Context, p *payee) (int, error) {
 	return id, err
 }
 
-func (r *PayeeDB) GetByID(context context.Context, id int) (*payee, error) {
+func (r *payeeDB) GetByID(context context.Context, id int) (*payee, error) {
 	query := `
 		SELECT beneficiary_name, beneficiary_code, account_number,
 		       ifsc_code, bank_name, email, mobile, payee_category
@@ -45,7 +45,7 @@ func (r *PayeeDB) GetByID(context context.Context, id int) (*payee, error) {
 
 	var p payee
 	err := row.Scan(
-		&p.beneficiaryName, //repeating
+		&p.beneficiaryName,
 		&p.beneficiaryCode,
 		&p.accNo,
 		&p.ifsc,
