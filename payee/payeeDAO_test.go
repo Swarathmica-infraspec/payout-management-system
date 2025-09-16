@@ -20,7 +20,7 @@ func setupTestDB(t *testing.T) *sql.DB {
 
 func TestInsertAndGetPayee(t *testing.T) {
 	db := setupTestDB(t)
-	store := PostgresPayeeDB(db)
+	store := PayeeDB(db)
 
 	p, err := NewPayee("Abc", "136", 1234567890123456, "CBIN0123459", "CBI", "abc@gmail.com", 9123456780, "Employee")
 	if err != nil {
