@@ -32,7 +32,7 @@ NOTE: Only email ids with .com are supported.
 
 # Database Setup
 
-We use PostgreSQL running inside Docker for persistant storage.
+We use PostgreSQL(17.6-trixie) running inside Docker for persistant storage.
 
 ## 1. Start Postgres with Docker Compose
 
