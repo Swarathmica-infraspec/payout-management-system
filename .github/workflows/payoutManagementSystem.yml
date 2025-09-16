@@ -53,5 +53,7 @@ jobs:
           cache-dependency-path: go.sum
       - name: Download dependencies
         run: go mod download
-      - name: Run tests
-        run: go test -v ./...
+      - name: Run tests in devcontainer
+        uses: devcontainers/ci@v0.3
+        with:
+          run: go test -v ./...
