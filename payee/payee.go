@@ -23,7 +23,10 @@ var allowedCategories = map[string]bool{
 }
 
 type payee struct {
+<<<<<<< HEAD
 	id              int
+=======
+>>>>>>> a2f1a55 (Introduce payee entity)
 	beneficiaryName string
 	beneficiaryCode string
 	accNo           int
