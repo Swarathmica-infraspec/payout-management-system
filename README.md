@@ -1,5 +1,4 @@
-# PayoutManagementSystem
-
+# payoutManagementSystem
 
 This project is about the payout management system built using golang.
 
@@ -7,22 +6,20 @@ This project is about the payout management system built using golang.
 
 ## Clone the repository
 
-Clone this repo: <a href = "https://github.com/Swarathmica-infraspec/payout-management-system"> source link  </a>
+Clone this repo: <a href = "https://github.com/Swarathmica-infraspec/payoutManagementSystem"> source link  </a>
 
 # Requirements
 
 GO-VERSION: 1.25.0
 
 The project contains payoutmanagementsystem/ <br>
-    - .github/workflows/payoutManagementSystem.yml <br>
-    - payee/ <br>
-        - payee.go <br>
-        - payee_test.go <br>
-    - go.mod <br>
-    - go.sum <br>
-    - README.md <br>
+- .github/workflows/payoutManagementSystem.yml <br>
+- go.mod <br>
+- go.sum <br>
+- main.go <br>
+- main_test.go <br>
+- README.md <br>
 
-NOTE: Only email ids with .com are supported.
 
 # Run Tests
 
