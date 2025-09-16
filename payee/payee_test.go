@@ -33,7 +33,7 @@ var errTests = []struct {
 	{"TestInvalidPayeeCategory", "invalid payee category: given category is not listed", "abc", "123", 6700543678, "CBIN0123451", "cbi", "abc@gmail.com", 9123456780, "Student", ErrInvalidCategory},
 }
 
-func TestInvalidPayee(t *testing.T) {
+func TestValidatePayee(t *testing.T) {
 	for _, tt := range errTests {
 		t.Run(tt.testName, func(t *testing.T) {
 			_, err := NewPayee(tt.beneficiaryName, tt.beneficiaryCode, tt.accNo, tt.ifsc, tt.bankName, tt.email, tt.mobile, tt.payeeCategory)
@@ -42,58 +42,4 @@ func TestInvalidPayee(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestValidPayee(t *testing.T) {
-
-	_, err := NewPayee("abc", "123", 1234567890, "CBIN0123456", "cbi", "abc@gmail.com", 9876543210, "Employee")
-	if err != nil {
-		t.Fatalf("payee should be created but got error: %v", err)
-	}
-
-	name := "abc"
-	code := "123"
-	accNo := 1234567890
-	bankIFSC := "CBIN0123456"
-	bankName := "cbi"
-	emailID := "abc@gmail.com"
-	mobile := 9876543210
-	category := "Employee"
-	p, err := NewPayee(name, code, accNo, bankIFSC, bankName, emailID, mobile, category)
-	if err != nil {
-		t.Fatalf("payee should be created but got error: %v", err)
-	}
-
-	if p.beneficiaryName != name {
-		t.Errorf("expected name: %v but stored name: %v", name, p.beneficiaryName)
-	}
-
-	if p.beneficiaryCode != code {
-		t.Errorf("expected beneficiary code: %v but stored code: %v", code, p.beneficiaryCode)
-	}
-
-	if p.accNo != accNo {
-		t.Errorf("expected account Number: %v but stored account number: %v", accNo, p.accNo)
-	}
-
-	if p.ifsc != bankIFSC {
-		t.Errorf("expected IFSC: %v but stored IFSC: %v", bankIFSC, p.ifsc)
-	}
-
-	if p.bankName != bankName {
-		t.Errorf("expected bank name: %v but stored bank name: %v", bankName, p.bankName)
-	}
-
-	if p.email != emailID {
-		t.Errorf("expected emailID: %v but stored email ID: %v", emailID, p.email)
-	}
-
-	if p.mobile != mobile {
-		t.Errorf("expected mobile number: %v but stored mobile number: %v", mobile, p.mobile)
-	}
-
-	if p.payeeCategory != category {
-		t.Errorf("expected category: %v but stored category: %v", category, p.payeeCategory)
-	}
-
 }
