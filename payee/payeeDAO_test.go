@@ -21,13 +21,14 @@ func setupTestDB(t *testing.T) *sql.DB {
 func TestInsertAndGetPayee(t *testing.T) {
 	db := setupTestDB(t)
 	store := PayeeDB(db)
+	ctx := context.Background()
 
 	p, err := NewPayee("Abc", "136", 1234567890123456, "CBIN0123459", "CBI", "abc@gmail.com", 9123456780, "Employee")
 	if err != nil {
 		t.Fatalf("validation failed: %v", err)
 	}
 
-	id, err := store.Insert(context.Background(), p)
+	id, err := store.Insert(ctx, p)
 	if err != nil {
 		t.Fatalf("failed to insert payee: %v", err)
 	}
@@ -38,7 +39,7 @@ func TestInsertAndGetPayee(t *testing.T) {
 		}
 	}()
 
-	got, err := store.GetByID(context.Background(), id)
+	got, err := store.GetByID(ctx, id)
 	if err != nil {
 		t.Fatalf("failed to fetch payee: %v", err)
 	}
