@@ -45,7 +45,10 @@ This will start PostgreSQL in a container.
 
 To start devcontainer using terminal:
 in your project root, run,
-devcontainer ip --workspace-folder
+devcontainer up --workspace-folder
+
+To get into the container:
+devcontainer exec --workspace-folder . bash
 
 
 ## 2. Create Payees Table
