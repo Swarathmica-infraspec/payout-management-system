@@ -3,17 +3,18 @@ package payee
 import (
 	"context"
 	"database/sql"
+	"os"
 	"testing"
 
 	_ "github.com/lib/pq"
 )
 
 func setupTestDB(t *testing.T) *sql.DB {
-	dsn := "postgres://postgres:postgres@db:5432/postgres?sslmode=disable"
+	dsn := os.Getenv("TEST_DATABASE_URL")
+
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		t.Fatalf("failed to connect to DB: %v", err)
-		// t.Skip("skipping connection")
 	}
 	return db
 }
