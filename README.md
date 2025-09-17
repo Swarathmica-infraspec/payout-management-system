@@ -82,6 +82,11 @@ Stop container if required by :
 docker stop payoutmanagementsystem_devcontainer-db-1
 docker stop payoutmanagementsystem_devcontainer-app-1
 
+Or devcontainer is started throught terminal, use 'exit' to come out of bash.
+Stop container if required by :
+docker stop payoutmanagementsystem_devcontainer-db-1
+docker stop payoutmanagementsystem_devcontainer-app-1
+
 
 # CI
 
