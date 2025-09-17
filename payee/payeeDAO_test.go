@@ -16,6 +16,9 @@ func setupTestDB(t *testing.T) *sql.DB {
 	if err != nil {
 		t.Fatalf("failed to connect to DB: %v", err)
 	}
+	if err := db.Ping(); err != nil {
+		t.Fatalf("failed to connect to DB: %v", err)
+	}
 	return db
 }
 
