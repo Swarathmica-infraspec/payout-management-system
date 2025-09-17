@@ -34,11 +34,18 @@ NOTE: Only email ids with .com are supported.
 
 We use PostgreSQL(17.6-trixie) running inside Docker for persistant storage.
 
+Install devcontainer extension in vs code, or from the terminal using
+npm i -g @devcontainers/cli
+
 ## 1. Start Postgres with Docker Compose
 
 From the project root, open VS Code. Press F1: Dev Containers: Reopen in Dev Container
 
 This will start PostgreSQL in a container.
+
+To start devcontainer using terminal:
+in your project root, run,
+devcontainer ip --workspace-folder
 
 
 ## 2. Create Payees Table
@@ -66,6 +73,11 @@ NOTE: this project is still under development and hence does not have HTTP API n
 # NOTE:
 
 To exit devcontainer: press F1: Dev Containers: Reopen folder locally
+
+Or devcontainer is started throught terminal, use 'exit' to come out of bash.
+Stop container if required by :
+docker stop payoutmanagementsystem_devcontainer-db-1
+docker stop payoutmanagementsystem_devcontainer-app-1
 
 
 # CI
