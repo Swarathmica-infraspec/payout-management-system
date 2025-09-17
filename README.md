@@ -63,9 +63,9 @@ go test -v ./...
 
 NOTE: this project is still under development and hence does not have HTTP API now.
 
-# NOTE:
+## To come out of devcontainer:
 
-To exit devcontainer: press F1: Dev Containers: Reopen folder locally
+press F1: Dev Containers: Reopen Folder Locally
 
 
 # CI
