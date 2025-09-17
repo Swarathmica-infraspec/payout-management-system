@@ -25,10 +25,7 @@ The project contains payoutmanagementsystem/ <br>
 - go.sum <br>
 - README.md <br>
 
-
 NOTE: Only email ids with .com are supported.
-
-
 
 # Database Setup
 
