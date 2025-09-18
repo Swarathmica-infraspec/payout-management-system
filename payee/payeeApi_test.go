@@ -6,55 +6,33 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/gin-gonic/gin"
 )
 
-func setupRouter() *gin.Engine {
-	gin.SetMode(gin.TestMode)
-	r := gin.Default()
-
-	r.POST("/payees", func(c *gin.Context) {
-		var req struct {
-			Name     string `json:"name"`
-			Code     string `json:"code"`
-			AccNo    int    `json:"account_number"`
-			IFSC     string `json:"ifsc"`
-			Bank     string `json:"bank"`
-			Email    string `json:"email"`
-			Mobile   int    `json:"mobile"`
-			Category string `json:"category"`
-		}
-
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
-			return
-		}
-
-		c.JSON(http.StatusCreated, gin.H{"id": 1})
-	})
-
-	return r
+func setupMux() *http.ServeMux {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/payees", PayeePostAPI)
+	return mux
 }
 
 func TestPayeePostAPISuccess(t *testing.T) {
-	router := setupRouter()
+	mux := setupMux()
 
 	payload := map[string]interface{}{
-		"name":           "Abc",
-		"code":           "123",
-		"account_number": 123456789,
-		"ifsc":           "CBIN012345",
+		"name":           "Abdc",
+		"code":           "1263",
+		"account_number": 1234767891,
+		"ifsc":           "CBIN0123456",
 		"bank":           "CBI",
-		"email":          "abc@example.com",
-		"mobile":         9876543210,
+		"email":          "abdc@example.com",
+		"mobile":         9876543290,
 		"category":       "Employee",
 	}
 	body, _ := json.Marshal(payload)
 
-	req, _ := http.NewRequest("POST", "/payees", bytes.NewBuffer(body))
+	req := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+
+	mux.ServeHTTP(w, req)
 
 	if w.Code != http.StatusCreated {
 		t.Fatalf("expected status %d, got %d, body=%s", http.StatusCreated, w.Code, w.Body.String())
@@ -62,13 +40,14 @@ func TestPayeePostAPISuccess(t *testing.T) {
 }
 
 func TestPayeePostAPIInvalidJSON(t *testing.T) {
-	router := setupRouter()
+	mux := setupMux()
 
-	req, _ := http.NewRequest("POST", "/payees", bytes.NewBufferString("{bad json}"))
+	req := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBufferString("{bad json}"))
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+
+	mux.ServeHTTP(w, req)
 
 	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, w.Code)
+		t.Fatalf("expected status %d, got %d, body=%s", http.StatusBadRequest, w.Code, w.Body.String())
 	}
 }

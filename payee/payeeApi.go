@@ -3,15 +3,17 @@ package payee
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 
-	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 )
 
-func PayeePostAPI() {
+func PayeePostAPI(w http.ResponseWriter, r *http.Request) {
 
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
@@ -28,43 +30,58 @@ func PayeePostAPI() {
 		}
 	}()
 
-	store := PostgresPayeeDB(db)
+	store := PayeeDB(db)
 
-	router := gin.Default()
-
-	router.POST("/payees", func(c *gin.Context) {
-		var req struct {
-			Name     string `json:"name"`
-			Code     string `json:"code"`
-			AccNo    int    `json:"account_number"`
-			IFSC     string `json:"ifsc"`
-			Bank     string `json:"bank"`
-			Email    string `json:"email"`
-			Mobile   int    `json:"mobile"`
-			Category string `json:"category"`
-		}
-
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body", "details": err.Error()})
-			return
-		}
-
-		p, err := NewPayee(req.Name, req.Code, req.AccNo, req.IFSC, req.Bank, req.Email, req.Mobile, req.Category)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "validation failed", "details": err.Error()})
-			return
-		}
-
-		id, err := store.Insert(context.Background(), p)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "DB insert failed", "details": err.Error()})
-			return
-		}
-
-		c.JSON(http.StatusCreated, gin.H{"id": id})
-	})
-	if err := router.Run(":8080"); err != nil {
-		log.Fatalf("failed to start server: %v", err)
+	type req struct {
+		Name     string `json:"name"`
+		Code     string `json:"code"`
+		AccNo    int    `json:"account_number"`
+		IFSC     string `json:"ifsc"`
+		Bank     string `json:"bank"`
+		Email    string `json:"email"`
+		Mobile   int    `json:"mobile"`
+		Category string `json:"category"`
 	}
 
+	var data req
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		http.Error(w, "Error unmarshaling JSON", http.StatusBadRequest)
+		return
+	}
+
+	p, err := NewPayee(data.Name, data.Code, data.AccNo, data.IFSC, data.Bank, data.Email, data.Mobile, data.Category)
+	if err != nil {
+		fmt.Println("Structure creation failed")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	_, err = store.Insert(context.Background(), p)
+	if err != nil {
+		fmt.Println(err)
+		fmt.Println("Insertion failed")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Printf("Received POST request with message")
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]any{
+		"message": "payee created successfully",
+	})
 }
