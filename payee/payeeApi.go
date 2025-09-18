@@ -81,7 +81,11 @@ func PayeePostAPI(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]any{
-		"message": "payee created successfully",
-	})
+	if err := json.NewEncoder(w).Encode(map[string]any{
+		"id": 1,
+	}); err != nil {
+		http.Error(w, "failed to encode response", http.StatusInternalServerError)
+		return
+	}
+
 }
