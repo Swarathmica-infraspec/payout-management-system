@@ -13,6 +13,7 @@ Clone this repo: <a href = "https://github.com/Swarathmica-infraspec/payout-mana
 GO-VERSION: 1.25.0
 
 The project contains payoutmanagementsystem/ <br>
+
 - .github/workflows/payoutManagementSystem.yml <br>
 - payee/
   - payee.go <br>
@@ -35,14 +36,10 @@ We use PostgreSQL running inside Docker for persistant storage.
 
 ## 1. Start Postgres with Docker Compose
 
-From the project root, run:
+From the project root, open VS Code. Press F1: Dev Containers: Reopen in Dev Container
 
-docker compose up -d db
+This will start PostgreSQL in a container.
 
-
-This will:
-
-Start a container named devcontainer-db-1 (from .devcontainer/docker-compose.yml)
 
 
 ## 2. Create Payees Table
@@ -73,7 +70,7 @@ then run: go run main.go #entry point
 
 payeeApi.go has the code for API while payeeAPI_test.go has test code
 
-NOTE: Supports only POST request
+
 
 1. POST request 
 curl -X POST http://localhost:8080/payees \
@@ -81,8 +78,8 @@ curl -X POST http://localhost:8080/payees \
   -d '{
     "name":"Abc",
     "code":"123",
-    "account_number":123456789,
-    "ifsc":"CBIN012345",
+    "account_number":1234567869,
+    "ifsc":"CBIN0123456",
     "bank":"CBI",
     "email":"abc@example.com",
     "mobile":9876543210,
@@ -99,15 +96,16 @@ curl -X GET http://localhost:8080/payees \
 3. GET by id request
 curl -X GET http://localhost:8080/payees/1 \
   -H "Content-Type: application/json"
-# Run Tests
+
+
+# Run tests
 
 To run tests:
-
-docker exec -it devcontainer-app-1 bash
-
-cd /workspaces/payoutManagementSystem
-
 go test -v ./...
+
+## To come out of devcontainer:
+
+press F1: Dev Containers: Reopen Folder Locally
 
 
 # CI
