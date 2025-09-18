@@ -2,7 +2,9 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 	payee "payoutmanagementsystem/payee"
 )
@@ -37,9 +39,13 @@ func close(store *payee.PayeePostgresDB) {
 
 func main() {
 	store := initStore()
-	r := payee.SetupRouter(store)
-	if err := r.Run(":8080"); err != nil {
-		log.Fatalf("failed to run server: %v", err)
-	}
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /payee", payee.PayeePostAPI)
+	mux.HandleFunc("GET /payee", payee.PayeeGetAPI(store))
+	mux.HandleFunc("GET /payee/:id", payee.PayeeGetOneAPI(store))
+	fmt.Println("Server starting on :8080")
+	mux.HandleFunc("/payee/", payee.PayeeGetOneAPI(store))
+
+	log.Fatal(http.ListenAndServe(":8080", mux))
 	close(store)
 }

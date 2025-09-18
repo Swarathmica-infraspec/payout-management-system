@@ -2,12 +2,94 @@ package payee
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
 	"net/http"
+	"os"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 )
+
+func PayeePostAPI(w http.ResponseWriter, r *http.Request) {
+
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		dsn = "postgres://postgres:postgres@db:5432/postgres?sslmode=disable"
+	}
+
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Printf("failed to close db: %v", err)
+		}
+	}()
+
+	store := PostgresPayeeDB(db)
+
+	type req struct {
+		Name     string `json:"name"`
+		Code     string `json:"code"`
+		AccNo    int    `json:"account_number"`
+		IFSC     string `json:"ifsc"`
+		Bank     string `json:"bank"`
+		Email    string `json:"email"`
+		Mobile   int    `json:"mobile"`
+		Category string `json:"category"`
+	}
+
+	var data req
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		http.Error(w, "Error unmarshaling JSON", http.StatusBadRequest)
+		return
+	}
+
+	p, err := NewPayee(data.Name, data.Code, data.AccNo, data.IFSC, data.Bank, data.Email, data.Mobile, data.Category)
+	if err != nil {
+		fmt.Println("Structure creation failed")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	_, err = store.Insert(context.Background(), p)
+	if err != nil {
+		fmt.Println(err)
+		fmt.Println("Insertion failed")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Printf("Received POST request with message")
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(w).Encode(map[string]any{
+		"id": 1,
+	}); err != nil {
+		http.Error(w, "failed to encode response", http.StatusInternalServerError)
+		return
+	}
+
+}
 
 type PayeeGETResponse struct {
 	ID              int    `json:"id"`
@@ -21,45 +103,11 @@ type PayeeGETResponse struct {
 	PayeeCategory   string `json:"payee_category"`
 }
 
-func PayeePostAPI(store *PayeePostgresDB) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var req struct {
-			Name     string `json:"name"`
-			Code     string `json:"code"`
-			AccNo    int    `json:"account_number"`
-			IFSC     string `json:"ifsc"`
-			Bank     string `json:"bank"`
-			Email    string `json:"email"`
-			Mobile   int    `json:"mobile"`
-			Category string `json:"category"`
-		}
-
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body", "details": err.Error()})
-			return
-		}
-
-		p, err := NewPayee(req.Name, req.Code, req.AccNo, req.IFSC, req.Bank, req.Email, req.Mobile, req.Category)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "validation failed", "details": err.Error()})
-			return
-		}
-
-		id, err := store.Insert(context.Background(), p)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "DB insert failed", "details": err.Error()})
-			return
-		}
-
-		c.JSON(http.StatusCreated, gin.H{"id": id})
-	}
-}
-
-func PayeeGetApi(store *PayeePostgresDB) gin.HandlerFunc {
-	return func(c *gin.Context) {
+func PayeeGetAPI(store *PayeePostgresDB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		payees, err := store.List(context.Background())
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "DB query failed", "details": err.Error()})
+			http.Error(w, "DB query failed: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -78,22 +126,55 @@ func PayeeGetApi(store *PayeePostgresDB) gin.HandlerFunc {
 			})
 		}
 
-		c.JSON(http.StatusOK, resp)
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			http.Error(w, "failed to encode response", http.StatusInternalServerError)
+		}
 	}
 }
 
-func PayeeGetOneApi(store *PayeePostgresDB) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		idParam := c.Param("id")
-		id, err := strconv.Atoi(idParam)
+func splitPath(p string) []string {
+	var parts []string
+	for _, seg := range split(p, '/') {
+		if seg != "" {
+			parts = append(parts, seg)
+		}
+	}
+	return parts
+}
+
+func split(s string, sep rune) []string {
+	var parts []string
+	cur := ""
+	for _, r := range s {
+		if r == sep {
+			parts = append(parts, cur)
+			cur = ""
+		} else {
+			cur += string(r)
+		}
+	}
+	parts = append(parts, cur)
+	return parts
+}
+
+func PayeeGetOneAPI(store *PayeePostgresDB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		parts := splitPath(r.URL.Path)
+		if len(parts) < 2 {
+			http.Error(w, "id missing in path", http.StatusBadRequest)
+			return
+		}
+
+		id, err := strconv.Atoi(parts[len(parts)-1])
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			http.Error(w, "invalid id", http.StatusBadRequest)
 			return
 		}
 
 		p, err := store.GetByID(context.Background(), id)
 		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "record not found"})
+			http.Error(w, "record not found", http.StatusNotFound)
 			return
 		}
 
@@ -109,13 +190,9 @@ func PayeeGetOneApi(store *PayeePostgresDB) gin.HandlerFunc {
 			PayeeCategory:   p.payeeCategory,
 		}
 
-		c.JSON(http.StatusOK, resp)
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			http.Error(w, "failed to encode response", http.StatusInternalServerError)
+		}
 	}
-}
-func SetupRouter(store *PayeePostgresDB) *gin.Engine {
-	r := gin.Default()
-	r.POST("/payees", PayeePostAPI(store))
-	r.GET("/payees", PayeeGetApi(store))
-	r.GET("/payees/:id", PayeeGetOneApi(store))
-	return r
 }
