@@ -82,8 +82,8 @@ curl -X POST http://localhost:8080/payees \
   -d '{
     "name":"Abc",
     "code":"123",
-    "account_number":123456789,
-    "ifsc":"CBIN012345",
+    "account_number":1234567890,
+    "ifsc":"CBIN0123456",
     "bank":"CBI",
     "email":"abc@example.com",
     "mobile":9876543210,
