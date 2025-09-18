@@ -45,6 +45,12 @@ func TestInvalidPayee(t *testing.T) {
 }
 
 func TestValidPayee(t *testing.T) {
+
+	_, err := NewPayee("abc", "123", 1234567890, "CBIN0123456", "cbi", "abc@gmail.com", 9876543210, "Employee")
+	if err != nil {
+		t.Fatalf("payee should be created but got error: %v", err)
+	}
+
 	name := "abc"
 	code := "123"
 	accNo := 1234567890
@@ -89,4 +95,5 @@ func TestValidPayee(t *testing.T) {
 	if p.payeeCategory != category {
 		t.Errorf("expected category: %v but stored category: %v", category, p.payeeCategory)
 	}
+
 }

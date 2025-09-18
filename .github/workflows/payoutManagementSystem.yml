@@ -52,18 +52,9 @@ jobs:
           cache-dependency-path: go.sum
       - name: Download dependencies
         run: go mod download
-      - name: Start all containers
-        run: docker compose -f .devcontainer/docker-compose.yml up -d
-      - name: Wait for database
-        run: |
-              until docker exec devcontainer-db-1 pg_isready -U postgres; do
-                echo "Waiting for PostgreSQL..."
-                sleep 2
-              done
-
-      - name: Create table Payee
-        run: |
-          docker cp payee/payee_db.sql devcontainer-db-1:/payee_db.sql
-          docker exec devcontainer-db-1 psql -U postgres -d postgres -f /payee_db.sql
-      - name: Run tests
-        run: docker exec devcontainer-app-1 sh -c "cd /workspaces/payout-management-system && go test -v ./..."
+      - name: Run tests in devcontainer
+        uses: devcontainers/ci@v0.3
+        with:
+          # TODO: SOLVE: POST JOB CLEANUP: Error: imageName is required to push images
+          # TODO: create acess token in ghcr and cache image for faster workflow
+          run: go test -v ./...
