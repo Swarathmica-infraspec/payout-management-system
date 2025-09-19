@@ -16,12 +16,14 @@ type expense struct {
 	receiptURI   string
 }
 
-var ErrInvalidTitle = errors.New("payoutmanagementsystem.NewExpense: title should not be empty")
-var ErrInvalidAmount = errors.New("payoutmanagementsystem.NewExpense: amount must be greater than 0")
-var ErrInvalidDate = errors.New("payoutmanagementsystem.NewExpense: invalid date values or format (YYYY-MM-DD)")
-var ErrInvalidCategory = errors.New("payoutmanagementsystem.NewExpense: category should not be empty")
-var ErrInvalidPayeeID = errors.New("payoutmanagementsystem.NewExpense: payeeID must be positive")
-var ErrInvalidReceiptURI = errors.New("payoutmanagementsystem.NewExpense: invalid receipt URI - must be file path")
+var (
+	ErrInvalidTitle      = errors.New("payoutmanagementsystem.NewExpense: title should not be empty")
+	ErrInvalidAmount     = errors.New("payoutmanagementsystem.NewExpense: amount must be greater than 0")
+	ErrInvalidDate       = errors.New("payoutmanagementsystem.NewExpense: invalid date values or format (YYYY-MM-DD)")
+	ErrInvalidCategory   = errors.New("payoutmanagementsystem.NewExpense: category should not be empty")
+	ErrInvalidPayeeID    = errors.New("payoutmanagementsystem.NewExpense: payeeID must be positive")
+	ErrInvalidReceiptURI = errors.New("payoutmanagementsystem.NewExpense: invalid receipt URI - must be file path")
+)
 
 func NewExpense(title string, amount float64, dateIncurred string, category string, notes string, payeeID int, receiptURI string) (*expense, error) {
 	if title == "" {

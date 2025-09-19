@@ -6,15 +6,16 @@ import (
 	"strconv"
 )
 
-var ErrInvalidAccountNumber = errors.New("payoutmanagementsystem.NewPayee: account number must be of 10 or 16 digits only")
-var ErrInvalidEmail = errors.New("payoutmanagementsystem.NewPayee: invalid email format")
-var ErrInvalidMobileNumber = errors.New("payoutmanagementsystem.NewPayee: mobile number must be of 10 digits only")
-var ErrEmptyName = errors.New("payoutmanagementsystem.NewPayee: name should not be empty")
-var ErrEmptyCode = errors.New("payoutmanagementsystem.NewPayee: code should not be empty")
-var ErrInvalidIFSC = errors.New("payoutmanagementsystem.NewPayee: invalid ifsc code")
-var ErrInvalidBankName = errors.New("payoutmanagementsystem.NewPayee: invalid bank name")
-var ErrInvalidCategory = errors.New("payoutmanagementsystem.NewPayee: invalid payee category")
-
+var (
+	ErrInvalidAccountNumber = errors.New("payoutmanagementsystem.NewPayee: account number must be of 10 or 16 digits only")
+	ErrInvalidEmail         = errors.New("payoutmanagementsystem.NewPayee: invalid email format")
+	ErrInvalidMobileNumber  = errors.New("payoutmanagementsystem.NewPayee: mobile number must be of 10 digits only")
+	ErrEmptyName            = errors.New("payoutmanagementsystem.NewPayee: name should not be empty")
+	ErrEmptyCode            = errors.New("payoutmanagementsystem.NewPayee: code should not be empty")
+	ErrInvalidIFSC          = errors.New("payoutmanagementsystem.NewPayee: invalid ifsc code")
+	ErrInvalidBankName      = errors.New("payoutmanagementsystem.NewPayee: invalid bank name")
+	ErrInvalidCategory      = errors.New("payoutmanagementsystem.NewPayee: invalid payee category")
+)
 var allowedCategories = map[string]bool{
 	"Employee":   true,
 	"Vendor":     true,
