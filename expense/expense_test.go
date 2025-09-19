@@ -52,21 +52,24 @@ var invalidExpenseTests = []struct {
 	receiptURI   string
 	expectedErr  error
 }{
-	{"", 450.00, "2025-08-27", "Food", "Team lunch", 10, "https://receipts.com/lunch.jpg", ErrInvalidTitle},
-	{"Travel", 0, "2025-08-27", "Travel", "Bus fare", 11, "", ErrInvalidAmount},
-	{"Snacks", 55, "2025-08-32", "Food", "Evening snacks", 12, "", ErrInvalidDate},
-	{"Snacks", 55, "2025-13-30", "Food", "Evening snacks", 12, "", ErrInvalidDate},
-	{"Snacks", 55, "1999-12-24", "Food", "Evening snacks", 12, "", ErrInvalidDate},
-	{"Paper", 20, "2025-08-21", "", "For printer", 13, "", ErrInvalidCategory},
-	{"Hotel", 2100, "2025-08-25", "Accommodation", "Stay", -1, "", ErrInvalidPayeeID},
-	{"Stationery", 200, "2025-08-24", "Office", "Pens", 14, "bill", ErrInvalidReceiptURI},
+	{"TestInvalidExpenseWithEmptyTitle", "", 450.00, futureDate(1), "Food", "Team lunch", 10, "https://receipts.com/lunch.jpg", ErrInvalidTitle},
+	{"TestInvalidExpenseOfAmount0", "Travel", 0, futureDate(1), "Travel", "Bus fare", 11, "", ErrInvalidAmount},
+	{"TestInvalidExpenseWithWrongDate", "Snacks", 55, "2025-08-32", "Food", "Evening snacks", 12, "", ErrInvalidDate},
+	{"TestInvalidExpenseWithWrongMonth", "Snacks", 55, "2025-13-30", "Food", "Evening snacks", 12, "", ErrInvalidDate},
+	{"TestInvalidExpenseWithYearBefore2025", "Snacks", 55, "1999-12-24", "Food", "Evening snacks", 12, "", ErrInvalidDate},
+	{"TestInvalidExpenseWithPastDate", "Lunch", 100, pastDate(1), "Food", "Past expense", 10, "/path/receipt.jpg", ErrInvalidDate},
+	{"TestInvalidExpenseWithWrongCategory", "Paper", 20, futureDate(1), "", "For printer", 13, "", ErrInvalidCategory},
+	{"TestInvalidExpenseWithInvalidPayeeID", "Hotel", 2100, futureDate(1), "Accommodation", "Stay", -1, "", ErrInvalidPayeeID},
+	{"TestInvalidExpenseWithInvalidReceiptURI", "Stationery", 200, futureDate(1), "Office", "Pens", 14, "bill", ErrInvalidReceiptURI},
 }
 
 func TestValidateExpenseWithInvalidValues(t *testing.T) {
 	for _, tt := range invalidExpenseTests {
-		_, err := NewExpense(tt.title, tt.amount, tt.dateIncurred, tt.category, tt.notes, tt.payeeID, tt.receiptURI)
-		if err != tt.expectedErr {
-			t.Fatalf("Expected Error: %v but Actual Error: %v", tt.expectedErr, err)
-		}
+		t.Run(tt.testName, func(t *testing.T) {
+			_, err := NewExpense(tt.title, tt.amount, tt.dateIncurred, tt.category, tt.notes, tt.payeeID, tt.receiptURI)
+			if err != tt.expectedErr {
+				t.Fatalf("Expected Error: %v but Actual Error: %v", tt.expectedErr, err)
+			}
+		})
 	}
 }
