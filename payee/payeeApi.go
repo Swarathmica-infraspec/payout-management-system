@@ -2,12 +2,22 @@ package payee
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"strconv"
-
-	"github.com/gin-gonic/gin"
-	_ "github.com/lib/pq"
+	"strings"
 )
+
+type PayeeRequest struct {
+	Name     string `json:"name"`
+	Code     string `json:"code"`
+	AccNo    int    `json:"account_number"`
+	IFSC     string `json:"ifsc"`
+	Bank     string `json:"bank"`
+	Email    string `json:"email"`
+	Mobile   int    `json:"mobile"`
+	Category string `json:"category"`
+}
 
 type PayeeGETResponse struct {
 	ID              int    `json:"id"`
@@ -21,45 +31,39 @@ type PayeeGETResponse struct {
 	PayeeCategory   string `json:"payee_category"`
 }
 
-func PayeePostAPI(store *PayeePostgresDB) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var req struct {
-			Name     string `json:"name"`
-			Code     string `json:"code"`
-			AccNo    int    `json:"account_number"`
-			IFSC     string `json:"ifsc"`
-			Bank     string `json:"bank"`
-			Email    string `json:"email"`
-			Mobile   int    `json:"mobile"`
-			Category string `json:"category"`
-		}
+func PayeePostAPI(store *PayeePostgresDB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body", "details": err.Error()})
+		var data PayeeRequest
+		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+			http.Error(w, "Invalid JSON body", http.StatusBadRequest)
 			return
 		}
 
-		p, err := NewPayee(req.Name, req.Code, req.AccNo, req.IFSC, req.Bank, req.Email, req.Mobile, req.Category)
+		p, err := NewPayee(data.Name, data.Code, data.AccNo, data.IFSC, data.Bank, data.Email, data.Mobile, data.Category)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "validation failed", "details": err.Error()})
+			http.Error(w, "Invalid payee data", http.StatusBadRequest)
 			return
 		}
 
 		id, err := store.Insert(context.Background(), p)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "DB insert failed", "details": err.Error()})
+			http.Error(w, "DB insertion failed: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		c.JSON(http.StatusCreated, gin.H{"id": id})
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(map[string]any{"id": id})
 	}
 }
 
-func PayeeGetApi(store *PayeePostgresDB) gin.HandlerFunc {
-	return func(c *gin.Context) {
+func PayeeGetAPI(store *PayeePostgresDB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
 		payees, err := store.List(context.Background())
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "DB query failed", "details": err.Error()})
+			http.Error(w, "DB query failed: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -78,22 +82,25 @@ func PayeeGetApi(store *PayeePostgresDB) gin.HandlerFunc {
 			})
 		}
 
-		c.JSON(http.StatusOK, resp)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(resp)
 	}
 }
 
-func PayeeGetOneApi(store *PayeePostgresDB) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		idParam := c.Param("id")
-		id, err := strconv.Atoi(idParam)
+func PayeeGetOneAPI(store *PayeePostgresDB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		idStr := strings.TrimPrefix(r.URL.Path, "/payees/")
+		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			http.Error(w, "invalid id", http.StatusBadRequest)
 			return
 		}
 
 		p, err := store.GetByID(context.Background(), id)
 		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "record not found"})
+			http.Error(w, "record not found", http.StatusNotFound)
 			return
 		}
 
@@ -109,78 +116,68 @@ func PayeeGetOneApi(store *PayeePostgresDB) gin.HandlerFunc {
 			PayeeCategory:   p.payeeCategory,
 		}
 
-		c.JSON(http.StatusOK, resp)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(resp)
 	}
 }
 
-func PayeeUpdateApi(store *PayeePostgresDB) gin.HandlerFunc {
-	return func(c *gin.Context) {
-
-		var req struct {
-			Name     string `json:"name"`
-			Code     string `json:"code"`
-			AccNo    int    `json:"account_number"`
-			IFSC     string `json:"ifsc"`
-			Bank     string `json:"bank"`
-			Email    string `json:"email"`
-			Mobile   int    `json:"mobile"`
-			Category string `json:"category"`
-		}
-
-		idStr := c.Param("id")
+func PayeeUpdateAPI(store *PayeePostgresDB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		idStr := strings.TrimPrefix(r.URL.Path, "/payees/update/")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ID"})
+			http.Error(w, "invalid ID", http.StatusBadRequest)
 			return
 		}
 
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body", "details": err.Error()})
+		var req PayeeRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid request body: "+err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		p, err := NewPayee(req.Name, req.Code, req.AccNo, req.IFSC, req.Bank, req.Email, req.Mobile, req.Category)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "validation failed", "details": err.Error()})
+			http.Error(w, "validation failed: "+err.Error(), http.StatusBadRequest)
 			return
 		}
 		p.id = id
 
 		_, err = store.Update(context.Background(), p)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "DB update failed", "details": err.Error()})
+			http.Error(w, "DB update failed: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"status": "updated"})
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(map[string]string{"status": "updated"})
 	}
 }
 
-func PayeeDeleteApi(store *PayeePostgresDB) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		id, err := strconv.Atoi(c.Param("id"))
+func PayeeDeleteAPI(store *PayeePostgresDB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		idStr := strings.TrimPrefix(r.URL.Path, "/payees/delete/")
+		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ID"})
+			http.Error(w, "invalid ID", http.StatusBadRequest)
 			return
 		}
 
 		err = store.Delete(context.Background(), id)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "DB delete failed", "details": err.Error()})
+			http.Error(w, "DB delete failed: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"status": "deleted"})
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(map[string]string{"status": "deleted"})
 	}
-}
-
-func SetupRouter(store *PayeePostgresDB) *gin.Engine {
-	r := gin.Default()
-	r.POST("/payees", PayeePostAPI(store))
-	r.GET("/payees", PayeeGetApi(store))
-	r.GET("/payees/:id", PayeeGetOneApi(store))
-	r.PUT("/payees/:id", PayeeUpdateApi(store))
-	r.DELETE("/payees/:id", PayeeDeleteApi(store))
-
-	return r
 }

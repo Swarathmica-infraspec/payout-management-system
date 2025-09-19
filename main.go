@@ -2,9 +2,13 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 	payee "payoutmanagementsystem/payee"
+
+	_ "github.com/lib/pq"
 )
 
 var store *payee.PayeePostgresDB
@@ -22,24 +26,19 @@ func initStore() *payee.PayeePostgresDB {
 		panic(err)
 	}
 	store = payee.PostgresPayeeDB(db)
-
 	return store
-
-}
-
-func close(store *payee.PayeePostgresDB) {
-	err := store.Db.Close()
-	if err != nil {
-		log.Println("failed to close DB")
-	}
-
 }
 
 func main() {
 	store := initStore()
-	r := payee.SetupRouter(store)
-	if err := r.Run(":8080"); err != nil {
-		log.Fatalf("failed to run server: %v", err)
-	}
-	close(store)
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/payees", payee.PayeePostAPI(store))
+	mux.HandleFunc("/payees/list", payee.PayeeGetAPI(store))
+	mux.HandleFunc("/payees/", payee.PayeeGetOneAPI(store))
+	mux.HandleFunc("/payees/update/", payee.PayeeUpdateAPI(store))
+	mux.HandleFunc("/payees/delete/", payee.PayeeDeleteAPI(store))
+
+	fmt.Println("Server starting on :8080")
+	log.Fatal(http.ListenAndServe(":8080", mux))
 }

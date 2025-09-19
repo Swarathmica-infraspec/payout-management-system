@@ -2,89 +2,75 @@ package payee
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
+
+	_ "github.com/lib/pq"
 )
 
-func setupRouter() *gin.Engine {
-	gin.SetMode(gin.TestMode)
-	r := gin.Default()
+var store *PayeePostgresDB
 
-	r.GET("/payees", func(c *gin.Context) {
-		payees := []map[string]interface{}{
-			{"id": 1, "name": "Alice"},
-		}
-		c.JSON(http.StatusOK, payees)
-	})
+func initStore() *PayeePostgresDB {
+	if store != nil {
+		return store
+	}
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		dsn = "postgres://postgres:postgres@db:5432/postgres?sslmode=disable"
+	}
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		panic(err)
+	}
+	store = PostgresPayeeDB(db)
+	return store
+}
 
-	r.POST("/payees", func(c *gin.Context) {
-		var req struct {
-			Name     string `json:"name"`
-			Code     string `json:"code"`
-			AccNo    int    `json:"account_number"`
-			IFSC     string `json:"ifsc"`
-			Bank     string `json:"bank"`
-			Email    string `json:"email"`
-			Mobile   int    `json:"mobile"`
-			Category string `json:"category"`
-		}
+func cleanDB(db *sql.DB) error {
+	_, err := db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
+	return err
+}
 
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
-			return
-		}
+func setupMux(t *testing.T) *http.ServeMux {
+	store := initStore()
 
-		c.JSON(http.StatusCreated, gin.H{"id": 1})
-	})
+	if err := cleanDB(store.Db); err != nil {
+		t.Fatalf("failed to clean DB: %v", err)
+	}
 
-	r.PUT("/payees/:id", func(c *gin.Context) {
-		var req struct {
-			Name     string `json:"name"`
-			Code     string `json:"code"`
-			AccNo    int    `json:"account_number"`
-			IFSC     string `json:"ifsc"`
-			Bank     string `json:"bank"`
-			Email    string `json:"email"`
-			Mobile   int    `json:"mobile"`
-			Category string `json:"category"`
-		}
+	mux := http.NewServeMux()
+	mux.HandleFunc("/payees", PayeePostAPI(store))
+	mux.HandleFunc("/payees/list", PayeeGetAPI(store))
+	mux.HandleFunc("/payees/", PayeeGetOneAPI(store))
+	mux.HandleFunc("/payees/update/", PayeeUpdateAPI(store))
+	mux.HandleFunc("/payees/delete/", PayeeDeleteAPI(store))
 
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{"status": "updated"})
-	})
-
-	r.DELETE("/payees/:id", func(c *gin.Context) {
-
-	})
-
-	return r
+	return mux
 }
 
 func TestPayeePostAPISuccess(t *testing.T) {
-	router := setupRouter()
+	mux := setupMux(t)
 
 	payload := map[string]interface{}{
-		"name":           "Abc",
-		"code":           "123",
-		"account_number": 123456789,
-		"ifsc":           "CBIN0123459",
+		"name":           "Abdc",
+		"code":           "1262",
+		"account_number": 1234767893,
+		"ifsc":           "CBIN0123456",
 		"bank":           "CBI",
-		"email":          "abc@example.com",
-		"mobile":         9876543210,
+		"email":          "abcd@example.com",
+		"mobile":         9876543292,
 		"category":       "Employee",
 	}
 	body, _ := json.Marshal(payload)
 
-	req, _ := http.NewRequest("POST", "/payees", bytes.NewBuffer(body))
+	req := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+
+	mux.ServeHTTP(w, req)
 
 	if w.Code != http.StatusCreated {
 		t.Fatalf("expected status %d, got %d, body=%s", http.StatusCreated, w.Code, w.Body.String())
@@ -92,36 +78,37 @@ func TestPayeePostAPISuccess(t *testing.T) {
 }
 
 func TestPayeePostAPIInvalidJSON(t *testing.T) {
-	router := setupRouter()
+	mux := setupMux(t)
 
-	req, _ := http.NewRequest("POST", "/payees", bytes.NewBufferString("{bad json}"))
+	req := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBufferString("{bad json}"))
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+
+	mux.ServeHTTP(w, req)
 
 	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, w.Code)
+		t.Fatalf("expected status %d, got %d, body=%s", http.StatusBadRequest, w.Code, w.Body.String())
 	}
 }
 
 func TestPayeeGetAPISuccess(t *testing.T) {
-	router := setupRouter()
+	mux := setupMux(t)
 
-	req, _ := http.NewRequest("GET", "/payees", nil)
+	req := httptest.NewRequest(http.MethodGet, "/payees/list", nil)
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+
+	mux.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected status %d, got %d, body=%s", http.StatusOK, w.Code, w.Body.String())
 	}
-
 }
 
 func TestPayeeUpdateAPI(t *testing.T) {
-	router := setupRouter()
+	mux := setupMux(t)
 
 	payee := map[string]interface{}{
 		"name":           "def",
-		"code":           "111",
+		"code":           "131",
 		"account_number": 1234567090,
 		"ifsc":           "SBIN0001111",
 		"bank":           "SBI",
@@ -130,36 +117,35 @@ func TestPayeeUpdateAPI(t *testing.T) {
 		"category":       "Employee",
 	}
 	body, _ := json.Marshal(payee)
-	req, _ := http.NewRequest("POST", "/payees", bytes.NewBuffer(body))
+	req := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+	mux.ServeHTTP(w, req)
 
 	if w.Code != http.StatusCreated {
 		t.Fatalf("failed to create payee, got status %d", w.Code)
 	}
+
 	updatePayee := map[string]interface{}{
-		"name":           "ghi",
-		"code":           "111",
-		"account_number": 1234567090,
+		"name":           "ghhi",
+		"code":           "131",
+		"account_number": 1234567990,
 		"ifsc":           "SBIN0001111",
 		"bank":           "SBI",
-		"email":          "def@example.com",
-		"mobile":         9876513210,
+		"email":          "ghhi@example.com",
+		"mobile":         9806517210,
 		"category":       "Employee",
 	}
 	updateBody, _ := json.Marshal(updatePayee)
-
-	req2, _ := http.NewRequest("PUT", "/payees/1", bytes.NewBuffer(updateBody))
+	req2 := httptest.NewRequest(http.MethodPut, "/payees/update/1", bytes.NewBuffer(updateBody))
 	w2 := httptest.NewRecorder()
-	router.ServeHTTP(w2, req2)
+	mux.ServeHTTP(w2, req2)
 
 	if w2.Code != http.StatusOK {
 		t.Fatalf("expected status %d, got %d, body=%s", http.StatusOK, w2.Code, w2.Body.String())
 	}
 }
-
 func TestPayeeDeleteAPI(t *testing.T) {
-	router := setupRouter()
+	mux := setupMux(t)
 
 	payee := map[string]interface{}{
 		"name":           "adef",
@@ -172,20 +158,28 @@ func TestPayeeDeleteAPI(t *testing.T) {
 		"category":       "Employee",
 	}
 	body, _ := json.Marshal(payee)
-	req, _ := http.NewRequest("POST", "/payees", bytes.NewBuffer(body))
+
+	req := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+	mux.ServeHTTP(w, req)
 
 	if w.Code != http.StatusCreated {
-		t.Fatalf("failed to create payee, got status %d", w.Code)
+		t.Fatalf("failed to create payee, got status %d, body=%s", w.Code, w.Body.String())
 	}
 
-	req2, _ := http.NewRequest("DELETE", "/payees/1", bytes.NewBuffer(body))
+	req2 := httptest.NewRequest(http.MethodDelete, "/payees/delete/1", nil)
 	w2 := httptest.NewRecorder()
-	router.ServeHTTP(w2, req2)
+	mux.ServeHTTP(w2, req2)
 
 	if w2.Code != http.StatusOK {
 		t.Fatalf("expected status %d, got %d, body=%s", http.StatusOK, w2.Code, w2.Body.String())
 	}
 
+	req3 := httptest.NewRequest(http.MethodGet, "/payees/1", nil)
+	w3 := httptest.NewRecorder()
+	mux.ServeHTTP(w3, req3)
+
+	if w3.Code != http.StatusNotFound {
+		t.Fatalf("expected status %d after delete, got %d, body=%s", http.StatusNotFound, w3.Code, w3.Body.String())
+	}
 }
