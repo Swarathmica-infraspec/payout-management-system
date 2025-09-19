@@ -69,6 +69,6 @@ func checkDate(dateStr string) bool {
 }
 
 func checkReceiptURI(uri string) bool {
-	match2, _ := regexp.MatchString(`^/`, uri)
-	return match2
+	isMatching, _ := regexp.MatchString(`^/`, uri)
+	return isMatching
 }
