@@ -10,7 +10,7 @@ type PayeeRepository interface {
 	Insert(context context.Context, p *payee) (int, error)
 	GetByID(context context.Context, id int) (*payee, error)
 	List(ctx context.Context) ([]payee, error)
-	Update(ctx context.Context) (*payee, error)
+	Update(ctx context.Context, p *payee) (*payee, error)
 }
 
 type PayeePostgresDB struct {
