@@ -20,12 +20,17 @@ The project contains payoutmanagementsystem/ <br>
   - payee.go <br>
   - payee_test.go <br>
   - payee_db.sql <br>
+- expense/
+  - expense.go
+  - expense_test.go
 - go.mod <br>
 - go.sum <br>
 - README.md <br>
 
 
 NOTE: Only email ids with .com are supported.
+
+NOTE: All expense dates must be provided in the YYYY-MM-DD format and represent valid calendar dates. Dates in the past are not allowed. Only years from 2025 to 2050 are accepted. 
 
 
 
