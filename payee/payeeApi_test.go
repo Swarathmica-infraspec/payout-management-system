@@ -8,6 +8,8 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	_ "github.com/lib/pq"
 )
 
 var store *PayeePostgresDB
@@ -25,16 +27,15 @@ func initStore() *PayeePostgresDB {
 		panic(err)
 	}
 	store = PostgresPayeeDB(db)
-
 	return store
-
 }
 
 func setupMux() *http.ServeMux {
 	store := initStore()
 	mux := http.NewServeMux()
-	mux.HandleFunc("/payees", PayeePostAPI)
-	mux.HandleFunc("/payee", PayeeGetAPI(store))
+	mux.HandleFunc("/payees", PayeePostAPI(store))
+	mux.HandleFunc("/payees/list", PayeeGetAPI(store))
+	mux.HandleFunc("/payees/", PayeeGetOneAPI(store))
 	return mux
 }
 
@@ -75,10 +76,11 @@ func TestPayeePostAPIInvalidJSON(t *testing.T) {
 		t.Fatalf("expected status %d, got %d, body=%s", http.StatusBadRequest, w.Code, w.Body.String())
 	}
 }
+
 func TestPayeeGetAPISuccess(t *testing.T) {
 	mux := setupMux()
 
-	req := httptest.NewRequest(http.MethodGet, "/payee", nil)
+	req := httptest.NewRequest(http.MethodGet, "/payees/list", nil)
 	w := httptest.NewRecorder()
 
 	mux.ServeHTTP(w, req)
