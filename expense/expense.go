@@ -3,6 +3,7 @@ package expense
 import (
 	"errors"
 	"regexp"
+	"time"
 )
 
 type expense struct {
@@ -29,7 +30,7 @@ func NewExpense(title string, amount float64, dateIncurred string, category stri
 	if amount <= 0 {
 		return nil, ErrInvalidAmount
 	}
-	if !checkDateFormat(dateIncurred) {
+	if !checkDate(dateIncurred) {
 		return nil, ErrInvalidDate
 	}
 	if category == "" {
@@ -52,10 +53,19 @@ func NewExpense(title string, amount float64, dateIncurred string, category stri
 	}, nil
 }
 
-func checkDateFormat(date string) bool {
-	pattern := `^(202[5-9]|20(3\d|4\d|50))-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$`
-	match, _ := regexp.MatchString(pattern, date)
-	return match
+func checkDate(dateStr string) bool {
+	date, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		return false
+	}
+
+	year := date.Year()
+	if year < 2025 || year > 2050 {
+		return false
+	}
+
+	today := time.Now().Truncate(24 * time.Hour)
+	return !date.Before(today)
 }
 
 func checkReceiptURI(uri string) bool {

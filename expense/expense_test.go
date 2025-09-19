@@ -1,8 +1,18 @@
 package expense
 
 import (
+	"fmt"
 	"testing"
+	"time"
 )
+
+func futureDate(daysAhead int) string {
+	return time.Now().AddDate(0, 0, daysAhead).Format("2006-01-02")
+}
+
+func pastDate(daysBack int) string {
+	return time.Now().AddDate(0, 0, -daysBack).Format("2006-01-02")
+}
 
 var validExpenseTests = []struct {
 	title        string
@@ -13,23 +23,26 @@ var validExpenseTests = []struct {
 	payeeID      int
 	receiptURI   string
 }{
-	{"Lunch", 450.00, "2025-08-27", "Food", "Team lunch", 10, "/Desktop/lunch.jpg"},
-	{"Travel", 120.00, "2025-08-26", "Transport", "Bus fare", 11, "/var/docs/paper-receipt.png"},
-	{"Paper", 20, "2025-08-21", "Supplies", "For printer", 13, "/var/docs/paper-receipt.png"},
-	{"Paper", 20, "2025-08-21", "Supplies", "For printer", 13, "/var/docs/paper-receipt.png"},
-	{"Hotel", 2100, "2025-08-25", "Accommodation", "Stay", 1, "/var/docs/paper-receipt.png"},
+	{"Lunch", 450.00, futureDate(1), "Food", "Team lunch", 10, "/Desktop/lunch.jpg"},
+	{"Travel", 120.00, futureDate(2), "Transport", "Bus fare", 11, "/var/docs/paper-receipt.png"},
+	{"Paper", 20, futureDate(3), "Supplies", "For printer", 13, "/var/docs/paper-receipt.png"},
+	{"Paper", 20, futureDate(4), "Supplies", "For printer", 13, "/var/docs/paper-receipt.png"},
+	{"Hotel", 2100, futureDate(5), "Accommodation", "Stay", 1, "/var/docs/paper-receipt.png"},
 }
 
 func TestValidateExpenseWithValidValues(t *testing.T) {
-	for _, tt := range validExpenseTests {
-		_, err := NewExpense(tt.title, tt.amount, tt.dateIncurred, tt.category, tt.notes, tt.payeeID, tt.receiptURI)
-		if err != nil {
-			t.Fatalf("Expense can be created, but got: %v", err)
-		}
+	for i, tt := range validExpenseTests {
+		t.Run(fmt.Sprintf("ValidExpenseCase%d_%s", i, tt.title), func(t *testing.T) {
+			_, err := NewExpense(tt.title, tt.amount, tt.dateIncurred, tt.category, tt.notes, tt.payeeID, tt.receiptURI)
+			if err != nil {
+				t.Fatalf("Expense can be created, but got: %v", err)
+			}
+		})
 	}
 }
 
 var invalidExpenseTests = []struct {
+	testName     string
 	title        string
 	amount       float64
 	dateIncurred string
