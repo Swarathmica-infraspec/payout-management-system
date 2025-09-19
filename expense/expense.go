@@ -25,6 +25,7 @@ var (
 	ErrInvalidReceiptURI = errors.New("payoutmanagementsystem.NewExpense: invalid receipt URI - must be file path")
 )
 
+// TODO: MULTIPLE IF: try to use a seperate func
 func NewExpense(title string, amount float64, dateIncurred string, category string, notes string, payeeID int, receiptURI string) (*expense, error) {
 	if title == "" {
 		return nil, ErrInvalidTitle

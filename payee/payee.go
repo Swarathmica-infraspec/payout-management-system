@@ -34,6 +34,7 @@ type payee struct {
 	payeeCategory   string
 }
 
+// TODO: MULTIPLE IF: try to use a seperate func
 func NewPayee(name string, code string, accNumber int, ifsc string, bankName string,
 	email string, mobile int, payeeCategory string) (*payee, error) {
 	if name == "" {
