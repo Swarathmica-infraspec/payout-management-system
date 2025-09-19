@@ -92,7 +92,7 @@ curl -X POST http://localhost:8080/payees \
 expected response: {'id':1}
 
 2. GET request
-curl -X GET http://localhost:8080/payees \
+curl -X GET http://localhost:8080/payees/list \
   -H "Content-Type: application/json"
 
 3. GET by id request
@@ -102,12 +102,12 @@ curl -X GET http://localhost:8080/payees/1 \
 4. PUT request
 
 <!-- SUPPOSE THE ROW GIVEN IN POST IS PRESENT IN DB -->
-curl -X PUT http://localhost:8080/payees/1
+curl -X PUT http://localhost:8080/payees/update/1
   -d '{
     "name":"ABCD",
     "code":"123",
     "account_number":1234567890,
-    "ifsc":"CBIN012345",
+    "ifsc":"CBIN0123456",
     "bank":"CBI",
     "email":"abc@example.com",
     "mobile":9876543210,
@@ -119,7 +119,7 @@ curl -X PUT http://localhost:8080/payees/1
   5. DELETE request
 <!-- SUPPOSE THE ROW GIVEN IN POST IS PRESENT IN DB -->
   
-curl -X DELETE http://localhost:8080/payees/1
+curl -X DELETE http://localhost:8080/payees/delete/1
 
 expected response: {"status":"deleted"}
 
