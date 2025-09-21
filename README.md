@@ -27,9 +27,6 @@ The project contains payoutmanagementsystem/ <br>
 
 NOTE: Only email ids with .com are supported.
 
-NOTE: Only email ids with .com are supported.
-
-
 
 # Database Setup
 
