@@ -45,10 +45,6 @@ func TestInvalidPayee(t *testing.T) {
 }
 
 func TestValidPayee(t *testing.T) {
-<<<<<<< HEAD
-=======
-
->>>>>>> a2f1a55 (Introduce payee entity)
 	_, err := NewPayee("abc", "123", 1234567890, "CBIN0123456", "cbi", "abc@gmail.com", 9876543210, "Employee")
 	if err != nil {
 		t.Fatalf("payee should be created but got error: %v", err)
