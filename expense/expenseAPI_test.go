@@ -6,38 +6,16 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/gin-gonic/gin"
 )
 
-func setupRouter() *gin.Engine {
-	gin.SetMode(gin.TestMode)
-	r := gin.Default()
-
-	r.POST("/expense", func(c *gin.Context) {
-		var req struct {
-			Title        string `json:"title"`
-			Amount       int    `json:"amount"`
-			DateIncurred string `json:"dateIncurred"`
-			Category     string `json:"category"`
-			Notes        string `json:"notes"`
-			PayeeID      int    `json:"payeeID"`
-			ReceiptURI   string `json:"receiptURI"`
-		}
-
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
-			return
-		}
-
-		c.JSON(http.StatusCreated, gin.H{"id": 1})
-	})
-
-	return r
+func setupMux() *http.ServeMux {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/expenses", ExpensePostAPI)
+	return mux
 }
 
 func TestExpensePostAPISuccess(t *testing.T) {
-	router := setupRouter()
+	mux := setupMux()
 
 	payload := map[string]interface{}{
 		"title":          "Food",
@@ -50,9 +28,10 @@ func TestExpensePostAPISuccess(t *testing.T) {
 	}
 	body, _ := json.Marshal(payload)
 
-	req, _ := http.NewRequest("POST", "/expense", bytes.NewBuffer(body))
+	req := httptest.NewRequest(http.MethodPost, "/expenses", bytes.NewBuffer(body))
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+
+	mux.ServeHTTP(w, req)
 
 	if w.Code != http.StatusCreated {
 		t.Fatalf("expected status %d, got %d, body=%s", http.StatusCreated, w.Code, w.Body.String())
@@ -60,11 +39,11 @@ func TestExpensePostAPISuccess(t *testing.T) {
 }
 
 func TestExpensePostAPIInvalidJSON(t *testing.T) {
-	router := setupRouter()
+	mux := setupMux()
 
-	req, _ := http.NewRequest("POST", "/expense", bytes.NewBufferString("{bad json}"))
+	req, _ := http.NewRequest("POST", "/expenses", bytes.NewBufferString("{bad json}"))
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+	mux.ServeHTTP(w, req)
 
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, w.Code)
