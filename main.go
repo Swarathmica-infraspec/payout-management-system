@@ -11,9 +11,9 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var store *payee.PayeePostgresDB
+var store payee.PayeeRepository
 
-func initStore() *payee.PayeePostgresDB {
+func initStore() payee.PayeeRepository {
 	if store != nil {
 		return store
 	}
@@ -25,7 +25,7 @@ func initStore() *payee.PayeePostgresDB {
 	if err != nil {
 		panic(err)
 	}
-	store = payee.PostgresPayeeDB(db)
+	store = payee.PayeeDB(db)
 	return store
 }
 

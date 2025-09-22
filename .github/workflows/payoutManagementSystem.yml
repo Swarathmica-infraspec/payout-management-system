@@ -55,4 +55,6 @@ jobs:
       - name: Run tests in devcontainer
         uses: devcontainers/ci@v0.3
         with:
+          # TODO: SOLVE: POST JOB CLEANUP: Error: imageName is required to push images
+          # TODO: create acess token in ghcr and cache image for faster workflow
           run: go test -v ./...

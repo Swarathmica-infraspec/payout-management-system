@@ -29,10 +29,12 @@ The project contains payoutmanagementsystem/ <br>
 
 NOTE: Only email ids with .com are supported.
 
-
 # Database Setup
 
-We use PostgreSQL running inside Docker for persistant storage.
+We use PostgreSQL(17.6-trixie) running inside Docker for persistant storage.
+
+Install devcontainer extension in vs code, or from the terminal using
+npm i -g @devcontainers/cli
 
 ## 1. Start Postgres with Docker Compose
 
@@ -40,19 +42,22 @@ From the project root, open VS Code. Press F1: Dev Containers: Reopen in Dev Con
 
 This will start PostgreSQL in a container.
 
+To start devcontainer using terminal:
+in your project root, run,
+devcontainer up --workspace-folder
+
+To get into the container:
+devcontainer exec --workspace-folder . bash
 
 
 ## 2. Create Payees Table
 
-Copy the SQL file into the container:
+Run the below command for the first time (or if db does not exist):
+psql -h db -U $POSTGRES_USER -d $POSTGRES_DB -f payee_db.sql
 
-docker cp payee/payee_db.sql devcontainer-db-1:/payee_db.sql
+It will prompt for password. Give your postgres password. (or refer to .env)
 
-
-Then apply it:
-
-docker exec -it devcontainer-db-1 psql -U postgres -d postgres -f /payee_db.sql
-
+If 'command not found: psql' : run : apt-get install -y postgresql-client
 
 ## 3. Data Access Object
 
@@ -78,7 +83,7 @@ curl -X POST http://localhost:8080/payees \
   -d '{
     "name":"Abc",
     "code":"123",
-    "account_number":1234567869,
+    "account_number":1234567890,
     "ifsc":"CBIN0123456",
     "bank":"CBI",
     "email":"abc@example.com",

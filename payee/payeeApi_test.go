@@ -12,9 +12,9 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var store *PayeePostgresDB
+var store *payeeDB
 
-func initStore() *PayeePostgresDB {
+func initStore() *payeeDB {
 	if store != nil {
 		return store
 	}
@@ -26,7 +26,7 @@ func initStore() *PayeePostgresDB {
 	if err != nil {
 		panic(err)
 	}
-	store = PostgresPayeeDB(db)
+	store = PayeeDB(db)
 	return store
 }
 
