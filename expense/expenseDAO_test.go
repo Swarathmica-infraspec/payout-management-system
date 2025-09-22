@@ -4,6 +4,7 @@ import (
     "context"
     "database/sql"
     "testing"
+	_ "github.com/lib/pq"
 )
 
 func setupTestDB(t *testing.T) *sql.DB {
