@@ -28,34 +28,36 @@ The project contains payoutmanagementsystem/ <br>
 
 NOTE: Only email ids with .com are supported.
 
-
 # Database Setup
 
-We use PostgreSQL running inside Docker for persistant storage.
+We use PostgreSQL(17.6-trixie) running inside Docker for persistant storage.
+
+Install devcontainer extension in vs code, or from the terminal using
+npm i -g @devcontainers/cli
 
 ## 1. Start Postgres with Docker Compose
 
-From the project root, run:
+From the project root, open VS Code. Press F1: Dev Containers: Reopen in Dev Container
 
-docker compose up -d db
+This will start PostgreSQL in a container.
 
+To start devcontainer using terminal:
+in your project root, run,
+devcontainer up --workspace-folder
 
-This will:
-
-Start a container named devcontainer-db-1 (from .devcontainer/docker-compose.yml)
+To get into the container:
+devcontainer exec --workspace-folder . bash
 
 
 ## 2. Create Payees Table
 
-Copy the SQL file into the container:
+Run the below command for the first time (or if db does not exist):
+psql -h db -U $POSTGRES_USER -d $POSTGRES_DB -f payee/payee_db.sql
 
-docker cp payee/payee_db.sql devcontainer-db-1:/payee_db.sql
+It will prompt for password. Give your postgres password. (or refer to .env)
 
-
-Then apply it:
-
-docker exec -it devcontainer-db-1 psql -U postgres -d postgres -f /payee_db.sql
-
+If 'command not found: psql' : run : apt-get update
+                                     apt-get install -y postgresql-client
 
 ## 3. Data Access Object
 
@@ -73,7 +75,7 @@ then run: go run main.go #entry point
 
 payeeApi.go has the code for API while payeeAPI_test.go has test code
 
-NOTE: Supports only POST request
+
 
 1. POST request 
 curl -X POST http://localhost:8080/payees \
@@ -82,7 +84,7 @@ curl -X POST http://localhost:8080/payees \
     "name":"Abc",
     "code":"123",
     "account_number":1234567890,
-    "ifsc":"CBIN012345",
+    "ifsc":"CBIN0123456",
     "bank":"CBI",
     "email":"abc@example.com",
     "mobile":9876543210,
@@ -102,7 +104,7 @@ curl -X GET http://localhost:8080/payees/1 \
 4. PUT request
 
 <!-- SUPPOSE THE ROW GIVEN IN POST IS PRESENT IN DB -->
-curl -X PUT http://localhost:8080/payees/update/1
+curl -X PUT http://localhost:8080/payees/update/1 \
   -d '{
     "name":"ABCD",
     "code":"123",
@@ -126,11 +128,6 @@ expected response: {"status":"deleted"}
 
 # Run Tests
 To run tests:
-
-docker exec -it devcontainer-app-1 bash
-
-cd /workspaces/payoutManagementSystem
-
 go test -v ./...
 
 # CI

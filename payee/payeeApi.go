@@ -31,7 +31,7 @@ type PayeeGETResponse struct {
 	PayeeCategory   string `json:"payee_category"`
 }
 
-func PayeePostAPI(store *PayeePostgresDB) http.HandlerFunc {
+func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		var data PayeeRequest
@@ -58,7 +58,7 @@ func PayeePostAPI(store *PayeePostgresDB) http.HandlerFunc {
 	}
 }
 
-func PayeeGetAPI(store *PayeePostgresDB) http.HandlerFunc {
+func PayeeGetAPI(store PayeeRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		payees, err := store.List(context.Background())
@@ -88,7 +88,7 @@ func PayeeGetAPI(store *PayeePostgresDB) http.HandlerFunc {
 	}
 }
 
-func PayeeGetOneAPI(store *PayeePostgresDB) http.HandlerFunc {
+func PayeeGetOneAPI(store PayeeRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		idStr := strings.TrimPrefix(r.URL.Path, "/payees/")
@@ -122,7 +122,7 @@ func PayeeGetOneAPI(store *PayeePostgresDB) http.HandlerFunc {
 	}
 }
 
-func PayeeUpdateAPI(store *PayeePostgresDB) http.HandlerFunc {
+func PayeeUpdateAPI(store PayeeRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		idStr := strings.TrimPrefix(r.URL.Path, "/payees/update/")
 		id, err := strconv.Atoi(idStr)
@@ -156,7 +156,7 @@ func PayeeUpdateAPI(store *PayeePostgresDB) http.HandlerFunc {
 	}
 }
 
-func PayeeDeleteAPI(store *PayeePostgresDB) http.HandlerFunc {
+func PayeeDeleteAPI(store PayeeRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodDelete {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
