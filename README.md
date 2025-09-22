@@ -13,6 +13,7 @@ Clone this repo: <a href = "https://github.com/Swarathmica-infraspec/payout-mana
 GO-VERSION: 1.25.0
 
 The project contains payoutmanagementsystem/ <br>
+
 - .github/workflows/payoutManagementSystem.yml <br>
 - payee/
   - payee.go <br>
@@ -108,6 +109,32 @@ Or devcontainer is started throught terminal, use 'exit' to come out of bash.
 Stop container if required by :
 docker stop payoutmanagementsystem_devcontainer-db-1
 docker stop payoutmanagementsystem_devcontainer-app-1
+
+NOTE: Only email ids with .com are supported.
+
+
+
+# Database Setup
+
+We use PostgreSQL running inside Docker for persistant storage.
+
+## Start Postgres with Docker Compose
+
+From the project root, open VS Code. Press F1: Dev Containers: Reopen in Dev Container
+
+This will start PostgreSQL in a container.
+
+
+# Run tests
+
+To run tests:
+go test -v ./...
+
+
+
+## To come out of devcontainer:
+
+press F1: Dev Containers: Reopen Folder Locally
 
 
 # CI
