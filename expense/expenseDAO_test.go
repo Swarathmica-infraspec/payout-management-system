@@ -10,8 +10,11 @@ func setupTestDB(t *testing.T) *sql.DB {
     dsn := "postgres://postgres:postgres@db:5432/postgres?sslmode=disable"
     db, err := sql.Open("postgres", dsn)
     if err != nil {
-        t.Fatal("database connection error")
-    }
+		t.Fatalf("failed to connect to DB: %v", err)
+	}
+	if err := db.Ping(); err != nil {
+		t.Fatalf("failed to connect to DB: %v", err)
+	}
     return db
 }
 
