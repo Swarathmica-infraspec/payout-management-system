@@ -53,11 +53,12 @@ devcontainer exec --workspace-folder . bash
 ## 2. Create Payees Table
 
 Run the below command for the first time (or if db does not exist):
-psql -h db -U $POSTGRES_USER -d $POSTGRES_DB -f payee_db.sql
+psql -h db -U $POSTGRES_USER -d $POSTGRES_DB -f payee/payee_db.sql
 
 It will prompt for password. Give your postgres password. (or refer to .env)
 
-If 'command not found: psql' : run : apt-get install -y postgresql-client
+If 'command not found: psql' : run : apt-get update
+                                     apt-get install -y postgresql-client
 
 ## 3. Data Access Object
 
@@ -75,7 +76,7 @@ then run: go run main.go #entry point
 
 payeeApi.go has the code for API while payeeAPI_test.go has test code
 
-NOTE: Supports only POST request
+
 
 1. POST request 
 curl -X POST http://localhost:8080/payees \
@@ -93,44 +94,11 @@ curl -X POST http://localhost:8080/payees \
 
 expected response: {'id':1}
 
-# Run tests
-
-To run tests: (inside docker)
-
-go test -v ./...
-
-
-
-## To come out of devcontainer:
-
-press F1: Dev Containers: Reopen Folder Locally
-
-Or devcontainer is started throught terminal, use 'exit' to come out of bash.
-Stop container if required by :
-docker stop payoutmanagementsystem_devcontainer-db-1
-docker stop payoutmanagementsystem_devcontainer-app-1
-
-NOTE: Only email ids with .com are supported.
-
-
-
-# Database Setup
-
-We use PostgreSQL running inside Docker for persistant storage.
-
-## Start Postgres with Docker Compose
-
-From the project root, open VS Code. Press F1: Dev Containers: Reopen in Dev Container
-
-This will start PostgreSQL in a container.
-
 
 # Run tests
 
 To run tests:
 go test -v ./...
-
-
 
 ## To come out of devcontainer:
 
