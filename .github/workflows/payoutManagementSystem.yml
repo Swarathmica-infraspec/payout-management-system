@@ -16,7 +16,6 @@ jobs:
         with:
           go-version: ${{ env.GO-VERSION }}
           cache-dependency-path: go.sum
-
   format:
     name: Check format
     runs-on: ubuntu-24.04
@@ -39,7 +38,7 @@ jobs:
         uses: golangci/golangci-lint-action@v7
         with:
           version: v2.4.0
-
+  
   test:
     runs-on: ubuntu-24.04
     needs: lint
@@ -59,3 +58,4 @@ jobs:
           # TODO: SOLVE: POST JOB CLEANUP: Error: imageName is required to push images
           # TODO: create acess token in ghcr and cache image for faster workflow
           runCmd: go test -v ./...
+
