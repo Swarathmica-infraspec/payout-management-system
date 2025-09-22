@@ -1,6 +1,5 @@
 # PayoutManagementSystem
 
-
 This project is about the payout management system built using golang.
 
 # Project Setup
@@ -14,6 +13,7 @@ Clone this repo: <a href = "https://github.com/Swarathmica-infraspec/payout-mana
 GO-VERSION: 1.25.0
 
 The project contains payoutmanagementsystem/ <br>
+
 - .github/workflows/payoutManagementSystem.yml <br>
 - payee/
   - payee.go <br>
@@ -21,12 +21,13 @@ The project contains payoutmanagementsystem/ <br>
   - payee_db.sql <br>
   - payeeDAO.go <br>
   - payeeDAO_test.go <br>
+  - payeeAPI.go <br>
+  - payeeApi_test.go <br>
 - go.mod <br>
 - go.sum <br>
 - README.md <br>
 
 NOTE: Only email ids with .com are supported.
-
 
 # Database Setup
 
@@ -58,9 +59,39 @@ It will prompt for password. Give your postgres password. (or refer to .env)
 
 If 'command not found: psql' : run : apt-get install -y postgresql-client
 
-# Data Access Object
+## 3. Data Access Object
 
 payeeDAO contains database query for payee and payeeDAO_test contains relevant tests
+
+## 4. HTTP API Usage
+
+since postgres is run from docker, 
+
+docker exec -it devcontainer-app-1 bash
+
+cd /workspaces/payoutManagementSystem
+
+then run: go run main.go #entry point
+
+payeeApi.go has the code for API while payeeAPI_test.go has test code
+
+NOTE: Supports only POST request
+
+1. POST request 
+curl -X POST http://localhost:8080/payees \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name":"Abc",
+    "code":"123",
+    "account_number":1234567890,
+    "ifsc":"CBIN0123456",
+    "bank":"CBI",
+    "email":"abc@example.com",
+    "mobile":9876543210,
+    "category":"Employee"
+  }'
+
+expected response: {'id':1}
 
 # Run tests
 
@@ -69,21 +100,41 @@ To run tests: (inside docker)
 go test -v ./...
 
 
-NOTE: this project is still under development and hence does not have HTTP API now.
 
-# NOTE:
+## To come out of devcontainer:
 
-To exit devcontainer: press F1: Dev Containers: Reopen folder locally
-
-Or devcontainer is started throught terminal, use 'exit' to come out of bash.
-Stop container if required by :
-docker stop payoutmanagementsystem_devcontainer-db-1
-docker stop payoutmanagementsystem_devcontainer-app-1
+press F1: Dev Containers: Reopen Folder Locally
 
 Or devcontainer is started throught terminal, use 'exit' to come out of bash.
 Stop container if required by :
 docker stop payoutmanagementsystem_devcontainer-db-1
 docker stop payoutmanagementsystem_devcontainer-app-1
+
+NOTE: Only email ids with .com are supported.
+
+
+
+# Database Setup
+
+We use PostgreSQL running inside Docker for persistant storage.
+
+## Start Postgres with Docker Compose
+
+From the project root, open VS Code. Press F1: Dev Containers: Reopen in Dev Container
+
+This will start PostgreSQL in a container.
+
+
+# Run tests
+
+To run tests:
+go test -v ./...
+
+
+
+## To come out of devcontainer:
+
+press F1: Dev Containers: Reopen Folder Locally
 
 
 # CI
