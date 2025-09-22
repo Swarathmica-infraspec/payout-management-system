@@ -1,38 +1,43 @@
 package expense
 
 import (
-    "context"
-    "database/sql"
-    "testing"
-	
+	"context"
+	"database/sql"
+	"os"
+	"testing"
+
 	_ "github.com/lib/pq"
 )
 
 func setupTestDB(t *testing.T) *sql.DB {
-    dsn := "postgres://postgres:postgres@db:5432/postgres?sslmode=disable"
-    db, err := sql.Open("postgres", dsn)
-    if err != nil {
+	dsn := os.Getenv("TEST_DATABASE_URL")
+
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
 		t.Fatalf("failed to connect to DB: %v", err)
 	}
 	if err := db.Ping(); err != nil {
 		t.Fatalf("failed to connect to DB: %v", err)
 	}
-    return db
+	return db
 }
 
-func TestCreateAndGetExpense(t *testing.T) {
-    db := setupTestDB(t)
-    if db == nil {
-        t.Fatal("database connection error")
-    }
-    store := NewPostgresExpenseDB(db)
+func TestInsertAndGetPayee(t *testing.T) {
+	db := setupTestDB(t)
+	defer func() {
+		if err := db.Close(); err != nil {
+			t.Errorf("failed to close DB connection: %v", err)
+		}
+	}()
+	store := NewPostgresExpenseDB(db)
+	ctx := context.Background()
 
     e, err := NewExpense("Lunch", 450.00, "2025-08-27", "Food", "Team lunch", 1, "/lunch.jpg")
     if err != nil {
         t.Fatalf("failed to create expense struct: %v", err)
     }
 
-    id, err := store.Insert(context.Background(), e)
+    id, err := store.Insert(ctx, e)
     if err != nil {
         t.Fatalf("insert operation failed: %v", err)
     }
@@ -43,7 +48,7 @@ func TestCreateAndGetExpense(t *testing.T) {
         }
     }()
 
-    got, err := store.GetByID(context.Background(), id)
+    got, err := store.GetByID(ctx, id)
     if err != nil {
         t.Fatalf("failed to fetch expense: %v", err)
     }
