@@ -108,7 +108,7 @@ curl -X GET http://localhost:8080/payees/1 \
 4. PUT request
 
 <!-- SUPPOSE THE ROW GIVEN IN POST IS PRESENT IN DB -->
-curl -X PUT http://localhost:8080/payees/update1
+curl -X PUT http://localhost:8080/payees/update/1 \
   -d '{
     "name":"ABCD",
     "code":"123",
