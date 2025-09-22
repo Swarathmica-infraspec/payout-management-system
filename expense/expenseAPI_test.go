@@ -2,64 +2,61 @@ package expense
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
-	"github.com/gin-gonic/gin"
+	_ "github.com/lib/pq"
 )
 
-func setupRouter() *gin.Engine {
-	gin.SetMode(gin.TestMode)
-	r := gin.Default()
+var store *ExpensePostgresDB
 
-	r.GET("/expense", func(c *gin.Context) {
-		expenses := []map[string]interface{}{
-			{"payee_id": 1, "title": "Food"},
-		}
-		c.JSON(http.StatusOK, expenses)
-	})
+func initStore() *ExpensePostgresDB {
+	if store != nil {
+		return store
+	}
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		dsn = "postgres://postgres:postgres@db:5432/postgres?sslmode=disable"
+	}
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		panic(err)
+	}
+	store = NewPostgresExpenseDB(db)
+	return store
+}
 
-	r.POST("/expense", func(c *gin.Context) {
-		var req struct {
-			Title        string `json:"title"`
-			Amount       int    `json:"amount"`
-			DateIncurred string `json:"dateIncurred"`
-			Category     string `json:"category"`
-			Notes        string `json:"notes"`
-			PayeeID      int    `json:"payeeID"`
-			ReceiptURI   string `json:"receiptURI"`
-		}
-
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
-			return
-		}
-
-		c.JSON(http.StatusCreated, gin.H{"id": 1})
-	})
-
-	return r
+func setupMux() *http.ServeMux {
+	store := initStore()
+	mux := http.NewServeMux()
+	mux.HandleFunc("/expenses", ExpensePostAPI(store))
+	mux.HandleFunc("/expenses/list", ExpenseGetAPI(store))
+	mux.HandleFunc("/expenses/", ExpenseGetOneAPI(store))
+	return mux
 }
 
 func TestExpensePostAPISuccess(t *testing.T) {
-	router := setupRouter()
+	mux := setupMux()
 
 	payload := map[string]interface{}{
-		"title":          "Food",
-		"amount":         100,
-		"dateIncurred":   "2025-09-06",
-		"category":       "bill",
-		"notes":          "dinner",
-		"payeeID":        1,
-		"receiptURI":     "/food_bill.jpg",
+		"title":        "Food",
+		"amount":       100,
+		"dateIncurred": "2025-09-06",
+		"category":     "bill",
+		"notes":        "dinner",
+		"payeeID":      1,
+		"receiptURI":   "/food_bill.jpg",
 	}
 	body, _ := json.Marshal(payload)
 
-	req, _ := http.NewRequest("POST", "/expense", bytes.NewBuffer(body))
+	req := httptest.NewRequest(http.MethodPost, "/expenses", bytes.NewBuffer(body))
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+
+	mux.ServeHTTP(w, req)
 
 	if w.Code != http.StatusCreated {
 		t.Fatalf("expected status %d, got %d, body=%s", http.StatusCreated, w.Code, w.Body.String())
@@ -67,11 +64,11 @@ func TestExpensePostAPISuccess(t *testing.T) {
 }
 
 func TestExpensePostAPIInvalidJSON(t *testing.T) {
-	router := setupRouter()
+	mux := setupMux()
 
-	req, _ := http.NewRequest("POST", "/expense", bytes.NewBufferString("{bad json}"))
+	req, _ := http.NewRequest("POST", "/expenses", bytes.NewBufferString("{bad json}"))
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+	mux.ServeHTTP(w, req)
 
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, w.Code)
@@ -79,14 +76,14 @@ func TestExpensePostAPIInvalidJSON(t *testing.T) {
 }
 
 func TestExpenseGetAPISuccess(t *testing.T) {
-	router := setupRouter()
+	mux := setupMux()
 
-	req, _ := http.NewRequest("GET", "/expense", nil)
+	req := httptest.NewRequest(http.MethodGet, "/expenses/list", nil)
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+
+	mux.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected status %d, got %d, body=%s", http.StatusOK, w.Code, w.Body.String())
 	}
-
 }

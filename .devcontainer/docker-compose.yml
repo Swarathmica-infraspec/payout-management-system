@@ -14,8 +14,6 @@ services:
       - ../..:/workspaces:cached
     command: sleep infinity
 
-    # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
-
     depends_on:
       - db
     ports:
@@ -23,7 +21,7 @@ services:
 
 
   db:
-    image: postgres:latest
+    image: postgres:17.6-bookworm
     restart: unless-stopped
     volumes:
       - postgres-data:/var/lib/postgresql/data
@@ -31,8 +29,3 @@ services:
       - .env
     ports:
       - "5432:5432"
-
-
-
-    # Add "forwardPorts": ["5432"] to **devcontainer.json** to forward PostgreSQL locally.
-    # (Adding the "ports" property to this file will not forward from a Codespace.)

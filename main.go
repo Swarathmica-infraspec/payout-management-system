@@ -2,7 +2,10 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
+	_ "github.com/lib/pq"
 	"log"
+	"net/http"
 	"os"
 	expense "payoutmanagementsystem/expense"
 )
@@ -22,24 +25,17 @@ func initStore() *expense.ExpensePostgresDB {
 		panic(err)
 	}
 	store = expense.NewPostgresExpenseDB(db)
-
 	return store
-
-}
-
-func close(store *expense.ExpensePostgresDB) {
-	err := store.Db.Close()
-	if err != nil {
-		log.Println("failed to close DB")
-	}
-
 }
 
 func main() {
 	store := initStore()
-	r := expense.SetupRouter(store)
-	if err := r.Run(":8080"); err != nil {
-		log.Fatalf("failed to run server: %v", err)
-	}
-	close(store)
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/expenses", expense.ExpensePostAPI(store))
+	mux.HandleFunc("/expenses/list", expense.ExpenseGetAPI(store))
+	mux.HandleFunc("/expenses/", expense.ExpenseGetOneAPI(store))
+
+	fmt.Println("Server starting on :8080")
+	log.Fatal(http.ListenAndServe(":8080", mux))
 }
