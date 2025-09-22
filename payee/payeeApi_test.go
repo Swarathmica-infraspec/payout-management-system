@@ -12,9 +12,9 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var store *PayeePostgresDB
+var store PayeeRepository
 
-func initStore() *PayeePostgresDB {
+func initStore() PayeeRepository {
 	if store != nil {
 		return store
 	}
@@ -26,7 +26,7 @@ func initStore() *PayeePostgresDB {
 	if err != nil {
 		panic(err)
 	}
-	store = PostgresPayeeDB(db)
+	store = PayeeDB(db)
 	return store
 }
 
@@ -38,9 +38,14 @@ func cleanDB(db *sql.DB) error {
 func setupMux(t *testing.T) *http.ServeMux {
 	store := initStore()
 
-	if err := cleanDB(store.Db); err != nil {
-		t.Fatalf("failed to clean DB: %v", err)
-	}
+	payeeDb, ok := store.(*payeeDB)
+    if !ok {
+        t.Fatalf("store is not *payeeDB")
+    }
+
+    if err := cleanDB(payeeDb.db); err != nil {
+        t.Fatalf("failed to clean DB: %v", err)
+    }
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/payees", PayeePostAPI(store))

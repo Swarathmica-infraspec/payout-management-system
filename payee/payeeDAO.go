@@ -13,20 +13,20 @@ type PayeeRepository interface {
 	Update(ctx context.Context, p *payee) (*payee, error)
 }
 
-type PayeePostgresDB struct {
-	Db *sql.DB
+type payeeDB struct {
+	db *sql.DB
 }
 
-func PostgresPayeeDB(db *sql.DB) *PayeePostgresDB {
-	return &PayeePostgresDB{Db: db}
+func PayeeDB(db *sql.DB) *payeeDB {
+	return &payeeDB{db: db}
 }
 
-func (r *PayeePostgresDB) Insert(context context.Context, p *payee) (int, error) {
+func (r *payeeDB) Insert(context context.Context, p *payee) (int, error) {
 	query := `
 		INSERT INTO payees (beneficiary_name, beneficiary_code, account_number,ifsc_code, bank_name, email, mobile, payee_category)
 		VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`
 	var id int
-	err := r.Db.QueryRowContext(context, query,
+	err := r.db.QueryRowContext(context, query,
 		p.beneficiaryName,
 		p.beneficiaryCode,
 		p.accNo,
@@ -39,12 +39,12 @@ func (r *PayeePostgresDB) Insert(context context.Context, p *payee) (int, error)
 	return id, err
 }
 
-func (r *PayeePostgresDB) GetByID(context context.Context, id int) (*payee, error) {
+func (r *payeeDB) GetByID(context context.Context, id int) (*payee, error) {
 	query := `
 		SELECT beneficiary_name, beneficiary_code, account_number,
 		       ifsc_code, bank_name, email, mobile, payee_category
 		FROM payees WHERE id=$1`
-	row := r.Db.QueryRowContext(context, query, id)
+	row := r.db.QueryRowContext(context, query, id)
 
 	var p payee
 	err := row.Scan(
@@ -64,8 +64,8 @@ func (r *PayeePostgresDB) GetByID(context context.Context, id int) (*payee, erro
 	return &p, nil
 }
 
-func (s *PayeePostgresDB) List(context context.Context) ([]payee, error) {
-	rows, err := s.Db.QueryContext(context, `
+func (s *payeeDB) List(context context.Context) ([]payee, error) {
+	rows, err := s.db.QueryContext(context, `
         SELECT id, beneficiary_name, beneficiary_code, account_number, ifsc_code, bank_name, email, mobile, payee_category
         FROM payees
         ORDER BY id ASC
@@ -96,7 +96,7 @@ func (s *PayeePostgresDB) List(context context.Context) ([]payee, error) {
 	return payees, nil
 }
 
-func (s *PayeePostgresDB) Update(ctx context.Context, p *payee) (*payee, error) {
+func (s *payeeDB) Update(ctx context.Context, p *payee) (*payee, error) {
 	query := `
         UPDATE payees SET
             beneficiary_name = $1,
@@ -112,7 +112,7 @@ func (s *PayeePostgresDB) Update(ctx context.Context, p *payee) (*payee, error) 
     `
 
 	var updatedPayee payee
-	err := s.Db.QueryRowContext(ctx, query,
+	err := s.db.QueryRowContext(ctx, query,
 		p.beneficiaryName,
 		p.beneficiaryCode,
 		p.accNo,
