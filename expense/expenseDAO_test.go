@@ -3,12 +3,14 @@ package expense
 import (
 	"context"
 	"database/sql"
-	_ "github.com/lib/pq"
+	"os"
 	"testing"
+
+	_ "github.com/lib/pq"
 )
 
 func setupTestDB(t *testing.T) *sql.DB {
-	dsn := "postgres://postgres:postgres@db:5432/postgres?sslmode=disable"
+	dsn := os.Getenv("TEST_DATABASE_URL")
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		t.Fatal("database connection error")

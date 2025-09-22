@@ -9,11 +9,10 @@ services:
       context: .
       dockerfile: Dockerfile
     env_file:
-        - .env
+        - ./.env
     volumes:
       - ../..:/workspaces:cached
     command: sleep infinity
-
     depends_on:
       - db
     ports:
@@ -21,11 +20,12 @@ services:
 
 
   db:
-    image: postgres:17.6-bookworm
+    image: postgres:17.6-trixie
     restart: unless-stopped
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      -  ../expense/expense_db.sql:/docker-entrypoint-initdb.d/expense_db.sql:ro
     env_file:
-      - .env
+      - ./.env
     ports:
       - "5432:5432"
