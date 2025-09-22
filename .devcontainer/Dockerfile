@@ -1,1 +1,1 @@
-FROM mcr.microsoft.com/devcontainers/go:1.25 AS build
+FROM mcr.microsoft.com/devcontainers/go:1.25
