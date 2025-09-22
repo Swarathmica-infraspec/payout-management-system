@@ -86,7 +86,7 @@ func ExpenseGetAPI(store *ExpensePostgresDB) http.HandlerFunc {
 func ExpenseGetOneAPI(store *ExpensePostgresDB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		idStr := strings.TrimPrefix(r.URL.Path, "/payees/")
+		idStr := strings.TrimPrefix(r.URL.Path, "/expenses/")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
 			http.Error(w, "invalid id", http.StatusBadRequest)
