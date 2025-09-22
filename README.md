@@ -13,7 +13,6 @@ Clone this repo: <a href = "https://github.com/Swarathmica-infraspec/payout-mana
 GO-VERSION: 1.25.0
 
 The project contains payoutmanagementsystem/ <br>
-
 - .github/workflows/payoutManagementSystem.yml <br>
 - payee/
   - payee.go <br>
@@ -44,7 +43,7 @@ This will start PostgreSQL in a container.
 
 To start devcontainer using terminal:
 in your project root, run,
-devcontainer up --workspace-folder
+devcontainer up --workspace-folder .
 
 To get into the container:
 devcontainer exec --workspace-folder . bash
@@ -53,26 +52,20 @@ devcontainer exec --workspace-folder . bash
 ## 2. Create Payees Table
 
 Run the below command for the first time (or if db does not exist):
+
 psql -h db -U $POSTGRES_USER -d $POSTGRES_DB -f payee/payee_db.sql
 
 It will prompt for password. Give your postgres password. (or refer to .env)
 
-If 'command not found: psql' : run : sudo apt-get update
-                                     sudo apt-get install -y postgresql-client
+If 'command not found: psql' : run : apt-get update
+                                     apt-get install -y postgresql-client
 
 ## 3. Data Access Object
 
 payeeDAO contains database query for payee and payeeDAO_test contains relevant tests
 
 ## 4. HTTP API Usage
-
-since postgres is run from docker, 
-
-docker exec -it devcontainer-app-1 bash
-
-cd /workspaces/payoutManagementSystem
-
-then run: go run main.go #entry point
+run: go run main.go #entry point
 
 payeeApi.go has the code for API while payeeAPI_test.go has test code
 
@@ -97,12 +90,19 @@ expected response: {'id':1}
 
 # Run tests
 
-To run tests:
+To run tests: (inside docker)
+
 go test -v ./...
 
 ## To come out of devcontainer:
 
-press F1: Dev Containers: Reopen Folder Locally
+To exit devcontainer: press F1: Dev Containers: Reopen folder locally
+
+Or devcontainer is started throught terminal, use 'exit' to come out of bash.
+Stop container if required by :
+docker stop payoutmanagementsystem_devcontainer-db-1
+docker stop payoutmanagementsystem_devcontainer-app-1
+
 
 
 # CI
