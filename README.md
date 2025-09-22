@@ -53,11 +53,12 @@ devcontainer exec --workspace-folder . bash
 ## 2. Create Payees Table
 
 Run the below command for the first time (or if db does not exist):
-psql -h db -U $POSTGRES_USER -d $POSTGRES_DB -f payee_db.sql
+psql -h db -U $POSTGRES_USER -d $POSTGRES_DB -f payee/payee_db.sql
 
 It will prompt for password. Give your postgres password. (or refer to .env)
 
-If 'command not found: psql' : run : apt-get install -y postgresql-client
+If 'command not found: psql' : run : apt-get update
+                                     apt-get install -y postgresql-client
 
 ## 3. Data Access Object
 
@@ -95,7 +96,7 @@ expected response: {'id':1}
 
 
 2. GET request
-curl -X GET http://localhost:8080/payees \
+curl -X GET http://localhost:8080/payees/list \
   -H "Content-Type: application/json"
 
 3. GET by id request
