@@ -66,9 +66,13 @@ func PayeePostAPI(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 		fmt.Println("Insertion failed")
 		w.WriteHeader(http.StatusConflict)
-		json.NewEncoder(w).Encode(map[string]string{
+		if err := json.NewEncoder(w).Encode(map[string]string{
 			"error": "Payee cannot be created with duplicate values",
-		})
+		}); err != nil {
+			log.Printf("Failed to encode JSON response: %v", err)
+			return
+		}
+
 		return
 	}
 
