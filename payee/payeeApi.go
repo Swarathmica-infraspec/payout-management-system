@@ -77,8 +77,6 @@ func PayeePostAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Printf("Received POST request with message")
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(w).Encode(map[string]any{
