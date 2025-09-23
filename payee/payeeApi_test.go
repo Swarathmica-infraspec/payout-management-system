@@ -71,8 +71,23 @@ func TestPayeePostAPISuccess(t *testing.T) {
 
 	mux.ServeHTTP(w, req)
 
+	type Response struct {
+		ID int `json:"id"`
+	}
+
+	var resp Response
+	err := json.Unmarshal([]byte(w.Body.Bytes()), &resp)
+	if err != nil {
+		t.Fatal("Error unmarshaling JSON:", err)
+		return
+	}
+
 	if w.Code != http.StatusCreated {
 		t.Fatalf("expected status %d, got %d, body=%s", http.StatusCreated, w.Code, w.Body.String())
+	}
+
+	if resp.ID != 1 {
+		t.Fatalf("The response body should be {\"id\":1}")
 	}
 }
 
