@@ -18,10 +18,8 @@ func initStore() PayeeRepository {
 	if store != nil {
 		return store
 	}
-	dsn := os.Getenv("DATABASE_URL")
-	if dsn == "" {
-		dsn = "postgres://postgres:postgres@db:5432/postgres?sslmode=disable"
-	}
+	dsn := os.Getenv("TEST_DATABASE_URL")
+
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		panic(err)
@@ -39,13 +37,13 @@ func setupMux(t *testing.T) *http.ServeMux {
 	store := initStore()
 
 	payeeDb, ok := store.(*payeeDB)
-    if !ok {
-        t.Fatalf("store is not *payeeDB")
-    }
+	if !ok {
+		t.Fatalf("store is not *payeeDB")
+	}
 
-    if err := cleanDB(payeeDb.db); err != nil {
-        t.Fatalf("failed to clean DB: %v", err)
-    }
+	if err := cleanDB(payeeDb.db); err != nil {
+		t.Fatalf("failed to clean DB: %v", err)
+	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/payees", PayeePostAPI(store))
