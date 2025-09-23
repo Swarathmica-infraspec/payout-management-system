@@ -18,10 +18,8 @@ func initStore() *payeeDB {
 	if store != nil {
 		return store
 	}
-	dsn := os.Getenv("DATABASE_URL")
-	if dsn == "" {
-		dsn = "postgres://postgres:postgres@db:5432/postgres?sslmode=disable"
-	}
+	dsn := os.Getenv("TEST_DATABASE_URL")
+	
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		panic(err)

@@ -57,4 +57,5 @@ jobs:
         with:
           # TODO: SOLVE: POST JOB CLEANUP: Error: imageName is required to push images
           # TODO: create acess token in ghcr and cache image for faster workflow
+          env: ./.env
           runCmd: go test -v ./...
