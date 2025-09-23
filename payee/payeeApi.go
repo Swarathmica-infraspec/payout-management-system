@@ -70,7 +70,10 @@ func PayeePostAPI(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("Insertion failed")
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusConflict)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "Payee cannot be created with duplicate values",
+		})
 		return
 	}
 
