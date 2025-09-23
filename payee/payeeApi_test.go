@@ -2,29 +2,66 @@ package payee
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
+
+	_ "github.com/lib/pq"
 )
 
-func setupMux() *http.ServeMux {
+var store PayeeRepository
+
+func initStore() PayeeRepository {
+	if store != nil {
+		return store
+	}
+	dsn := os.Getenv("TEST_DATABASE_URL")
+
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		panic(err)
+	}
+	store = PayeeDB(db)
+	return store
+}
+
+func cleanDB(db *sql.DB) error {
+	_, err := db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
+	return err
+}
+
+func setupMux(t *testing.T) *http.ServeMux {
+	store := initStore()
+
+	payeeDb, ok := store.(*payeeDB)
+	if !ok {
+		t.Fatalf("store is not *payeeDB")
+	}
+
+	if err := cleanDB(payeeDb.db); err != nil {
+		t.Fatalf("failed to clean DB: %v", err)
+	}
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/payees", PayeePostAPI)
+
 	return mux
 }
 
 func TestPayeePostAPISuccess(t *testing.T) {
-	mux := setupMux()
+	mux := setupMux(t)
 
 	payload := map[string]interface{}{
 		"name":           "Abdc",
-		"code":           "1263",
-		"account_number": 1234767891,
+		"code":           "1262",
+		"account_number": 1234767893,
 		"ifsc":           "CBIN0123456",
 		"bank":           "CBI",
-		"email":          "abdc@example.com",
-		"mobile":         9876543290,
+		"email":          "abcd@example.com",
+		"mobile":         9876543292,
 		"category":       "Employee",
 	}
 	body, _ := json.Marshal(payload)
@@ -40,7 +77,7 @@ func TestPayeePostAPISuccess(t *testing.T) {
 }
 
 func TestPayeePostAPIInvalidJSON(t *testing.T) {
-	mux := setupMux()
+	mux := setupMux(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBufferString("{bad json}"))
 	w := httptest.NewRecorder()
