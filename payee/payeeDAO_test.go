@@ -73,3 +73,55 @@ func TestInsertAndGetPayee(t *testing.T) {
 		t.Errorf("expected beneficiary code: %s, got: %s", p.payeeCategory, got.payeeCategory)
 	}
 }
+
+func TestInsertPayee(t *testing.T) {
+	db := setupTestDB(t)
+	store := PayeeDB(db)
+	ctx := context.Background()
+
+	p, _ := NewPayee("Abc", "136", 1234567890123456, "CBIN0123459", "CBI", "abc@gmail.com", 9123456780, "Employee")
+
+	id, err := store.Insert(ctx, p)
+	if err != nil {
+		t.Fatalf("failed to insert payee: %v", err)
+	}
+	defer db.Exec("DELETE FROM payees WHERE id = $1", id)
+
+	var code, name, bank, ifsc, email, category string
+	var accNo int
+	var mobile int
+	err = db.QueryRow(`
+		SELECT beneficiary_code, beneficiary_name, account_number, ifsc_code, bank_name, email, mobile, payee_category
+		FROM payees WHERE id = $1`, id).
+		Scan(&code, &name, &accNo, &ifsc, &bank, &email, &mobile, &category)
+	if err != nil {
+		t.Fatalf("failed to query payee: %v", err)
+	}
+
+	if code != p.beneficiaryCode {
+		t.Errorf("expected %+v, got %+v", code, p.beneficiaryCode)
+	}
+
+	if name != p.beneficiaryName {
+		t.Errorf("expected %+v, got %+v", name, p.beneficiaryName)
+	}
+	if accNo != p.accNo {
+		t.Errorf("expected %+v, got %+v", accNo, p.accNo)
+	}
+
+	if ifsc != p.ifsc {
+		t.Errorf("expected %+v, got %+v", ifsc, p.ifsc)
+	}
+	if bank != p.bankName {
+		t.Errorf("expected %+v, got %+v", bank, p.bankName)
+	}
+	if email != p.email {
+		t.Errorf("expected %+v, got %+v", email, p.email)
+	}
+	if mobile != p.mobile {
+		t.Errorf("expected %+v, got %+v", mobile, p.mobile)
+	}
+	if category != p.payeeCategory {
+		t.Errorf("expected %+v, got %+v", mobile, p.mobile)
+	}
+}
