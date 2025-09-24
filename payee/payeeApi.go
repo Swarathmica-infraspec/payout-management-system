@@ -86,3 +86,9 @@ func PayeePostAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
+func SetupRouter() *http.ServeMux {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/payees", PayeePostAPI)
+	return mux
+}

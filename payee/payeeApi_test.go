@@ -45,8 +45,7 @@ func setupMux(t *testing.T) *http.ServeMux {
 		t.Fatalf("failed to clean DB: %v", err)
 	}
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/payees", PayeePostAPI)
+	mux := SetupRouter()
 
 	return mux
 }
