@@ -33,7 +33,11 @@ func TestInsertPayee(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to insert payee: %v", err)
 	}
-	defer db.Exec("DELETE FROM payees WHERE id = $1", id)
+	defer func() {
+		if _, err := db.Exec("DELETE FROM payees WHERE id = $1", id); err != nil {
+			t.Logf("failed to clear payee: %v", err)
+		}
+	}()
 
 	var code, name, bank, ifsc, email, category string
 	var accNo int
@@ -87,7 +91,11 @@ func TestGetPayeeByID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to insert fixture payee: %v", err)
 	}
-	defer db.Exec("DELETE FROM payees WHERE id = $1", id)
+	defer func() {
+		if _, err := db.Exec("DELETE FROM payees WHERE id = $1", id); err != nil {
+			t.Logf("failed to clear payee: %v", err)
+		}
+	}()
 
 	got, err := store.GetByID(ctx, id)
 	if err != nil {
