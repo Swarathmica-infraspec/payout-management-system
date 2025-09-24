@@ -125,3 +125,28 @@ func TestInsertPayee(t *testing.T) {
 		t.Errorf("expected %+v, got %+v", mobile, p.mobile)
 	}
 }
+
+func TestGetPayeeByID(t *testing.T) {
+	db := setupTestDB(t)
+	store := PayeeDB(db)
+	ctx := context.Background()
+
+	var id int
+	err := db.QueryRow(`
+		INSERT INTO payees (beneficiary_name, beneficiary_code, account_number, ifsc_code, bank_name, email, mobile, payee_category)
+		VALUES ('Abc','136',1234567890123456,'CBIN0123459','CBI','abc@gmail.com',9123456780,'Employee')
+		RETURNING id`).Scan(&id)
+	if err != nil {
+		t.Fatalf("failed to insert fixture payee: %v", err)
+	}
+	defer db.Exec("DELETE FROM payees WHERE id = $1", id)
+
+	got, err := store.GetByID(ctx, id)
+	if err != nil {
+		t.Fatalf("failed to fetch payee: %v", err)
+	}
+
+	if got.beneficiaryName != "Abc" {
+		t.Errorf("expected name Abc, got %s", got.beneficiaryName)
+	}
+}
