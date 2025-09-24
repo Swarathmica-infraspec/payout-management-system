@@ -21,6 +21,7 @@ func setupTestDB(t *testing.T) *sql.DB {
 	}
 	return db
 }
+
 func clearPayees(t *testing.T, db *sql.DB) {
 	_, err := db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
 	if err != nil {
@@ -28,8 +29,14 @@ func clearPayees(t *testing.T, db *sql.DB) {
 	}
 }
 
+
 func TestInsertAndGetPayee(t *testing.T) {
 	db := setupTestDB(t)
+	defer func() {
+		if err := db.Close(); err != nil {
+			t.Errorf("failed to close DB connection: %v", err)
+		}
+	}()
 	store := PayeeDB(db)
 	ctx := context.Background()
 

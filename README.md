@@ -13,7 +13,6 @@ Clone this repo: <a href = "https://github.com/Swarathmica-infraspec/payout-mana
 GO-VERSION: 1.25.0
 
 The project contains payoutmanagementsystem/ <br>
-
 - .github/workflows/payoutManagementSystem.yml <br>
 - payee/
   - payee.go <br>
@@ -65,14 +64,7 @@ If 'command not found: psql' : run : apt-get update
 payeeDAO contains database query for payee and payeeDAO_test contains relevant tests
 
 ## 4. HTTP API Usage
-
-since postgres is run from docker, 
-
-docker exec -it devcontainer-app-1 bash
-
-cd /workspaces/payoutManagementSystem
-
-then run: go run main.go #entry point
+run: go run main.go #entry point
 
 payeeApi.go has the code for API while payeeAPI_test.go has test code
 
@@ -103,15 +95,16 @@ curl -X GET http://localhost:8080/payees/list \
 curl -X GET http://localhost:8080/payees/1 \
   -H "Content-Type: application/json"
 
-
 # Run tests
 
-To run tests:
+To run tests: (inside docker)
+
 go test -v ./...
+
 
 ## To come out of devcontainer:
 
-press F1: Dev Containers: Reopen Folder Locally
+To exit devcontainer: press F1: Dev Containers: Reopen folder locally
 
 Or devcontainer is started throught terminal, use 'exit' to come out of bash.
 Stop container if required by :
