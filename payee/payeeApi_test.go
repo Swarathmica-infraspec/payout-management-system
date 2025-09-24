@@ -102,4 +102,12 @@ func TestPayeePostAPIInvalidJSON(t *testing.T) {
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected status %d, got %d, body=%s", http.StatusBadRequest, w.Code, w.Body.String())
 	}
+
+	resp := w.Body.String()
+	expected := "Error unmarshaling JSON\n"
+
+	if resp != expected {
+		t.Fatalf("expected body %q, got %q", expected, resp)
+	}
+
 }
