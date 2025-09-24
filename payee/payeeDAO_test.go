@@ -98,11 +98,40 @@ func TestGetPayeeByID(t *testing.T) {
 	}()
 
 	got, err := store.GetByID(ctx, id)
+	name := "Abc"
+	code := "136"
+	accNo := 1234567890123456
+	ifsc := "CBIN0123459"
+	bank := "CBI"
+	email := "abc@gmail.com"
+	mobile := 9123456780
+	category := "Employee"
 	if err != nil {
 		t.Fatalf("failed to fetch payee: %v", err)
 	}
 
-	if got.beneficiaryName != "Abc" {
-		t.Errorf("expected name Abc, got %s", got.beneficiaryName)
+	if got.beneficiaryName != name {
+		t.Errorf("expected name %s, got %s", name, got.beneficiaryName)
+	}
+	if got.beneficiaryCode != code {
+		t.Errorf("expected  code %s, got %s", code, got.beneficiaryCode)
+	}
+	if got.accNo != accNo {
+		t.Errorf("expected accNo %d, got %d", accNo, got.accNo)
+	}
+	if got.ifsc != ifsc {
+		t.Errorf("expected ifsc %s, got %s", ifsc, got.ifsc)
+	}
+	if got.bankName != bank {
+		t.Errorf("expected bank %s, got %s", bank, got.bankName)
+	}
+	if got.email != email {
+		t.Errorf("expected email %s, got %s", email, got.email)
+	}
+	if got.mobile != mobile {
+		t.Errorf("expected mobile %d, got %d", mobile, got.mobile)
+	}
+	if got.payeeCategory != category {
+		t.Errorf("expected category %s, got %s", category, got.payeeCategory)
 	}
 }
