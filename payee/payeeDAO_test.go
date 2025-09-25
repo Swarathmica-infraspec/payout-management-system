@@ -22,6 +22,12 @@ func setupTestDB(t *testing.T) *sql.DB {
 	return db
 }
 
+func clearPayees(t *testing.T, db *sql.DB) {
+	_, err := db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
+	if err != nil {
+		t.Fatalf("failed to clear table: %v", err)
+	}
+}
 func TestInsertPayee(t *testing.T) {
 	db := setupTestDB(t)
 	store := PayeeDB(db)
@@ -133,5 +139,31 @@ func TestGetPayeeByID(t *testing.T) {
 	}
 	if got.payeeCategory != category {
 		t.Errorf("expected category %s, got %s", category, got.payeeCategory)
+	}
+}
+func TestListPayees(t *testing.T) {
+	db := setupTestDB(t)
+	store := PayeeDB(db)
+	defer clearPayees(t, db)
+
+	p, err := NewPayee("Xyz", "456", 1234567890123456, "HDFC0001213", "HDFC", "xyz@gmail.com", 9876543210, "Vendor")
+	if err != nil {
+		t.Fatalf("validation failed: %v", err)
+	}
+
+	id, err := store.Insert(context.Background(), p)
+	if err != nil {
+		t.Fatal("Insertion failed")
+	}
+
+	defer func() {
+		if _, err := db.Exec("DELETE FROM payees WHERE id = $1", id); err != nil {
+			t.Errorf("warning: failed to clean up payee id %d: %v", id, err)
+		}
+	}()
+
+	_, err = store.List(context.Background())
+	if err != nil {
+		t.Fatalf("failed to list payees: %v", err)
 	}
 }
