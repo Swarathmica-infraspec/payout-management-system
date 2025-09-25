@@ -113,3 +113,38 @@ func TestPayeePostAPIInvalidJSON(t *testing.T) {
 	}
 
 }
+func TestPayeePostAPIDuplicate(t *testing.T) {
+	mux := setupMux(t)
+
+	payload := map[string]interface{}{
+		"name":           "Abdc",
+		"code":           "1262",
+		"account_number": 1234767893,
+		"ifsc":           "CBIN0123456",
+		"bank":           "CBI",
+		"email":          "abcd@example.com",
+		"mobile":         9876543292,
+		"category":       "Employee",
+	}
+	body, _ := json.Marshal(payload)
+
+	req1 := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
+	w1 := httptest.NewRecorder()
+	mux.ServeHTTP(w1, req1)
+	if w1.Code != http.StatusCreated {
+		t.Fatalf("expected 201 Created, got %d", w1.Code)
+	}
+
+	req2 := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
+	w2 := httptest.NewRecorder()
+	mux.ServeHTTP(w2, req2)
+
+	if w2.Code != http.StatusConflict {
+		t.Fatalf("expected 409 Conflict, got %d, body=%s", w2.Code, w2.Body.String())
+	}
+
+	expected := `{"error":"Payee cannot be created with duplicate values"}` + "\n"
+	if w2.Body.String() != expected {
+		t.Fatalf("expected body %q, got %q", expected, w2.Body.String())
+	}
+}
