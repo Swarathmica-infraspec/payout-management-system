@@ -104,7 +104,7 @@ func TestPayeePostAPIInvalidJSON(t *testing.T) {
 	}
 
 	resp := w.Body.String()
-	expected := "Error unmarshaling JSON\n"
+	expected := `{"error":"Error unmarshaling JSON"}` + "\n"
 
 	if resp != expected {
 		t.Fatalf("expected body %q, got %q", expected, resp)
