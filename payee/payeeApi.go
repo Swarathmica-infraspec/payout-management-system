@@ -20,7 +20,12 @@ func PayeePostAPI(w http.ResponseWriter, r *http.Request) {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to connect to database"})
+		if err := json.NewEncoder(w).Encode(map[string]string{
+			"error": "Failed to connect to database",
+		}); err != nil {
+			log.Printf("failed to write JSON response: %v", err)
+		}
+
 		return
 	}
 
