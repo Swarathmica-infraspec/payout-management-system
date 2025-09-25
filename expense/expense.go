@@ -62,11 +62,6 @@ func checkDate(dateStr string) bool {
 		return false
 	}
 
-	year := date.Year()
-	if year < 2025 || year > 2050 {
-		return false
-	}
-
 	today := time.Now().Truncate(24 * time.Hour)
 	return !date.Before(today)
 }
