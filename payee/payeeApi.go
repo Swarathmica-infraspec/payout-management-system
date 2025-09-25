@@ -19,8 +19,11 @@ func PayeePostAPI(w http.ResponseWriter, r *http.Request) {
 
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
-		panic(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to connect to database"})
+		return
 	}
+
 	defer func() {
 		if err := db.Close(); err != nil {
 			log.Printf("failed to close db: %v", err)
@@ -44,21 +47,37 @@ func PayeePostAPI(w http.ResponseWriter, r *http.Request) {
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		if err := json.NewEncoder(w).Encode(map[string]string{
+			"error": "Error reading request body",
+		}); err != nil {
+			log.Printf("Error reading request body: %v", err)
+			return
+		}
 		return
 	}
 
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		http.Error(w, "Error unmarshaling JSON", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(map[string]string{
+			"error": "Error unmarshaling JSON",
+		}); err != nil {
+			log.Printf("Error unmarshaling JSON: %v", err)
+			return
+		}
 		return
 	}
 
 	p, err := NewPayee(data.Name, data.Code, data.AccNo, data.IFSC, data.Bank, data.Email, data.Mobile, data.Category)
 	if err != nil {
-		fmt.Println("Structure creation failed")
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		w.WriteHeader(http.StatusConflict)
+		if err := json.NewEncoder(w).Encode(map[string]string{
+			"error": "Structure creation failed",
+		}); err != nil {
+			log.Printf("Structure creation failed: %v", err)
+			return
+		}
 	}
 
 	_, err = store.Insert(context.Background(), p)
