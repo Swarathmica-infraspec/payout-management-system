@@ -167,3 +167,32 @@ func TestListPayees(t *testing.T) {
 		t.Fatalf("failed to list payees: %v", err)
 	}
 }
+
+func TestUpdatePayee(t *testing.T) {
+	ctx := context.Background()
+	db := setupTestDB(t)
+	defer clearPayees(t, db)
+
+	store := PayeeDB(db)
+
+	p, _ := NewPayee("Abc", "123", 1234567890123456, "CBIN0124345", "CBI", "abc@gmail.com", 9123456780, "Employee")
+	id, err := store.Insert(ctx, p)
+	if err != nil {
+		t.Fatalf("failed to insert payee: %v", err)
+	}
+
+	originalPayee, _ := store.GetByID(ctx, id)
+
+	updatedName := "cat"
+
+	originalPayee.beneficiaryName = updatedName
+
+	updated, err := store.Update(ctx, originalPayee)
+	if err != nil {
+		t.Fatalf("Update failed: %v", err)
+	}
+
+	if updated.beneficiaryName != updatedName {
+		t.Errorf("expected name %q, got %q", updatedName, updated.beneficiaryName)
+	}
+}
