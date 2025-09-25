@@ -84,7 +84,10 @@ func TestPayeePostAPISuccess(t *testing.T) {
 	if w.Code != http.StatusCreated {
 		t.Fatalf("expected status %d, got %d, body=%s", http.StatusCreated, w.Code, w.Body.String())
 	}
-
+	expected := `{"id":1}` + "\n"
+	if w.Body.String() != expected {
+		t.Fatalf("expected body %q, got %q", expected, w.Body.String())
+	}
 	if resp.ID != 1 {
 		t.Fatalf("The response body should be {\"id\":1}")
 	}
