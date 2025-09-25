@@ -17,6 +17,7 @@ The project contains payoutmanagementsystem/ <br>
 - expense/
   - expense.go <br>
   - expense_test.go <br>
+  - expense_db.sql <br>
 - payee/
   - payee.go <br>
   - payee_test.go <br>
@@ -38,7 +39,6 @@ We use PostgreSQL(17.6-trixie) running inside Docker for persistant storage.
 Install devcontainer extension in vs code, or from the terminal using
 npm i -g @devcontainers/cli
 
-NOTE: Only payee has Database as of now.
 
 ## 1. Start Postgres with Docker Compose
 
@@ -59,6 +59,7 @@ devcontainer exec --workspace-folder . bash
 Run the below command for the first time (or if db does not exist):
 
 psql -h db -U $POSTGRES_USER -d $POSTGRES_DB -f payee/payee_db.sql
+psql -h db -U $POSTGRES_USER -d $POSTGRES_DB -f expense/expense_db.sql
 
 It will prompt for password. Give your postgres password. (or refer to .env)
 
