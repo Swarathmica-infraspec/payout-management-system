@@ -314,3 +314,91 @@ func TestPayeeGetOneAPINotFound(t *testing.T) {
 		t.Fatalf("expected body %q, got %q", expected, w.Body.String())
 	}
 }
+
+func TestPayeeUpdateAPI(t *testing.T) {
+	mux := setupMux(t)
+
+	payee := map[string]interface{}{
+		"name":           "def",
+		"code":           "131",
+		"account_number": 1234567090,
+		"ifsc":           "SBIN0001111",
+		"bank":           "SBI",
+		"email":          "def@example.com",
+		"mobile":         9876513210,
+		"category":       "Employee",
+	}
+	body, _ := json.Marshal(payee)
+	req := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusCreated {
+		t.Fatalf("failed to create payee, got status %d", w.Code)
+	}
+
+	type PostResponse struct {
+		ID int `json:"id"`
+	}
+	var inserted PostResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &inserted); err != nil {
+		t.Fatalf("failed to unmarshal create response: %v", err)
+	}
+
+	updatePayee := map[string]interface{}{
+		"name":           "ghhi",
+		"code":           "131",
+		"account_number": 1234567990,
+		"ifsc":           "SBIN0002222",
+		"bank":           "SBI Updated",
+		"email":          "ghhi@example.com",
+		"mobile":         9806517210,
+		"category":       "Vendor",
+	}
+	updateBody, _ := json.Marshal(updatePayee)
+	req2 := httptest.NewRequest(http.MethodPut, "/payees/update/"+strconv.Itoa(inserted.ID), bytes.NewBuffer(updateBody))
+	w2 := httptest.NewRecorder()
+	mux.ServeHTTP(w2, req2)
+
+	if w2.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d, body=%s", http.StatusOK, w2.Code, w2.Body.String())
+	}
+
+	req3 := httptest.NewRequest(http.MethodGet, "/payees/"+strconv.Itoa(inserted.ID), nil)
+	w3 := httptest.NewRecorder()
+	mux.ServeHTTP(w3, req3)
+
+	if w3.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK on GET, got %d, body=%s", w3.Code, w3.Body.String())
+	}
+
+	var got PayeeGETResponse
+	if err := json.Unmarshal(w3.Body.Bytes(), &got); err != nil {
+		t.Fatalf("failed to unmarshal get response: %v", err)
+	}
+
+	if got.BeneficiaryName != updatePayee["name"] {
+		t.Errorf("expected name %q, got %q", updatePayee["name"], got.BeneficiaryName)
+	}
+	if got.BeneficiaryCode != updatePayee["code"] {
+		t.Errorf("expected code %q, got %q", updatePayee["code"], got.BeneficiaryCode)
+	}
+	if got.AccNo != updatePayee["account_number"] {
+		t.Errorf("expected account_number %v, got %v", updatePayee["account_number"], got.AccNo)
+	}
+	if got.IFSC != updatePayee["ifsc"] {
+		t.Errorf("expected ifsc %q, got %q", updatePayee["ifsc"], got.IFSC)
+	}
+	if got.BankName != updatePayee["bank"] {
+		t.Errorf("expected bank %q, got %q", updatePayee["bank"], got.BankName)
+	}
+	if got.Email != updatePayee["email"] {
+		t.Errorf("expected email %q, got %q", updatePayee["email"], got.Email)
+	}
+	if got.Mobile != updatePayee["mobile"] {
+		t.Errorf("expected mobile %v, got %v", updatePayee["mobile"], got.Mobile)
+	}
+	if got.PayeeCategory != updatePayee["category"] {
+		t.Errorf("expected category %q, got %q", updatePayee["category"], got.PayeeCategory)
+	}
+}

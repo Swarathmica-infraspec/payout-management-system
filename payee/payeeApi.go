@@ -121,10 +121,45 @@ func PayeeGetOneAPI(store PayeeRepository) http.HandlerFunc {
 		_ = json.NewEncoder(w).Encode(resp)
 	}
 }
+func PayeeUpdateAPI(store PayeeRepository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		idStr := strings.TrimPrefix(r.URL.Path, "/payees/update/")
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			http.Error(w, "invalid ID", http.StatusBadRequest)
+			return
+		}
+
+		var req PayeeRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid request body: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		p, err := NewPayee(req.Name, req.Code, req.AccNo, req.IFSC, req.Bank, req.Email, req.Mobile, req.Category)
+		if err != nil {
+			http.Error(w, "validation failed: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+		p.id = id
+
+		_, err = store.Update(context.Background(), p)
+		if err != nil {
+			http.Error(w, "DB update failed: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(map[string]string{"status": "updated"})
+	}
+}
+
 func SetupRouter(store PayeeRepository) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/payees", PayeePostAPI(store))
 	mux.HandleFunc("/payees/list", PayeeGetAPI(store))
 	mux.HandleFunc("/payees/", PayeeGetOneAPI(store))
+	mux.HandleFunc("/payees/update/", PayeeUpdateAPI(store))
 	return mux
 }
