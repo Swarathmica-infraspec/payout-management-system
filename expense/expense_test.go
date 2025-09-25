@@ -5,13 +5,17 @@ import (
 	"time"
 )
 
-func futureDate(daysAhead int) string {
-	return time.Now().AddDate(0, 0, daysAhead).Format("2006-01-02")
+func futureDate(baseDate time.Time, daysAhead int) string {
+	return baseDate.AddDate(0, 0, daysAhead).Format("2006-01-02")
 }
 
-func pastDate(daysBack int) string {
-	return time.Now().AddDate(0, 0, -daysBack).Format("2006-01-02")
+func pastDate(baseDate time.Time, daysBack int) string {
+	return baseDate.AddDate(0, 0, -daysBack).Format("2006-01-02")
 }
+
+var (
+	baseDate = time.Date(2025, 9, 25, 10, 0, 0, 0, time.UTC)
+)
 
 var invalidExpenseTests = []struct {
 	testName     string
@@ -24,15 +28,15 @@ var invalidExpenseTests = []struct {
 	receiptURI   string
 	expectedErr  error
 }{
-	{"TestInvalidExpenseWithEmptyTitle", "", 450.00, futureDate(1), "Food", "Team lunch", 10, "https://receipts.com/lunch.jpg", ErrInvalidTitle},
-	{"TestInvalidExpenseOfAmount0", "Travel", 0, futureDate(1), "Travel", "Bus fare", 11, "", ErrInvalidAmount},
+	{"TestInvalidExpenseWithEmptyTitle", "", 450.00, futureDate(baseDate, 1), "Food", "Team lunch", 10, "https://receipts.com/lunch.jpg", ErrInvalidTitle},
+	{"TestInvalidExpenseOfAmount0", "Travel", 0, futureDate(baseDate, 1), "Travel", "Bus fare", 11, "", ErrInvalidAmount},
 	{"TestInvalidExpenseWithWrongDate", "Snacks", 55, "2025-08-32", "Food", "Evening snacks", 12, "", ErrInvalidDate},
 	{"TestInvalidExpenseWithWrongMonth", "Snacks", 55, "2025-13-30", "Food", "Evening snacks", 12, "", ErrInvalidDate},
 	{"TestInvalidExpenseWithYearBefore2025", "Snacks", 55, "1999-12-24", "Food", "Evening snacks", 12, "", ErrInvalidDate},
-	{"TestInvalidExpenseWithPastDate", "Lunch", 100, pastDate(1), "Food", "Past expense", 10, "/path/receipt.jpg", ErrInvalidDate},
-	{"TestInvalidExpenseWithWrongCategory", "Paper", 20, futureDate(1), "", "For printer", 13, "", ErrInvalidCategory},
-	{"TestInvalidExpenseWithInvalidPayeeID", "Hotel", 2100, futureDate(1), "Accommodation", "Stay", -1, "", ErrInvalidPayeeID},
-	{"TestInvalidExpenseWithInvalidReceiptURI", "Stationery", 200, futureDate(1), "Office", "Pens", 14, "bill", ErrInvalidReceiptURI},
+	{"TestInvalidExpenseWithPastDate", "Lunch", 100, pastDate(baseDate, 1), "Food", "Past expense", 10, "/path/receipt.jpg", ErrInvalidDate},
+	{"TestInvalidExpenseWithWrongCategory", "Paper", 20, futureDate(baseDate, 1), "", "For printer", 13, "", ErrInvalidCategory},
+	{"TestInvalidExpenseWithInvalidPayeeID", "Hotel", 2100, futureDate(baseDate, 1), "Accommodation", "Stay", -1, "", ErrInvalidPayeeID},
+	{"TestInvalidExpenseWithInvalidReceiptURI", "Stationery", 200, futureDate(baseDate, 1), "Office", "Pens", 14, "bill", ErrInvalidReceiptURI},
 }
 
 func TestInvalidExpense(t *testing.T) {
@@ -49,7 +53,7 @@ func TestInvalidExpense(t *testing.T) {
 func TestValidExpense(t *testing.T) {
 	title := "Lunch"
 	amount := 450.00
-	dateIncurred := futureDate(1)
+	dateIncurred := futureDate(time.Now(),1)
 	category := "Food"
 	notes := "Team lunch"
 	payeeID := 10
