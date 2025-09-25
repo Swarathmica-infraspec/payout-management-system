@@ -11,6 +11,7 @@ type PayeeRepository interface {
 	GetByID(context context.Context, id int) (*payee, error)
 	List(context context.Context) ([]payee, error)
 	Update(ctx context.Context, p *payee) (*payee, error)
+	Delete(ctx context.Context, id int) error
 }
 
 type payeeDB struct {
@@ -137,4 +138,8 @@ func (s *payeeDB) Update(ctx context.Context, p *payee) (*payee, error) {
 	}
 
 	return &updatedPayee, nil
+}
+func (r *payeeDB) Delete(context context.Context, id int) error {
+	_, err := r.db.ExecContext(context, "DELETE FROM payees WHERE id=$1", id)
+	return err
 }
