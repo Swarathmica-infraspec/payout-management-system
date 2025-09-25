@@ -402,3 +402,62 @@ func TestPayeeUpdateAPI(t *testing.T) {
 		t.Errorf("expected category %q, got %q", updatePayee["category"], got.PayeeCategory)
 	}
 }
+
+func TestPayeeDeleteAPI(t *testing.T) {
+	mux := setupMux(t)
+
+	payee := map[string]interface{}{
+		"name":           "adef",
+		"code":           "1211",
+		"account_number": 1134567090,
+		"ifsc":           "SBIN0001111",
+		"bank":           "SBI",
+		"email":          "adef@example.com",
+		"mobile":         9876503210,
+		"category":       "Employee",
+	}
+	body, _ := json.Marshal(payee)
+
+	req := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusCreated {
+		t.Fatalf("failed to create payee, got status %d, body=%s", w.Code, w.Body.String())
+	}
+
+	type PostResponse struct {
+		ID int `json:"id"`
+	}
+	var inserted PostResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &inserted); err != nil {
+		t.Fatalf("failed to unmarshal create response: %v", err)
+	}
+
+	url := "/payees/delete/" + strconv.Itoa(inserted.ID)
+	req2 := httptest.NewRequest(http.MethodDelete, url, nil)
+	w2 := httptest.NewRecorder()
+	mux.ServeHTTP(w2, req2)
+
+	if w2.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d, body=%s", http.StatusOK, w2.Code, w2.Body.String())
+	}
+
+	var deleteResponse map[string]string
+	if err := json.Unmarshal(w2.Body.Bytes(), &deleteResponse); err != nil {
+		t.Fatalf("failed to unmarshal delete response: %v", err)
+	}
+	if deleteResponse["status"] != "deleted" {
+		t.Fatalf("expected status=deleted, got %v", deleteResponse["status"])
+	}
+
+	urlGet := "/payees/" + strconv.Itoa(inserted.ID)
+	req3 := httptest.NewRequest(http.MethodGet, urlGet, nil)
+	w3 := httptest.NewRecorder()
+	mux.ServeHTTP(w3, req3)
+
+	if w3.Code != http.StatusNotFound {
+		t.Fatalf("expected status %d after delete, got %d, body=%s",
+			http.StatusNotFound, w3.Code, w3.Body.String())
+	}
+}

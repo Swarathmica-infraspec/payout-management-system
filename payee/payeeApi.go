@@ -154,6 +154,31 @@ func PayeeUpdateAPI(store PayeeRepository) http.HandlerFunc {
 		_ = json.NewEncoder(w).Encode(map[string]string{"status": "updated"})
 	}
 }
+func PayeeDeleteAPI(store PayeeRepository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		idStr := strings.TrimPrefix(r.URL.Path, "/payees/delete/")
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			http.Error(w, "invalid ID", http.StatusBadRequest)
+			return
+		}
+
+		err = store.Delete(context.Background(), id)
+		if err != nil {
+			http.Error(w, "DB delete failed: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(map[string]string{"status": "deleted"})
+	}
+}
 
 func SetupRouter(store PayeeRepository) *http.ServeMux {
 	mux := http.NewServeMux()
@@ -161,5 +186,6 @@ func SetupRouter(store PayeeRepository) *http.ServeMux {
 	mux.HandleFunc("/payees/list", PayeeGetAPI(store))
 	mux.HandleFunc("/payees/", PayeeGetOneAPI(store))
 	mux.HandleFunc("/payees/update/", PayeeUpdateAPI(store))
+	mux.HandleFunc("/payees/delete/", PayeeDeleteAPI(store))
 	return mux
 }
