@@ -88,9 +88,7 @@ func TestPayeePostAPISuccess(t *testing.T) {
 	if w.Body.String() != expected {
 		t.Fatalf("expected body %q, got %q", expected, w.Body.String())
 	}
-	if resp.ID != 1 {
-		t.Fatalf("The response body should be {\"id\":1}")
-	}
+
 }
 
 func TestPayeePostAPIInvalidJSON(t *testing.T) {
