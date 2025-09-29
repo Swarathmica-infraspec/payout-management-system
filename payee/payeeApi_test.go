@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	_ "github.com/lib/pq"
+	"github.com/stretchr/testify/assert"
 )
 
 var store PayeeRepository
@@ -74,27 +75,10 @@ func TestPayeePostAPISuccess(t *testing.T) {
 
 	mux.ServeHTTP(w, req)
 
-	type Response struct {
-		ID int `json:"id"`
-	}
+	assert.Equal(t, http.StatusCreated, w.Code)
 
-	var resp Response
-	err := json.Unmarshal([]byte(w.Body.Bytes()), &resp)
-	if err != nil {
-		t.Fatal("Error unmarshaling JSON:", err)
-		return
-	}
-
-	if w.Code != http.StatusCreated {
-		t.Fatalf("expected status %d, got %d, body=%s", http.StatusCreated, w.Code, w.Body.String())
-	}
-	expected := `{"id":1}` + "\n"
-	if w.Body.String() != expected {
-		t.Fatalf("expected body %q, got %q", expected, w.Body.String())
-	}
-	if resp.ID != 1 {
-		t.Fatalf("The response body should be {\"id\":1}")
-	}
+	expected := `{"id":1}`
+	assert.JSONEq(t, expected, w.Body.String())
 }
 
 func TestPayeePostAPIInvalidJSON(t *testing.T) {
@@ -105,16 +89,10 @@ func TestPayeePostAPIInvalidJSON(t *testing.T) {
 
 	mux.ServeHTTP(w, req)
 
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected status %d, got %d, body=%s", http.StatusBadRequest, w.Code, w.Body.String())
-	}
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 
-	resp := w.Body.String()
-	expected := "Invalid JSON body\n"
-
-	if resp != expected {
-		t.Fatalf("expected body %q, got %q", expected, resp)
-	}
+	expected := `{"error":"Invalid JSON body"}`
+	assert.JSONEq(t, expected, w.Body.String())
 
 }
 func TestPayeePostAPIDuplicate(t *testing.T) {
@@ -135,22 +113,18 @@ func TestPayeePostAPIDuplicate(t *testing.T) {
 	req1 := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
 	w1 := httptest.NewRecorder()
 	mux.ServeHTTP(w1, req1)
-	if w1.Code != http.StatusCreated {
-		t.Fatalf("expected 201 Created, got %d", w1.Code)
-	}
+	assert.Equal(t, http.StatusCreated, w1.Code)
 
 	req2 := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
 	w2 := httptest.NewRecorder()
 	mux.ServeHTTP(w2, req2)
 
-	if w2.Code != http.StatusConflict {
-		t.Fatalf("expected 409 Conflict, got %d, body=%s", w2.Code, w2.Body.String())
-	}
+	assert.Equal(t, http.StatusConflict, w2.Code)
 
-	expected := "DB insertion failed: pq: duplicate key value violates unique constraint \"payees_beneficiary_code_key\"\n"
-	if w2.Body.String() != expected {
-		t.Fatalf("expected body %q, got %q", expected, w2.Body.String())
-	}
+	expected := `{"error":"DB insertion failed: pq: duplicate key value violates unique constraint \"payees_beneficiary_code_key\""}`
+
+	assert.JSONEq(t, expected, w2.Body.String())
+
 }
 
 func TestPayeeGetAPI(t *testing.T) {
@@ -170,52 +144,28 @@ func TestPayeeGetAPI(t *testing.T) {
 	reqCreate := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
 	wCreate := httptest.NewRecorder()
 	mux.ServeHTTP(wCreate, reqCreate)
-	if wCreate.Code != http.StatusCreated {
-		t.Fatalf("expected 201 Created, got %d, body=%s", wCreate.Code, wCreate.Body.String())
-	}
+	assert.Equal(t, http.StatusCreated, wCreate.Code)
 
 	req := httptest.NewRequest(http.MethodGet, "/payees/list", nil)
 	w := httptest.NewRecorder()
 	mux.ServeHTTP(w, req)
 
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected status %d, got %d, body=%s", http.StatusOK, w.Code, w.Body.String())
-	}
+	assert.Equal(t, http.StatusOK, w.Code)
 
 	var resp []PayeeGETResponse
-	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
-		t.Fatalf("response is not valid JSON: %v", err)
-	}
-
-	if len(resp) != 1 {
-		t.Fatalf("expected 1 payee, got %d", len(resp))
-	}
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	assert.NoError(t, err)
+	assert.Len(t, resp, 1)
 
 	got := resp[0]
-	if got.BeneficiaryName != payload["name"] {
-		t.Errorf("expected name %q, got %q", payload["name"], got.BeneficiaryName)
-	}
-	if got.BeneficiaryCode != payload["code"] {
-		t.Errorf("expected code %q, got %q", payload["code"], got.BeneficiaryCode)
-	}
-	if got.AccNo != payload["account_number"] {
-		t.Errorf("expected account_number %v, got %v", payload["account_number"], got.AccNo)
-	}
-	if got.IFSC != payload["ifsc"] {
-		t.Errorf("expected IFSC %q, got %q", payload["ifsc"], got.IFSC)
-	}
-	if got.BankName != payload["bank"] {
-		t.Errorf("expected bank %q, got %q", payload["bank"], got.BankName)
-	}
-	if got.Email != payload["email"] {
-		t.Errorf("expected email %q, got %q", payload["email"], got.Email)
-	}
-	if got.Mobile != payload["mobile"] {
-		t.Errorf("expected mobile %v, got %v", payload["mobile"], got.Mobile)
-	}
-	if got.PayeeCategory != payload["category"] {
-		t.Errorf("expected category %q, got %q", payload["category"], got.PayeeCategory)
-	}
+	assert.Equal(t, payload["name"], got.BeneficiaryName)
+	assert.Equal(t, payload["code"], got.BeneficiaryCode)
+	assert.Equal(t, payload["account_number"], got.AccNo)
+	assert.Equal(t, payload["ifsc"], got.IFSC)
+	assert.Equal(t, payload["bank"], got.BankName)
+	assert.Equal(t, payload["email"], got.Email)
+	assert.Equal(t, payload["mobile"], got.Mobile)
+	assert.Equal(t, payload["category"], got.PayeeCategory)
 
 }
 
@@ -238,60 +188,35 @@ func TestPayeeGetOneAPI(t *testing.T) {
 	wCreate := httptest.NewRecorder()
 	mux.ServeHTTP(wCreate, reqCreate)
 
-	if wCreate.Code != http.StatusCreated {
-		t.Fatalf("expected 201 Created, got %d, body=%s", wCreate.Code, wCreate.Body.String())
-	}
+	assert.Equal(t, http.StatusCreated, wCreate.Code)
 
 	type CreateResp struct {
 		ID int `json:"id"`
 	}
 	var createResp CreateResp
-	if err := json.Unmarshal(wCreate.Body.Bytes(), &createResp); err != nil {
-		t.Fatal("Failed to unmarshal create response:", err)
-	}
+	err := json.Unmarshal(wCreate.Body.Bytes(), &createResp)
+	assert.NoError(t, err)
 
 	url := "/payees/" + strconv.Itoa(createResp.ID)
 	reqGet := httptest.NewRequest(http.MethodGet, url, nil)
 	wGet := httptest.NewRecorder()
 	mux.ServeHTTP(wGet, reqGet)
 
-	if wGet.Code != http.StatusOK {
-		t.Fatalf("expected 200 OK, got %d, body=%s", wGet.Code, wGet.Body.String())
-	}
+	assert.Equal(t, http.StatusOK, wGet.Code)
 
 	var getResp PayeeGETResponse
+	err = json.Unmarshal(wGet.Body.Bytes(), &getResp)
+	assert.NoError(t, err)
 
-	if err := json.Unmarshal(wGet.Body.Bytes(), &getResp); err != nil {
-		t.Fatal("Failed to unmarshal get response:", err)
-	}
-
-	if getResp.ID != createResp.ID {
-		t.Fatalf("expected ID %d, got %d", createResp.ID, getResp.ID)
-	}
-	if getResp.BeneficiaryName != payload["name"] {
-		t.Fatalf("expected name %q, got %q", payload["name"], getResp.BeneficiaryName)
-	}
-	if getResp.BeneficiaryCode != payload["code"] {
-		t.Fatalf("expected code %q, got %q", payload["code"], getResp.BeneficiaryCode)
-	}
-	if getResp.AccNo != payload["account_number"] {
-		t.Fatalf("expected accNo %v, got %v", payload["account_number"], getResp.AccNo)
-	}
-	if getResp.IFSC != payload["ifsc"] {
-		t.Fatalf("expected IFSC %q, got %q", payload["ifsc"], getResp.IFSC)
-	}
-	if getResp.BankName != payload["bank"] {
-		t.Fatalf("expected bank %q, got %q", payload["bank"], getResp.BankName)
-	}
-	if getResp.Email != payload["email"] {
-		t.Fatalf("expected email %q, got %q", payload["email"], getResp.Email)
-	}
-	if getResp.Mobile != payload["mobile"] {
-		t.Fatalf("expected mobile %v, got %v", payload["mobile"], getResp.Mobile)
-	}
-	if getResp.PayeeCategory != payload["category"] {
-		t.Fatalf("expected category %q, got %q", payload["category"], getResp.PayeeCategory)
-	}
+	assert.Equal(t, createResp.ID, getResp.ID)
+	assert.Equal(t, payload["name"], getResp.BeneficiaryName)
+	assert.Equal(t, payload["code"], getResp.BeneficiaryCode)
+	assert.Equal(t, payload["account_number"], getResp.AccNo)
+	assert.Equal(t, payload["ifsc"], getResp.IFSC)
+	assert.Equal(t, payload["bank"], getResp.BankName)
+	assert.Equal(t, payload["email"], getResp.Email)
+	assert.Equal(t, payload["mobile"], getResp.Mobile)
+	assert.Equal(t, payload["category"], getResp.PayeeCategory)
 }
 
 func TestPayeeGetOneAPINotFound(t *testing.T) {
@@ -305,14 +230,10 @@ func TestPayeeGetOneAPINotFound(t *testing.T) {
 
 	mux.ServeHTTP(w, req)
 
-	if w.Code != http.StatusNotFound {
-		t.Fatalf("expected 404 Not Found, got %d, body=%s", w.Code, w.Body.String())
-	}
+	assert.Equal(t, http.StatusNotFound, w.Code)
 
-	expected := "record not found\n"
-	if w.Body.String() != expected {
-		t.Fatalf("expected body %q, got %q", expected, w.Body.String())
-	}
+	expected := `{"error":"record not found"}`
+	assert.JSONEq(t, expected, w.Body.String())
 }
 
 func TestPayeeUpdateAPI(t *testing.T) {
