@@ -2,6 +2,8 @@ package payee
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var errTests = []struct {
@@ -38,19 +40,13 @@ func TestInvalidPayee(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			_, err := NewPayee(tt.beneficiaryName, tt.beneficiaryCode, tt.accNo, tt.ifsc, tt.bankName, tt.email, tt.mobile, tt.payeeCategory)
 			if err != tt.expectedErr {
-				t.Fatalf("Error Test Case: %v , Expected Error: %v but Actual Error: %v", tt.errMsg, tt.expectedErr, err)
+				assert.ErrorIs(t, err, tt.expectedErr, "Error Test Case: %v", tt.errMsg)
 			}
 		})
 	}
 }
 
 func TestValidPayee(t *testing.T) {
-
-	_, err := NewPayee("abc", "123", 1234567890, "CBIN0123456", "cbi", "abc@gmail.com", 9876543210, "Employee")
-	if err != nil {
-		t.Fatalf("payee should be created but got error: %v", err)
-	}
-
 	name := "abc"
 	code := "123"
 	accNo := 1234567890
@@ -60,40 +56,14 @@ func TestValidPayee(t *testing.T) {
 	mobile := 9876543210
 	category := "Employee"
 	p, err := NewPayee(name, code, accNo, bankIFSC, bankName, emailID, mobile, category)
-	if err != nil {
-		t.Fatalf("payee should be created but got error: %v", err)
-	}
+	assert.NoError(t, err, "payee should be created")
 
-	if p.beneficiaryName != name {
-		t.Errorf("expected name: %v but stored name: %v", name, p.beneficiaryName)
-	}
-
-	if p.beneficiaryCode != code {
-		t.Errorf("expected beneficiary code: %v but stored code: %v", code, p.beneficiaryCode)
-	}
-
-	if p.accNo != accNo {
-		t.Errorf("expected account Number: %v but stored account number: %v", accNo, p.accNo)
-	}
-
-	if p.ifsc != bankIFSC {
-		t.Errorf("expected IFSC: %v but stored IFSC: %v", bankIFSC, p.ifsc)
-	}
-
-	if p.bankName != bankName {
-		t.Errorf("expected bank name: %v but stored bank name: %v", bankName, p.bankName)
-	}
-
-	if p.email != emailID {
-		t.Errorf("expected emailID: %v but stored email ID: %v", emailID, p.email)
-	}
-
-	if p.mobile != mobile {
-		t.Errorf("expected mobile number: %v but stored mobile number: %v", mobile, p.mobile)
-	}
-
-	if p.payeeCategory != category {
-		t.Errorf("expected category: %v but stored category: %v", category, p.payeeCategory)
-	}
-
+	assert.Equal(t, name, p.beneficiaryName, "name mismatch")
+	assert.Equal(t, code, p.beneficiaryCode, "beneficiary code mismatch")
+	assert.Equal(t, accNo, p.accNo, "account number mismatch")
+	assert.Equal(t, bankIFSC, p.ifsc, "IFSC mismatch")
+	assert.Equal(t, bankName, p.bankName, "bank name mismatch")
+	assert.Equal(t, emailID, p.email, "email mismatch")
+	assert.Equal(t, mobile, p.mobile, "mobile mismatch")
+	assert.Equal(t, category, p.payeeCategory, "category mismatch")
 }
