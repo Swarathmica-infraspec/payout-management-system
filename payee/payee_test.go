@@ -39,9 +39,8 @@ func TestInvalidPayee(t *testing.T) {
 	for _, tt := range errTests {
 		t.Run(tt.testName, func(t *testing.T) {
 			_, err := NewPayee(tt.beneficiaryName, tt.beneficiaryCode, tt.accNo, tt.ifsc, tt.bankName, tt.email, tt.mobile, tt.payeeCategory)
-			if err != tt.expectedErr {
-				assert.ErrorIs(t, err, tt.expectedErr, "Error Test Case: %v", tt.errMsg)
-			}
+			assert.ErrorIs(t, err, tt.expectedErr, "Error Test Case: %v", tt.errMsg)
+
 		})
 	}
 }
