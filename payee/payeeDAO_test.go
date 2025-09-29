@@ -73,14 +73,13 @@ func TestGetPayeeByID(t *testing.T) {
 		VALUES ('Abc','136',1234567890123456,'CBIN0123459','CBI','abc@gmail.com',9123456780,'Employee')
 		RETURNING id`).Scan(&id)
 
-  require.NoError(t, err, "failed to insert payee")
+	require.NoError(t, err, "failed to insert payee")
 	defer func() {
 		_, err := db.Exec("DELETE FROM payees WHERE id = $1", id)
 		assert.NoError(t, err, "failed to clean up payee")
 	}()
 
 	got, err := store.GetByID(ctx, id)
-
 
 	name := "Abc"
 	code := "136"

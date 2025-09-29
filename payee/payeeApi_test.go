@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	_ "github.com/lib/pq"
-
+	"github.com/stretchr/testify/assert"
 )
 
 var store PayeeRepository
@@ -52,7 +52,6 @@ func setupMux(t *testing.T) *http.ServeMux {
 	}
 
 	mux := SetupRouter(store)
-
 
 	return mux
 }
@@ -96,7 +95,7 @@ func TestPayeePostAPIInvalidJSON(t *testing.T) {
 
 	expected := `{"error":"Invalid JSON body"}`
 	assert.JSONEq(t, expected, w.Body.String())
-  
+
 }
 func TestPayeePostAPIDuplicate(t *testing.T) {
 	mux := setupMux(t)
@@ -236,5 +235,5 @@ func TestPayeeGetOneAPINotFound(t *testing.T) {
 
 	expected := `{"error":"record not found"}`
 	assert.JSONEq(t, expected, w.Body.String())
-	
+
 }
