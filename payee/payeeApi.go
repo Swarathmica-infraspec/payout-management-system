@@ -177,20 +177,26 @@ func PayeeUpdateAPI(store PayeeRepository) http.HandlerFunc {
 func PayeeDeleteAPI(store PayeeRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodDelete {
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "method not allowed"})
 			return
 		}
 
 		idStr := strings.TrimPrefix(r.URL.Path, "/payees/delete/")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			http.Error(w, "invalid ID", http.StatusBadRequest)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "invalid ID"})
 			return
 		}
 
 		err = store.Delete(context.Background(), id)
 		if err != nil {
-			http.Error(w, "DB delete failed: "+err.Error(), http.StatusInternalServerError)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "DB delete failed: " + err.Error()})
 			return
 		}
 
