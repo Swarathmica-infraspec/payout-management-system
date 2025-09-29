@@ -155,12 +155,12 @@ func TestDeletePayee(t *testing.T) {
 
 	p, _ := NewPayee("Abc", "123", 1234567890123456, "CBIN0123456", "CBI", "abc@gmail.com", 9123456780, "Employee")
 	id, err := store.Insert(ctx, p)
-	assert.NoError(t, err, "failed to insert payee")
+	require.NoError(t, err, "failed to insert payee")
 
 	err = store.SoftDelete(ctx, id)
-	assert.NoError(t, err, "soft delete failed")
+	require.NoError(t, err, "soft delete failed")
 
 	got, err := store.GetByID(ctx, id)
-	assert.Error(t, err, "expected error fetching soft-deleted payee")
-	assert.Nil(t, got, "soft-deleted payee should not be returned by GetByID")
+	assert.Error(t, err, "expected error fetching soft deleted payee")
+	assert.Nil(t, got, "soft deleted payee should not be returned by GetByID")
 }
