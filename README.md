@@ -57,8 +57,8 @@ psql -h db -U $POSTGRES_USER -d $POSTGRES_DB -f payee/payee_db.sql
 
 It will prompt for password. Give your postgres password. (or refer to .env)
 
-If 'command not found: psql' : run : apt-get update
-                                     apt-get install -y postgresql-client
+If 'command not found: psql' : run : sudo apt-get update
+                                     sudo apt-get install -y postgresql-client
 
 ## 3. Data Access Object
 
