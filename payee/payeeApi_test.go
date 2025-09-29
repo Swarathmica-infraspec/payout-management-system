@@ -322,42 +322,29 @@ func TestPayeeDeleteAPI(t *testing.T) {
 	w := httptest.NewRecorder()
 	mux.ServeHTTP(w, req)
 
-	if w.Code != http.StatusCreated {
-		t.Fatalf("failed to create payee, got status %d, body=%s", w.Code, w.Body.String())
-	}
+	assert.Equal(t, http.StatusCreated, w.Code, "POST to create payee should succeed")
 
 	type PostResponse struct {
 		ID int `json:"id"`
 	}
 	var inserted PostResponse
-	if err := json.Unmarshal(w.Body.Bytes(), &inserted); err != nil {
-		t.Fatalf("failed to unmarshal create response: %v", err)
-	}
+	err := json.Unmarshal(w.Body.Bytes(), &inserted)
+	assert.NoError(t, err, "failed to unmarshal create response")
 
 	url := "/payees/delete/" + strconv.Itoa(inserted.ID)
 	req2 := httptest.NewRequest(http.MethodDelete, url, nil)
 	w2 := httptest.NewRecorder()
 	mux.ServeHTTP(w2, req2)
 
-	if w2.Code != http.StatusOK {
-		t.Fatalf("expected status %d, got %d, body=%s", http.StatusOK, w2.Code, w2.Body.String())
-	}
+	assert.Equal(t, http.StatusOK, w2.Code, "DELETE should return 200 OK")
 
-	var deleteResponse map[string]string
-	if err := json.Unmarshal(w2.Body.Bytes(), &deleteResponse); err != nil {
-		t.Fatalf("failed to unmarshal delete response: %v", err)
-	}
-	if deleteResponse["status"] != "deleted" {
-		t.Fatalf("expected status=deleted, got %v", deleteResponse["status"])
-	}
+	expectedDeleteResp := `{"status":"deleted"}`
+	assert.JSONEq(t, expectedDeleteResp, w2.Body.String(), "DELETE response should match JSON")
 
 	urlGet := "/payees/" + strconv.Itoa(inserted.ID)
 	req3 := httptest.NewRequest(http.MethodGet, urlGet, nil)
 	w3 := httptest.NewRecorder()
 	mux.ServeHTTP(w3, req3)
 
-	if w3.Code != http.StatusNotFound {
-		t.Fatalf("expected status %d after delete, got %d, body=%s",
-			http.StatusNotFound, w3.Code, w3.Body.String())
-	}
+	assert.Equal(t, http.StatusNotFound, w3.Code, "GET after delete should return 404 Not Found")
 }
