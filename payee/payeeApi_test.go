@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	_ "github.com/lib/pq"
-	"github.com/stretchr/testify/assert"
+
 )
 
 var store PayeeRepository
@@ -25,6 +25,7 @@ func initStore() PayeeRepository {
 	if dsn == "" {
 		log.Fatal("DATABASE_URL not set")
 	}
+
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		panic(err)
@@ -51,6 +52,7 @@ func setupMux(t *testing.T) *http.ServeMux {
 	}
 
 	mux := SetupRouter(store)
+
 
 	return mux
 }
@@ -79,6 +81,7 @@ func TestPayeePostAPISuccess(t *testing.T) {
 
 	expected := `{"id":1}`
 	assert.JSONEq(t, expected, w.Body.String())
+
 }
 
 func TestPayeePostAPIInvalidJSON(t *testing.T) {
@@ -93,7 +96,7 @@ func TestPayeePostAPIInvalidJSON(t *testing.T) {
 
 	expected := `{"error":"Invalid JSON body"}`
 	assert.JSONEq(t, expected, w.Body.String())
-
+  
 }
 func TestPayeePostAPIDuplicate(t *testing.T) {
 	mux := setupMux(t)
@@ -114,7 +117,6 @@ func TestPayeePostAPIDuplicate(t *testing.T) {
 	w1 := httptest.NewRecorder()
 	mux.ServeHTTP(w1, req1)
 	assert.Equal(t, http.StatusCreated, w1.Code)
-
 	req2 := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
 	w2 := httptest.NewRecorder()
 	mux.ServeHTTP(w2, req2)
@@ -234,4 +236,5 @@ func TestPayeeGetOneAPINotFound(t *testing.T) {
 
 	expected := `{"error":"record not found"}`
 	assert.JSONEq(t, expected, w.Body.String())
+	
 }

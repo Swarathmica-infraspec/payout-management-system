@@ -138,5 +138,6 @@ func SetupRouter(store PayeeRepository) *http.ServeMux {
 	mux.HandleFunc("/payees", PayeePostAPI(store))
 	mux.HandleFunc("/payees/list", PayeeGetAPI(store))
 	mux.HandleFunc("/payees/", PayeeGetOneAPI(store))
+
 	return mux
 }

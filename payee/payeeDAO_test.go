@@ -25,6 +25,7 @@ func clearPayees(t *testing.T, db *sql.DB) {
 	_, err := db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
 	require.NoError(t, err, "failed to clear DB")
 }
+
 func TestInsertPayee(t *testing.T) {
 	db := setupTestDB(t)
 	store := PayeeDB(db)
@@ -71,13 +72,15 @@ func TestGetPayeeByID(t *testing.T) {
 		INSERT INTO payees (beneficiary_name, beneficiary_code, account_number, ifsc_code, bank_name, email, mobile, payee_category)
 		VALUES ('Abc','136',1234567890123456,'CBIN0123459','CBI','abc@gmail.com',9123456780,'Employee')
 		RETURNING id`).Scan(&id)
-	require.NoError(t, err, "failed to insert payee")
+
+  require.NoError(t, err, "failed to insert payee")
 	defer func() {
 		_, err := db.Exec("DELETE FROM payees WHERE id = $1", id)
 		assert.NoError(t, err, "failed to clean up payee")
 	}()
 
 	got, err := store.GetByID(ctx, id)
+
 
 	name := "Abc"
 	code := "136"
@@ -118,4 +121,5 @@ func TestListPayees(t *testing.T) {
 	require.NoError(t, err, "failed to list payees")
 
 	assert.NotEmpty(t, payees, "expected at least one payee")
+
 }
