@@ -74,7 +74,6 @@ func PayeeGetAPI(store PayeeRepository) http.HandlerFunc {
 			_ = json.NewEncoder(w).Encode(map[string]string{"error": "DB query failed"})
 			return
 		}
-		
 
 		var resp []PayeeGETResponse
 		for _, p := range payees {
@@ -111,7 +110,7 @@ func PayeeGetOneAPI(store PayeeRepository) http.HandlerFunc {
 
 		p, err := store.GetByID(context.Background(), id)
 		if err != nil {
-				w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusNotFound)
 			_ = json.NewEncoder(w).Encode(map[string]string{"error": "record not found"})
 			return
