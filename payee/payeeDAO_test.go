@@ -129,9 +129,7 @@ func TestUpdatePayee(t *testing.T) {
 
 	p, _ := NewPayee("Abc", "123", 1234567890123456, "CBIN0124345", "CBI", "abc@gmail.com", 9123456780, "Employee")
 	id, err := store.Insert(ctx, p)
-	if err != nil {
-		t.Fatalf("failed to insert payee: %v", err)
-	}
+	require.NoError(t, err, "Insertion failed")
 
 	originalPayee, _ := store.GetByID(ctx, id)
 
@@ -140,11 +138,10 @@ func TestUpdatePayee(t *testing.T) {
 	originalPayee.beneficiaryName = updatedName
 
 	updated, err := store.Update(ctx, originalPayee)
-	if err != nil {
-		t.Fatalf("Update failed: %v", err)
-	}
+	require.NoError(t, err, "Update failed")
 
 	if updated.beneficiaryName != updatedName {
 		t.Errorf("expected name %q, got %q", updatedName, updated.beneficiaryName)
 	}
+	assert.Equal(t, updatedName, updated.beneficiaryName)
 }
