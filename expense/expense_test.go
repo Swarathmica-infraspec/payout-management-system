@@ -3,6 +3,8 @@ package expense
 import (
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func futureDate(baseDate time.Time, daysAhead int) string {
@@ -27,6 +29,7 @@ var invalidExpenseTests = []struct {
 	payeeID      int
 	receiptURI   string
 	expectedErr  error
+	errMsg       string
 }{
 	{"TestInvalidExpenseWithEmptyTitle", "", 450.00, futureDate(baseDate, 1), "Food", "Team lunch", 10, "https://receipts.com/lunch.jpg", ErrInvalidTitle},
 	{"TestInvalidExpenseOfAmount0", "Travel", 0, futureDate(baseDate, 1), "Travel", "Bus fare", 11, "", ErrInvalidAmount},
@@ -42,9 +45,8 @@ func TestInvalidExpense(t *testing.T) {
 	for _, tt := range invalidExpenseTests {
 		t.Run(tt.testName, func(t *testing.T) {
 			_, err := NewExpense(tt.title, tt.amount, tt.dateIncurred, tt.category, tt.notes, tt.payeeID, tt.receiptURI)
-			if err != tt.expectedErr {
-				t.Fatalf("Expected Error: %v but Actual Error: %v", tt.expectedErr, err)
-			}
+			assert.ErrorIs(t, err, tt.expectedErr, "Error Test Case: %v", tt.errMsg)
+
 		})
 	}
 }
