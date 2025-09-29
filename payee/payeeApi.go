@@ -192,7 +192,7 @@ func PayeeDeleteAPI(store PayeeRepository) http.HandlerFunc {
 			return
 		}
 
-		err = store.Delete(context.Background(), id)
+		err = store.SoftDelete(context.Background(), id)
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)

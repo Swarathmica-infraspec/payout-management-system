@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	_ "github.com/lib/pq"
+	"github.com/stretchr/testify/assert"
 )
 
 func setupTestDB(t *testing.T) *sql.DB {
@@ -206,13 +207,12 @@ func TestDeletePayee(t *testing.T) {
 
 	p, _ := NewPayee("Abc", "123", 1234567890123456, "CBIN0123456", "CBI", "abc@gmail.com", 9123456780, "Employee")
 	id, err := store.Insert(ctx, p)
-	if err != nil {
-		t.Fatalf("failed to insert payee: %v", err)
-	}
+	assert.NoError(t, err, "failed to insert payee")
 
-	err = store.Delete(ctx, id)
-	if err != nil {
-		t.Fatalf("delete failed: %v", err)
-	}
+	err = store.SoftDelete(ctx, id)
+	assert.NoError(t, err, "soft delete failed")
 
+	got, err := store.GetByID(ctx, id)
+	assert.Error(t, err, "expected error fetching soft-deleted payee")
+	assert.Nil(t, got, "soft-deleted payee should not be returned by GetByID")
 }
