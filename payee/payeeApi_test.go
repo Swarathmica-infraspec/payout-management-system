@@ -254,17 +254,14 @@ func TestPayeeUpdateAPI(t *testing.T) {
 	w := httptest.NewRecorder()
 	mux.ServeHTTP(w, req)
 
-	if w.Code != http.StatusCreated {
-		t.Fatalf("failed to create payee, got status %d", w.Code)
-	}
+	assert.Equal(t, http.StatusCreated, w.Code, "first POST should succeed")
 
 	type PostResponse struct {
 		ID int `json:"id"`
 	}
 	var inserted PostResponse
-	if err := json.Unmarshal(w.Body.Bytes(), &inserted); err != nil {
-		t.Fatalf("failed to unmarshal create response: %v", err)
-	}
+	err := json.Unmarshal(w.Body.Bytes(), &inserted)
+	assert.NoError(t, err, "failed to unmarshal create response")
 
 	updatePayee := map[string]interface{}{
 		"name":           "ghhi",
@@ -281,45 +278,27 @@ func TestPayeeUpdateAPI(t *testing.T) {
 	w2 := httptest.NewRecorder()
 	mux.ServeHTTP(w2, req2)
 
-	if w2.Code != http.StatusOK {
-		t.Fatalf("expected status %d, got %d, body=%s", http.StatusOK, w2.Code, w2.Body.String())
-	}
+	assert.Equal(t, http.StatusOK, w2.Code, "update should return 200 OK")
+
+	expectedUpdateResp := `{"status":"updated"}`
+	assert.JSONEq(t, expectedUpdateResp, w2.Body.String(), "update response should match JSON")
 
 	req3 := httptest.NewRequest(http.MethodGet, "/payees/"+strconv.Itoa(inserted.ID), nil)
 	w3 := httptest.NewRecorder()
 	mux.ServeHTTP(w3, req3)
 
-	if w3.Code != http.StatusOK {
-		t.Fatalf("expected 200 OK on GET, got %d, body=%s", w3.Code, w3.Body.String())
-	}
+	assert.Equal(t, http.StatusOK, w3.Code, "GET after update should return 200 OK")
 
 	var got PayeeGETResponse
-	if err := json.Unmarshal(w3.Body.Bytes(), &got); err != nil {
-		t.Fatalf("failed to unmarshal get response: %v", err)
-	}
+	err = json.Unmarshal(w3.Body.Bytes(), &got)
+	assert.NoError(t, err, "failed to unmarshal get response")
 
-	if got.BeneficiaryName != updatePayee["name"] {
-		t.Errorf("expected name %q, got %q", updatePayee["name"], got.BeneficiaryName)
-	}
-	if got.BeneficiaryCode != updatePayee["code"] {
-		t.Errorf("expected code %q, got %q", updatePayee["code"], got.BeneficiaryCode)
-	}
-	if got.AccNo != updatePayee["account_number"] {
-		t.Errorf("expected account_number %v, got %v", updatePayee["account_number"], got.AccNo)
-	}
-	if got.IFSC != updatePayee["ifsc"] {
-		t.Errorf("expected ifsc %q, got %q", updatePayee["ifsc"], got.IFSC)
-	}
-	if got.BankName != updatePayee["bank"] {
-		t.Errorf("expected bank %q, got %q", updatePayee["bank"], got.BankName)
-	}
-	if got.Email != updatePayee["email"] {
-		t.Errorf("expected email %q, got %q", updatePayee["email"], got.Email)
-	}
-	if got.Mobile != updatePayee["mobile"] {
-		t.Errorf("expected mobile %v, got %v", updatePayee["mobile"], got.Mobile)
-	}
-	if got.PayeeCategory != updatePayee["category"] {
-		t.Errorf("expected category %q, got %q", updatePayee["category"], got.PayeeCategory)
-	}
+	assert.Equal(t, updatePayee["name"], got.BeneficiaryName, "name should match updated value")
+	assert.Equal(t, updatePayee["code"], got.BeneficiaryCode, "code should match updated value")
+	assert.Equal(t, updatePayee["account_number"], got.AccNo, "account number should match updated value")
+	assert.Equal(t, updatePayee["ifsc"], got.IFSC, "IFSC should match updated value")
+	assert.Equal(t, updatePayee["bank"], got.BankName, "bank should match updated value")
+	assert.Equal(t, updatePayee["email"], got.Email, "email should match updated value")
+	assert.Equal(t, updatePayee["mobile"], got.Mobile, "mobile should match updated value")
+	assert.Equal(t, updatePayee["category"], got.PayeeCategory, "category should match updated value")
 }
