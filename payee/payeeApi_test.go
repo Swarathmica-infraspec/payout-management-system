@@ -12,6 +12,7 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var store PayeeRepository
@@ -42,13 +43,10 @@ func setupMux(t *testing.T) *http.ServeMux {
 	store := initStore()
 
 	payeeDb, ok := store.(*payeeDB)
-	if !ok {
-		t.Fatalf("store is not *payeeDB")
-	}
+	require.True(t, ok, "store should be *payeeDB")
 
-	if err := cleanDB(payeeDb.db); err != nil {
-		t.Fatalf("failed to clean DB: %v", err)
-	}
+	err := cleanDB(payeeDb.db)
+	require.NoError(t, err, "failed to clean DB")
 
 	mux := SetupRouter(store)
 
