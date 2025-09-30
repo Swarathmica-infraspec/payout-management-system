@@ -1,15 +1,46 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	payee "payoutmanagementsystem/payee"
+
+	_ "github.com/lib/pq"
 )
 
+func initStore() (payee.PayeeRepository, *sql.DB) {
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		log.Fatal("DATABASE_URL not set")
+	}
+
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		log.Fatal("Failed to open DB:", err)
+	}
+
+	if err := db.Ping(); err != nil {
+		log.Fatal("Failed to ping DB:", err)
+	}
+
+	repo := payee.PayeeDB(db)
+	return repo, db
+}
+
 func main() {
-	mux := payee.SetupRouter()
+	store, db := initStore()
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Println("Failed to close DB:", err)
+		}
+	}()
+
+	mux := payee.SetupRouter(store)
+
 	fmt.Println("Server starting on :8080")
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }
