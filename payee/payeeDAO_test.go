@@ -21,6 +21,11 @@ func setupTestDB(t *testing.T) *sql.DB {
 	return db
 }
 
+func clearPayees(t *testing.T, db *sql.DB) {
+	_, err := db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
+	require.NoError(t, err, "failed to clear DB")
+}
+
 func TestInsertPayee(t *testing.T) {
 	db := setupTestDB(t)
 	store := PayeeDB(db)
@@ -95,4 +100,25 @@ func TestGetPayeeByID(t *testing.T) {
 	assert.Equal(t, email, got.email)
 	assert.Equal(t, mobile, got.mobile)
 	assert.Equal(t, category, got.payeeCategory)
+}
+func TestListPayees(t *testing.T) {
+	db := setupTestDB(t)
+	store := PayeeDB(db)
+	defer clearPayees(t, db)
+
+	p, err := NewPayee("Xyz", "456", 1234567890123456, "HDFC0001213", "HDFC", "xyz@gmail.com", 9876543210, "Vendor")
+	require.NoError(t, err, "validation failed")
+
+	id, err := store.Insert(context.Background(), p)
+	require.NoError(t, err, "Insertion failed")
+	defer func() {
+		_, err := db.Exec("DELETE FROM payees WHERE id = $1", id)
+		assert.NoError(t, err, "failed to clean up payee")
+	}()
+
+	payees, err := store.List(context.Background())
+	require.NoError(t, err, "failed to list payees")
+
+	assert.NotEmpty(t, payees, "expected at least one payee")
+
 }
