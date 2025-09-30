@@ -106,10 +106,10 @@ To exit devcontainer: press F1: Dev Containers: Reopen folder locally
 
 Or devcontainer is started throught terminal, use 'exit' to come out of bash.
 Stop container if required by :
-docker stop payoutmanagementsystem_devcontainer-db-1
-docker stop payoutmanagementsystem_devcontainer-app-1
+docker stop <folder-name>_devcontainer-db-1 <folder-name>_devcontainer-app-1
 
-
+Remove the container:
+docker rm <folder-name>_devcontainer-app-1 <folder-name>_devcontainer-db-1
 
 # CI
 
