@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strconv"
 	"testing"
 
 	_ "github.com/lib/pq"
@@ -122,5 +123,115 @@ func TestPayeePostAPIDuplicate(t *testing.T) {
 	expected := `{"error":"DB insertion failed"}`
 
 	assert.JSONEq(t, expected, w2.Body.String())
+
+}
+
+func TestPayeeGetAPI(t *testing.T) {
+	mux := setupMux(t)
+
+	payload := map[string]interface{}{
+		"name":           "Abdc",
+		"code":           "1262",
+		"account_number": 1234767893,
+		"ifsc":           "CBIN0123456",
+		"bank":           "CBI",
+		"email":          "abcd@example.com",
+		"mobile":         9876543292,
+		"category":       "Employee",
+	}
+	body, _ := json.Marshal(payload)
+	reqCreate := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
+	wCreate := httptest.NewRecorder()
+	mux.ServeHTTP(wCreate, reqCreate)
+	assert.Equal(t, http.StatusCreated, wCreate.Code)
+
+	req := httptest.NewRequest(http.MethodGet, "/payees/list", nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var resp []PayeeGETResponse
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	assert.NoError(t, err)
+	assert.Len(t, resp, 1)
+
+	got := resp[0]
+	assert.Equal(t, payload["name"], got.BeneficiaryName)
+	assert.Equal(t, payload["code"], got.BeneficiaryCode)
+	assert.Equal(t, payload["account_number"], got.AccNo)
+	assert.Equal(t, payload["ifsc"], got.IFSC)
+	assert.Equal(t, payload["bank"], got.BankName)
+	assert.Equal(t, payload["email"], got.Email)
+	assert.Equal(t, payload["mobile"], got.Mobile)
+	assert.Equal(t, payload["category"], got.PayeeCategory)
+
+}
+
+func TestPayeeGetOneAPI(t *testing.T) {
+	mux := setupMux(t)
+
+	payload := map[string]interface{}{
+		"name":           "Abdc",
+		"code":           "1262",
+		"account_number": 1234767893,
+		"ifsc":           "CBIN0123456",
+		"bank":           "CBI",
+		"email":          "abcd@example.com",
+		"mobile":         9876543292,
+		"category":       "Employee",
+	}
+	body, _ := json.Marshal(payload)
+
+	reqCreate := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
+	wCreate := httptest.NewRecorder()
+	mux.ServeHTTP(wCreate, reqCreate)
+
+	assert.Equal(t, http.StatusCreated, wCreate.Code)
+
+	type CreateResp struct {
+		ID int `json:"id"`
+	}
+	var createResp CreateResp
+	err := json.Unmarshal(wCreate.Body.Bytes(), &createResp)
+	assert.NoError(t, err)
+
+	url := "/payees/" + strconv.Itoa(createResp.ID)
+	reqGet := httptest.NewRequest(http.MethodGet, url, nil)
+	wGet := httptest.NewRecorder()
+	mux.ServeHTTP(wGet, reqGet)
+
+	assert.Equal(t, http.StatusOK, wGet.Code)
+
+	var getResp PayeeGETResponse
+	err = json.Unmarshal(wGet.Body.Bytes(), &getResp)
+	assert.NoError(t, err)
+
+	assert.Equal(t, createResp.ID, getResp.ID)
+	assert.Equal(t, payload["name"], getResp.BeneficiaryName)
+	assert.Equal(t, payload["code"], getResp.BeneficiaryCode)
+	assert.Equal(t, payload["account_number"], getResp.AccNo)
+	assert.Equal(t, payload["ifsc"], getResp.IFSC)
+	assert.Equal(t, payload["bank"], getResp.BankName)
+	assert.Equal(t, payload["email"], getResp.Email)
+	assert.Equal(t, payload["mobile"], getResp.Mobile)
+	assert.Equal(t, payload["category"], getResp.PayeeCategory)
+}
+
+func TestPayeeGetOneAPINotFound(t *testing.T) {
+	mux := setupMux(t)
+
+	nonExistentID := 9999
+	url := "/payees/" + strconv.Itoa(nonExistentID)
+
+	req := httptest.NewRequest(http.MethodGet, url, nil)
+	w := httptest.NewRecorder()
+
+	mux.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+
+	expected := `{"error":"record not found"}`
+	assert.JSONEq(t, expected, w.Body.String())
 
 }
