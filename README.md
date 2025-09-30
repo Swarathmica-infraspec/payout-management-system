@@ -87,6 +87,12 @@ curl -X POST http://localhost:8080/payees \
 
 expected response: {'id':1}
 
+2. GET request 
+curl -X GET http://localhost:8080/payees/list -H "Content-Type: application/json"
+
+3. GET by id request 
+curl -X GET http://localhost:8080/payees/1 -H "Content-Type: application/json"
+
 
 # Run tests
 
