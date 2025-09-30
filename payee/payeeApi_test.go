@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 
 	_ "github.com/lib/pq"
+	"github.com/stretchr/testify/assert"
 )
 
 var store PayeeRepository
@@ -19,6 +21,9 @@ func initStore() PayeeRepository {
 		return store
 	}
 	dsn := os.Getenv("TEST_DATABASE_URL")
+	if dsn == "" {
+		log.Fatal("DATABASE_URL not set")
+	}
 
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
@@ -45,7 +50,7 @@ func setupMux(t *testing.T) *http.ServeMux {
 		t.Fatalf("failed to clean DB: %v", err)
 	}
 
-	mux := SetupRouter()
+	mux := SetupRouter(store)
 
 	return mux
 }
@@ -70,24 +75,10 @@ func TestPayeePostAPISuccess(t *testing.T) {
 
 	mux.ServeHTTP(w, req)
 
-	type Response struct {
-		ID int `json:"id"`
-	}
+	assert.Equal(t, http.StatusCreated, w.Code)
 
-	var resp Response
-	err := json.Unmarshal([]byte(w.Body.Bytes()), &resp)
-	if err != nil {
-		t.Fatal("Error unmarshaling JSON:", err)
-		return
-	}
-
-	if w.Code != http.StatusCreated {
-		t.Fatalf("expected status %d, got %d, body=%s", http.StatusCreated, w.Code, w.Body.String())
-	}
-	expected := `{"id":1}` + "\n"
-	if w.Body.String() != expected {
-		t.Fatalf("expected body %q, got %q", expected, w.Body.String())
-	}
+	expected := `{"id":1}`
+	assert.JSONEq(t, expected, w.Body.String())
 
 }
 
@@ -99,16 +90,10 @@ func TestPayeePostAPIInvalidJSON(t *testing.T) {
 
 	mux.ServeHTTP(w, req)
 
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected status %d, got %d, body=%s", http.StatusBadRequest, w.Code, w.Body.String())
-	}
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 
-	resp := w.Body.String()
-	expected := `{"error":"Error unmarshaling JSON"}` + "\n"
-
-	if resp != expected {
-		t.Fatalf("expected body %q, got %q", expected, resp)
-	}
+	expected := `{"error":"Invalid JSON body"}`
+	assert.JSONEq(t, expected, w.Body.String())
 
 }
 func TestPayeePostAPIDuplicate(t *testing.T) {
@@ -129,20 +114,15 @@ func TestPayeePostAPIDuplicate(t *testing.T) {
 	req1 := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
 	w1 := httptest.NewRecorder()
 	mux.ServeHTTP(w1, req1)
-	if w1.Code != http.StatusCreated {
-		t.Fatalf("expected 201 Created, got %d", w1.Code)
-	}
-
+	assert.Equal(t, http.StatusCreated, w1.Code)
 	req2 := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
 	w2 := httptest.NewRecorder()
 	mux.ServeHTTP(w2, req2)
 
-	if w2.Code != http.StatusConflict {
-		t.Fatalf("expected 409 Conflict, got %d, body=%s", w2.Code, w2.Body.String())
-	}
+	assert.Equal(t, http.StatusConflict, w2.Code)
 
-	expected := `{"error":"Payee cannot be created with duplicate values"}` + "\n"
-	if w2.Body.String() != expected {
-		t.Fatalf("expected body %q, got %q", expected, w2.Body.String())
-	}
+	expected := `{"error":"DB insertion failed"}`
+
+	assert.JSONEq(t, expected, w2.Body.String())
+
 }
