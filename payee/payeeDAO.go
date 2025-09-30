@@ -11,7 +11,7 @@ type PayeeRepository interface {
 	GetByID(context context.Context, id int) (*payee, error)
 	List(context context.Context) ([]payee, error)
 	Update(ctx context.Context, p *payee) (*payee, error)
-	Delete(ctx context.Context, id int) error
+	SoftDelete(ctx context.Context, id int) error
 }
 
 type payeeDB struct {
@@ -44,7 +44,7 @@ func (r *payeeDB) GetByID(context context.Context, id int) (*payee, error) {
 	query := `
         SELECT beneficiary_name, beneficiary_code, account_number,
                ifsc_code, bank_name, email, mobile, payee_category
-        FROM payees WHERE id=$1`
+        FROM payees WHERE id=$1 AND is_deleted = FALSE`
 	row := r.db.QueryRowContext(context, query, id)
 
 	var p payee
@@ -67,8 +67,7 @@ func (r *payeeDB) GetByID(context context.Context, id int) (*payee, error) {
 func (s *payeeDB) List(context context.Context) ([]payee, error) {
 	rows, err := s.db.QueryContext(context, `
         SELECT id, beneficiary_name, beneficiary_code, account_number, ifsc_code, bank_name, email, mobile, payee_category
-        FROM payees
-        ORDER BY id ASC
+        FROM payees WHERE is_deleted = FALSE ORDER BY id ASC
     `)
 	if err != nil {
 		return nil, err
@@ -139,7 +138,7 @@ func (s *payeeDB) Update(ctx context.Context, p *payee) (*payee, error) {
 
 	return &updatedPayee, nil
 }
-func (r *payeeDB) Delete(context context.Context, id int) error {
-	_, err := r.db.ExecContext(context, "DELETE FROM payees WHERE id=$1", id)
+func (r *payeeDB) SoftDelete(ctx context.Context, id int) error {
+	_, err := r.db.ExecContext(ctx, "UPDATE payees SET is_deleted = TRUE WHERE id = $1", id)
 	return err
 }
