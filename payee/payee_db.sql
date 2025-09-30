@@ -9,3 +9,5 @@ CREATE TABLE IF NOT EXISTS payees (
     mobile BIGINT NOT NULL UNIQUE,
     payee_category TEXT
 );
+
+ALTER TABLE payees ADD COLUMN is_deleted BOOLEAN DEFAULT FALSE;
