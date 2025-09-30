@@ -54,7 +54,7 @@ func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusConflict)
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": "DB insertion failed: " + err.Error()})
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "DB insertion failed"})
 			return
 		}
 

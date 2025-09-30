@@ -122,7 +122,7 @@ func TestPayeePostAPIDuplicate(t *testing.T) {
 
 	assert.Equal(t, http.StatusConflict, w2.Code)
 
-	expected := `{"error":"DB insertion failed: pq: duplicate key value violates unique constraint \"payees_beneficiary_code_key\""}`
+	expected := `{"error":"DB insertion failed"}`
 
 	assert.JSONEq(t, expected, w2.Body.String())
 
