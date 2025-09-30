@@ -17,7 +17,6 @@ type PayeeRequest struct {
 	Category string `json:"category"`
 }
 
-
 func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
