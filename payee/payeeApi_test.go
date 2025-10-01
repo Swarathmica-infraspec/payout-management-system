@@ -136,7 +136,7 @@ func TestPayeePostAPIUniqueConstraints(t *testing.T) {
 				"category":       "Employee",
 			},
 			wantCode: http.StatusConflict,
-			wantJSON: `{"error":"Insertion failed: duplicate code"}`,
+			wantJSON: `{"error":"Payee already exists with the same: code"}`,
 		},
 		{
 			name: "duplicate account",
@@ -151,7 +151,7 @@ func TestPayeePostAPIUniqueConstraints(t *testing.T) {
 				"category":       "Employee",
 			},
 			wantCode: http.StatusConflict,
-			wantJSON: `{"error":"Insertion failed: duplicate account number"}`,
+			wantJSON: `{"error":"Payee already exists with the same: account number"}`,
 		},
 		{
 			name: "duplicate email",
@@ -166,7 +166,7 @@ func TestPayeePostAPIUniqueConstraints(t *testing.T) {
 				"category":       "Employee",
 			},
 			wantCode: http.StatusConflict,
-			wantJSON: `{"error":"Insertion failed: duplicate email"}`,
+			wantJSON: `{"error":"Payee already exists with the same: email"}`,
 		},
 		{
 			name: "duplicate mobile",
@@ -181,7 +181,7 @@ func TestPayeePostAPIUniqueConstraints(t *testing.T) {
 				"category":       "Employee",
 			},
 			wantCode: http.StatusConflict,
-			wantJSON: `{"error":"Insertion failed: duplicate mobile"}`,
+			wantJSON: `{"error":"Payee already exists with the same: mobile"}`,
 		},
 	}
 

@@ -44,22 +44,22 @@ func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
     switch err {
     case ErrDuplicateCode:
         w.WriteHeader(http.StatusConflict)
-        errMsg = "duplicate code"
+        errMsg = "code"
     case ErrDuplicateAccount:
         w.WriteHeader(http.StatusConflict)
-        errMsg = "duplicate account number"
+        errMsg = "account number"
     case ErrDuplicateEmail:
         w.WriteHeader(http.StatusConflict)
-        errMsg = "duplicate email"
+        errMsg = "email"
     case ErrDuplicateMobile:
         w.WriteHeader(http.StatusConflict)
-        errMsg = "duplicate mobile"
+        errMsg = "mobile"
     default:
         w.WriteHeader(http.StatusInternalServerError)
         errMsg = "internal server error"
     }
 
-    _ = json.NewEncoder(w).Encode(map[string]string{"error": "Insertion failed: "+errMsg})
+    _ = json.NewEncoder(w).Encode(map[string]string{"error": "Payee already exists with the same: "+errMsg})
     return
 }
 
