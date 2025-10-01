@@ -85,6 +85,30 @@ func TestInsertPayeeWithDuplicateAccountNumber(t *testing.T) {
 	_, err = store.Insert(ctx, duplicate)
 	require.ErrorIs(t, err, ErrDuplicateAccount)
 }
+
+func TestInsertPayeeWithDuplicateEmail(t *testing.T) {
+	db := setupTestDB(t)
+	store := PayeeDB(db)
+	ctx := context.Background()
+
+	original, err := NewPayee("Abc", "136", 1234567890123456, "CBIN0123459", "CBI", "abc@gmail.com", 9123456780, "Employee")
+	require.NoError(t, err, "failed to create original payee")
+
+	id, err := store.Insert(ctx, original)
+	require.NoError(t, err, "failed to insert original payee")
+
+	defer func() {
+		_, err := db.Exec("DELETE FROM payees WHERE id = $1", id)
+		assert.NoError(t, err, "failed to clean up original payee")
+	}()
+
+	duplicate, err := NewPayee("Pqr", "138", 1234567890123450, "CBIN0123461", "CBI", "abc@gmail.com", 9123456800, "Employee")
+	require.NoError(t, err, "failed to create duplicate payee")
+
+	_, err = store.Insert(ctx, duplicate)
+	require.ErrorIs(t, err, ErrDuplicateEmail, "expected ErrDuplicateEmail")
+}
+
 func TestGetPayeeByID(t *testing.T) {
 	db := setupTestDB(t)
 	store := PayeeDB(db)

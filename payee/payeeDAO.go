@@ -25,6 +25,7 @@ func PayeeDB(db *sql.DB) *payeeDB {
 var (
 	ErrDuplicateCode    = errors.New("duplicate beneficiary code")
 	ErrDuplicateAccount = errors.New("duplicate account number")
+	ErrDuplicateEmail   = errors.New("duplicate email")
 )
 
 func (r *payeeDB) Insert(context context.Context, p *payee) (int, error) {
@@ -49,6 +50,8 @@ func (r *payeeDB) Insert(context context.Context, p *payee) (int, error) {
 				return 0, ErrDuplicateCode
 			case "payees_account_number_key":
 				return 0, ErrDuplicateAccount
+			case "payees_email_key":
+				return 0, ErrDuplicateEmail
 			}
 		}
 		return 0, fmt.Errorf("insert payee: %w", err)
