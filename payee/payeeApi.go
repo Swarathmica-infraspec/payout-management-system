@@ -43,7 +43,7 @@ func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
 			switch err {
 			case ErrDuplicateCode:
 				w.WriteHeader(http.StatusConflict)
-				errMsg = "code"
+				errMsg = "beneficiary code"
 			case ErrDuplicateAccount:
 				w.WriteHeader(http.StatusConflict)
 				errMsg = "account number"
