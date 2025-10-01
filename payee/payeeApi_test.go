@@ -136,7 +136,7 @@ func TestPayeePostAPIUniqueConstraints(t *testing.T) {
 				"category":       "Employee",
 			},
 			wantCode: http.StatusConflict,
-			wantJSON: `{"error":"Payee already exists with the same: code"}`,
+			wantJSON: `{"error":"Payee already exists with the same: beneficiary code"}`,
 		},
 		{
 			name: "duplicate account",
