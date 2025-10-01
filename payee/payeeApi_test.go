@@ -119,7 +119,7 @@ func TestPayeePostAPIDuplicate(t *testing.T) {
 
 	assert.Equal(t, http.StatusConflict, w2.Code)
 
-	expected := `{"error":"DB insertion failed"}`
+	expected := `{"error":"Payee already exists"}`
 
 	assert.JSONEq(t, expected, w2.Body.String())
 
