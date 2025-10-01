@@ -23,7 +23,7 @@ services:
     restart: unless-stopped
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      -  ../payee/payee_db.sql:/docker-entrypoint-initdb.d/payee_db.sql:ro
+      -  ../database/:/docker-entrypoint-initdb.d/:ro
     env_file:
       - ./.env
     ports:
