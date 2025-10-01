@@ -26,6 +26,8 @@ func TestInsertPayee(t *testing.T) {
 	store := PayeeDB(db)
 	ctx := context.Background()
 
+	_, _ = db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
+
 	p, err := NewPayee("Abc", "136", 1234567890123456, "CBIN0123459", "CBI", "abc@gmail.com", 9123456780, "Employee")
 	require.NoError(t, err, "failed to create payee")
 
@@ -61,7 +63,7 @@ func TestInsertPayeeWithDuplicateValues(t *testing.T) {
 	store := PayeeDB(db)
 	ctx := context.Background()
 
-	// Insert the original payee
+	_, _ = db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
 	original, err := NewPayee("Abc", "136", 1234567890123456, "CBIN0123459", "CBI", "abc@gmail.com", 9123456780, "Employee")
 	require.NoError(t, err, "failed to create original payee")
 
@@ -128,6 +130,8 @@ func TestGetPayeeByID(t *testing.T) {
 	db := setupTestDB(t)
 	store := PayeeDB(db)
 	ctx := context.Background()
+
+	_, _ = db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
 
 	var id int
 	err := db.QueryRow(`

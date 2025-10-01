@@ -56,8 +56,8 @@ func (r *payeeDB) Insert(context context.Context, p *payee) (int, error) {
 			case "payees_mobile_key":
 				return 0, ErrDuplicateMobile
 			}
+			return 0, fmt.Errorf("insert payee: %w", err)
 		}
-		return 0, fmt.Errorf("insert payee: %w", err)
 	}
 	return id, nil
 }
