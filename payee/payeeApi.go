@@ -19,7 +19,6 @@ type PayeeRequest struct {
 
 func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		var data PayeeRequest
 		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 			w.Header().Set("Content-Type", "application/json")
@@ -38,31 +37,30 @@ func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
 
 		id, err := store.Insert(context.Background(), p)
 		if err != nil {
-    w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("Content-Type", "application/json")
 
-    var errMsg string
-    switch err {
-    case ErrDuplicateCode:
-        w.WriteHeader(http.StatusConflict)
-        errMsg = "code"
-    case ErrDuplicateAccount:
-        w.WriteHeader(http.StatusConflict)
-        errMsg = "account number"
-    case ErrDuplicateEmail:
-        w.WriteHeader(http.StatusConflict)
-        errMsg = "email"
-    case ErrDuplicateMobile:
-        w.WriteHeader(http.StatusConflict)
-        errMsg = "mobile"
-    default:
-        w.WriteHeader(http.StatusInternalServerError)
-        errMsg = "internal server error"
-    }
+			var errMsg string
+			switch err {
+			case ErrDuplicateCode:
+				w.WriteHeader(http.StatusConflict)
+				errMsg = "code"
+			case ErrDuplicateAccount:
+				w.WriteHeader(http.StatusConflict)
+				errMsg = "account number"
+			case ErrDuplicateEmail:
+				w.WriteHeader(http.StatusConflict)
+				errMsg = "email"
+			case ErrDuplicateMobile:
+				w.WriteHeader(http.StatusConflict)
+				errMsg = "mobile"
+			default:
+				w.WriteHeader(http.StatusInternalServerError)
+				errMsg = "internal server error"
+			}
 
-    _ = json.NewEncoder(w).Encode(map[string]string{"error": "Payee already exists with the same: "+errMsg})
-    return
-}
-
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "Payee already exists with the same: " + errMsg})
+			return
+		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
