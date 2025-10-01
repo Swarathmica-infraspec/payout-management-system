@@ -39,6 +39,7 @@ func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
 		id, err := store.Insert(context.Background(), p)
 		if err != nil {
     w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
 
     var errMsg string
     switch err {
