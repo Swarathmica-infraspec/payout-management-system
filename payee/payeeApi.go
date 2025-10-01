@@ -40,7 +40,7 @@ func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusConflict)
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": "DB insertion failed"})
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "Payee already exists"})
 			return
 		}
 
