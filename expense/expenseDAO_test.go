@@ -30,7 +30,7 @@ func TestInsertExpense(t *testing.T) {
 	store := ExpenseDB(db)
 	ctx := context.Background()
 
-	e, err := NewExpense("Lunch", 450.00, "2025-08-27", "Food", "Team lunch", 1, "/lunch.jpg")
+	e, err := NewExpense("Lunch", 450.00, futureDate(baseDate, 1), "Food", "Team lunch", 1, "/lunch.jpg")
 	require.NoError(t, err, "failed to create expense struct")
 
 	id, err := store.Insert(ctx, e)
