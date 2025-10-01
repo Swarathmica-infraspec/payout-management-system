@@ -70,6 +70,21 @@ func TestInsertPayeeWithDuplicateCode(t *testing.T) {
 	_, err = store.Insert(ctx, duplicate)
 	require.ErrorIs(t, err, ErrDuplicateCode)
 }
+
+func TestInsertPayeeWithDuplicateAccountNumber(t *testing.T) {
+	db := setupTestDB(t)
+	store := PayeeDB(db)
+	ctx := context.Background()
+
+	original, _ := NewPayee("Abc", "136", 1234567890123456, "CBIN0123459", "CBI", "abc@gmail.com", 9123456780, "Employee")
+	id, err := store.Insert(ctx, original)
+	require.NoError(t, err)
+	defer db.Exec("DELETE FROM payees WHERE id = $1", id)
+
+	duplicate, _ := NewPayee("Xyz", "137", 1234567890123456, "CBIN0123460", "CBI", "x@gmail.com", 9123456790, "Employee")
+	_, err = store.Insert(ctx, duplicate)
+	require.ErrorIs(t, err, ErrDuplicateAccount)
+}
 func TestGetPayeeByID(t *testing.T) {
 	db := setupTestDB(t)
 	store := PayeeDB(db)

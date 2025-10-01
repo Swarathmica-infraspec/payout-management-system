@@ -23,7 +23,8 @@ func PayeeDB(db *sql.DB) *payeeDB {
 }
 
 var (
-	ErrDuplicateCode = errors.New("duplicate beneficiary code")
+	ErrDuplicateCode    = errors.New("duplicate beneficiary code")
+	ErrDuplicateAccount = errors.New("duplicate account number")
 )
 
 func (r *payeeDB) Insert(context context.Context, p *payee) (int, error) {
@@ -46,7 +47,8 @@ func (r *payeeDB) Insert(context context.Context, p *payee) (int, error) {
 			switch pgErr.Constraint {
 			case "payees_beneficiary_code_key":
 				return 0, ErrDuplicateCode
-
+			case "payees_account_number_key":
+				return 0, ErrDuplicateAccount
 			}
 		}
 		return 0, fmt.Errorf("insert payee: %w", err)
