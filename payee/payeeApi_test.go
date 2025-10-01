@@ -94,33 +94,106 @@ func TestPayeePostAPIInvalidJSON(t *testing.T) {
 	assert.JSONEq(t, expected, w.Body.String())
 
 }
-func TestPayeePostAPIDuplicate(t *testing.T) {
+func TestPayeePostAPIUniqueConstraints(t *testing.T) {
 	mux := setupMux(t)
 
-	payload := map[string]interface{}{
-		"name":           "Abdc",
-		"code":           "1262",
-		"account_number": 1234767893,
-		"ifsc":           "CBIN0123456",
+	// Original payee to create first
+	original := map[string]interface{}{
+		"name":           "Abc",
+		"code":           "136",
+		"account_number": 1234567890123456,
+		"ifsc":           "CBIN0123459",
 		"bank":           "CBI",
-		"email":          "abcd@example.com",
-		"mobile":         9876543292,
+		"email":          "abc@gmail.com",
+		"mobile":         9123456780,
 		"category":       "Employee",
 	}
-	body, _ := json.Marshal(payload)
+	body, _ := json.Marshal(original)
 
+	// Insert original payee
 	req1 := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
 	w1 := httptest.NewRecorder()
 	mux.ServeHTTP(w1, req1)
 	assert.Equal(t, http.StatusCreated, w1.Code)
-	req2 := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
-	w2 := httptest.NewRecorder()
-	mux.ServeHTTP(w2, req2)
 
-	assert.Equal(t, http.StatusConflict, w2.Code)
+	// Table-driven duplicate tests
+	tests := []struct {
+		name     string
+		payload  map[string]interface{}
+		wantCode int
+		wantJSON string
+	}{
+		{
+			name: "duplicate code",
+			payload: map[string]interface{}{
+				"name":           "Xyz",
+				"code":           "136",
+				"account_number": 9876543210123456,
+				"ifsc":           "CBIN0123460",
+				"bank":           "CBI",
+				"email":          "xyz@gmail.com",
+				"mobile":         9876543290,
+				"category":       "Employee",
+			},
+			wantCode: http.StatusConflict,
+			wantJSON: `{"error":"Insertion failed: duplicate code"}`,
+		},
+		{
+			name: "duplicate account",
+			payload: map[string]interface{}{
+				"name":           "Xyz",
+				"code":           "137",
+				"account_number": 1234567890123456,
+				"ifsc":           "CBIN0123460",
+				"bank":           "CBI",
+				"email":          "x@gmail.com",
+				"mobile":         9876543291,
+				"category":       "Employee",
+			},
+			wantCode: http.StatusConflict,
+			wantJSON: `{"error":"Insertion failed: duplicate account number"}`,
+		},
+		{
+			name: "duplicate email",
+			payload: map[string]interface{}{
+				"name":           "Pqr",
+				"code":           "138",
+				"account_number": 1111111111111111,
+				"ifsc":           "CBIN0123461",
+				"bank":           "CBI",
+				"email":          "abc@gmail.com",
+				"mobile":         9876543292,
+				"category":       "Employee",
+			},
+			wantCode: http.StatusConflict,
+			wantJSON: `{"error":"Insertion failed: duplicate email"}`,
+		},
+		{
+			name: "duplicate mobile",
+			payload: map[string]interface{}{
+				"name":           "Lmn",
+				"code":           "139",
+				"account_number": 2222222222222222,
+				"ifsc":           "CBIN0123462",
+				"bank":           "CBI",
+				"email":          "lmn@gmail.com",
+				"mobile":         9123456780,
+				"category":       "Employee",
+			},
+			wantCode: http.StatusConflict,
+			wantJSON: `{"error":"Insertion failed: duplicate mobile"}`,
+		},
+	}
 
-	expected := `{"error":"DB insertion failed"}`
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			body, _ := json.Marshal(tt.payload)
+			req := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
+			w := httptest.NewRecorder()
+			mux.ServeHTTP(w, req)
 
-	assert.JSONEq(t, expected, w2.Body.String())
-
+			assert.Equal(t, tt.wantCode, w.Code)
+			assert.JSONEq(t, tt.wantJSON, w.Body.String())
+		})
+	}
 }
