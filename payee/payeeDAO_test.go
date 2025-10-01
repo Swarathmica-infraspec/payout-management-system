@@ -56,7 +56,20 @@ func TestInsertPayee(t *testing.T) {
 	assert.Equal(t, p.mobile, mobile)
 	assert.Equal(t, p.payeeCategory, category)
 }
+func TestInsertPayeeWithDuplicateCode(t *testing.T) {
+	db := setupTestDB(t)
+	store := PayeeDB(db)
+	ctx := context.Background()
 
+	original, _ := NewPayee("Abc", "136", 1234567890123456, "CBIN0123459", "CBI", "abc@gmail.com", 9123456780, "Employee")
+	id, err := store.Insert(ctx, original)
+	require.NoError(t, err)
+	defer db.Exec("DELETE FROM payees WHERE id = $1", id)
+
+	duplicate, _ := NewPayee("Abc", "136", 1234567800123456, "CBIN0123459", "CBI", "abcd@gmail.com", 9127456780, "Employee")
+	_, err = store.Insert(ctx, duplicate)
+	require.ErrorIs(t, err, ErrDuplicateCode)
+}
 func TestGetPayeeByID(t *testing.T) {
 	db := setupTestDB(t)
 	store := PayeeDB(db)
