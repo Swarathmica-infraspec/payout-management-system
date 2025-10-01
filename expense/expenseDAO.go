@@ -10,15 +10,15 @@ type ExpenseRepository interface {
 	GetByID(ctx context.Context, id int) (*expense, error)
 }
 
-type ExpensePostgresDB struct {
+type expenseDB struct {
 	db *sql.DB
 }
 
-func NewPostgresExpenseDB(db *sql.DB) *ExpensePostgresDB {
-	return &ExpensePostgresDB{db: db}
+func NewPostgresExpenseDB(db *sql.DB) *expenseDB {
+	return &expenseDB{db: db}
 }
 
-func (r *ExpensePostgresDB) Insert(ctx context.Context, e *expense) (int, error) {
+func (r *expenseDB) Insert(ctx context.Context, e *expense) (int, error) {
 	query := `
 		INSERT INTO expenses 
 		(title, amount, date_incurred, category, notes, payee_id, receipt_uri)
@@ -37,7 +37,7 @@ func (r *ExpensePostgresDB) Insert(ctx context.Context, e *expense) (int, error)
 	return id, err
 }
 
-func (r *ExpensePostgresDB) GetByID(ctx context.Context, id int) (*expense, error) {
+func (r *expenseDB) GetByID(ctx context.Context, id int) (*expense, error) {
 	query := `
 		SELECT title, amount, date_incurred, category, notes, payee_id, receipt_uri 
 		FROM expenses WHERE id=$1`
