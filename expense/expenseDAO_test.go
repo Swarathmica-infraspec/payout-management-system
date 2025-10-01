@@ -75,10 +75,17 @@ func TestGetExpenseByID(t *testing.T) {
 	got, err := store.GetByID(ctx, id)
 	require.NoError(t, err, "failed to fetch expense")
 
-	assert.Equal(t, "Dinner", got.title)
-	assert.Equal(t, 700.00, got.amount)
-	assert.Equal(t, "Food", got.category)
-	assert.Equal(t, "Team dinner", got.notes)
-	assert.Equal(t, 2, got.payeeID)
-	assert.Equal(t, "/dinner.jpg", got.receiptURI)
+	title := "Dinner"
+	amount := 700.00
+	category := "Food"
+	notes := "Team dinner"
+	payeeID := 2
+	receiptURI := "/dinner.jpg"
+
+	assert.Equal(t, title, got.title)
+	assert.Equal(t, amount, got.amount)
+	assert.Equal(t, category, got.category)
+	assert.Equal(t, notes, got.notes)
+	assert.Equal(t, payeeID, got.payeeID)
+	assert.Equal(t, receiptURI, got.receiptURI)
 }
