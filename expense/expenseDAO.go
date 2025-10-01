@@ -14,7 +14,7 @@ type expenseDB struct {
 	db *sql.DB
 }
 
-func NewPostgresExpenseDB(db *sql.DB) *expenseDB {
+func ExpenseDB(db *sql.DB) *expenseDB {
 	return &expenseDB{db: db}
 }
 

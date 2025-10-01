@@ -29,7 +29,7 @@ func TestInsertAndGetPayee(t *testing.T) {
 			t.Errorf("failed to close DB connection: %v", err)
 		}
 	}()
-	store := NewPostgresExpenseDB(db)
+	store := ExpenseDB(db)
 	ctx := context.Background()
 
     e, err := NewExpense("Lunch", 450.00, "2025-08-27", "Food", "Team lunch", 1, "/lunch.jpg")
