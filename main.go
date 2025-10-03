@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"os"
 
-	payee "payoutmanagementsystem/payee"
+	payee "github.com/Swarathmica-infraspec/payout-management-system/payee"
 
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func initStore() (payee.PayeeRepository, *sql.DB) {
@@ -18,7 +18,7 @@ func initStore() (payee.PayeeRepository, *sql.DB) {
 		log.Fatal("DATABASE_URL not set")
 	}
 
-	db, err := sql.Open("postgres", dsn)
+	db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		log.Fatal("Failed to open DB:", err)
 	}
