@@ -38,28 +38,34 @@ func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
 		if err != nil {
 
 			var errMsg string
+			var status int
+
 			switch err {
 			case ErrDuplicateCode:
-				w.WriteHeader(http.StatusConflict)
 				errMsg = "beneficiary code"
+				status = http.StatusConflict
 			case ErrDuplicateAccount:
-				w.WriteHeader(http.StatusConflict)
 				errMsg = "account number"
+				status = http.StatusConflict
 			case ErrDuplicateEmail:
-				w.WriteHeader(http.StatusConflict)
 				errMsg = "email"
+				status = http.StatusConflict
 			case ErrDuplicateMobile:
-				w.WriteHeader(http.StatusConflict)
 				errMsg = "mobile"
+				status = http.StatusConflict
 			default:
-				w.WriteHeader(http.StatusInternalServerError)
 				errMsg = "internal server error"
+				status = http.StatusInternalServerError
 			}
 
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": "Payee already exists with the same: " + errMsg})
+			w.WriteHeader(status)
+			if status == http.StatusConflict {
+				_ = json.NewEncoder(w).Encode(map[string]string{"error": "Payee already exists with the same: " + errMsg})
+			} else {
+				_ = json.NewEncoder(w).Encode(map[string]string{"error": errMsg})
+			}
 			return
 		}
-
 		w.WriteHeader(http.StatusCreated)
 		_ = json.NewEncoder(w).Encode(map[string]any{"id": id})
 	}
