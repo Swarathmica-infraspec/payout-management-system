@@ -97,7 +97,6 @@ func TestPayeePostAPIInvalidJSON(t *testing.T) {
 func TestPayeePostAPIUniqueConstraints(t *testing.T) {
 	mux := setupMux(t)
 
-	// Original payee to create first
 	original := map[string]interface{}{
 		"name":           "Abc",
 		"code":           "136",
@@ -108,15 +107,16 @@ func TestPayeePostAPIUniqueConstraints(t *testing.T) {
 		"mobile":         9123456780,
 		"category":       "Employee",
 	}
-	body, _ := json.Marshal(original)
+	createPayee := func(payload map[string]interface{}) *httptest.ResponseRecorder {
+		body, _ := json.Marshal(payload)
+		req := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+		mux.ServeHTTP(w, req)
+		return w
+	}
+	w := createPayee(original)
+	assert.Equal(t, http.StatusCreated, w.Code)
 
-	// Insert original payee
-	req1 := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
-	w1 := httptest.NewRecorder()
-	mux.ServeHTTP(w1, req1)
-	assert.Equal(t, http.StatusCreated, w1.Code)
-
-	// Table-driven duplicate tests
 	tests := []struct {
 		name     string
 		payload  map[string]interface{}
@@ -187,11 +187,7 @@ func TestPayeePostAPIUniqueConstraints(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			body, _ := json.Marshal(tt.payload)
-			req := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
-			w := httptest.NewRecorder()
-			mux.ServeHTTP(w, req)
-
+			w := createPayee(tt.payload)
 			assert.Equal(t, tt.wantCode, w.Code)
 			assert.JSONEq(t, tt.wantJSON, w.Body.String())
 		})

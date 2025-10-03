@@ -20,8 +20,8 @@ type PayeeRequest struct {
 func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var data PayeeRequest
+		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
-			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(w).Encode(map[string]string{"error": "Invalid JSON body"})
 			return
@@ -29,7 +29,6 @@ func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
 
 		p, err := NewPayee(data.Name, data.Code, data.AccNo, data.IFSC, data.Bank, data.Email, data.Mobile, data.Category)
 		if err != nil {
-			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(w).Encode(map[string]string{"error": "Invalid payee data"})
 			return
@@ -37,32 +36,36 @@ func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
 
 		id, err := store.Insert(context.Background(), p)
 		if err != nil {
-			w.Header().Set("Content-Type", "application/json")
 
 			var errMsg string
+			var status int
+
 			switch err {
 			case ErrDuplicateCode:
-				w.WriteHeader(http.StatusConflict)
 				errMsg = "beneficiary code"
+				status = http.StatusConflict
 			case ErrDuplicateAccount:
-				w.WriteHeader(http.StatusConflict)
 				errMsg = "account number"
+				status = http.StatusConflict
 			case ErrDuplicateEmail:
-				w.WriteHeader(http.StatusConflict)
 				errMsg = "email"
+				status = http.StatusConflict
 			case ErrDuplicateMobile:
-				w.WriteHeader(http.StatusConflict)
 				errMsg = "mobile"
+				status = http.StatusConflict
 			default:
-				w.WriteHeader(http.StatusInternalServerError)
 				errMsg = "internal server error"
+				status = http.StatusInternalServerError
 			}
 
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": "Payee already exists with the same: " + errMsg})
+			w.WriteHeader(status)
+			if status == http.StatusConflict {
+				_ = json.NewEncoder(w).Encode(map[string]string{"error": "Payee already exists with the same: " + errMsg})
+			} else {
+				_ = json.NewEncoder(w).Encode(map[string]string{"error": errMsg})
+			}
 			return
 		}
-
-		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		_ = json.NewEncoder(w).Encode(map[string]any{"id": id})
 	}
