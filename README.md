@@ -14,6 +14,9 @@ GO-VERSION: 1.25.0
 
 The project contains payoutmanagementsystem/ <br>
 - .github/workflows/payoutManagementSystem.yml <br>
+- expense/
+  - expense.go <br>
+  - expense_test.go <br>
 - payee/
   - payee.go <br>
   - payee_test.go <br>
@@ -34,6 +37,8 @@ We use PostgreSQL(17.6-trixie) running inside Docker for persistant storage.
 
 Install devcontainer extension in vs code, or from the terminal using
 npm i -g @devcontainers/cli
+
+NOTE: Only payee has Database as of now.
 
 ## 1. Start Postgres with Docker Compose
 
@@ -57,14 +62,17 @@ psql -h db -U $POSTGRES_USER -d $POSTGRES_DB -f payee/payee_db.sql
 
 It will prompt for password. Give your postgres password. (or refer to .env)
 
-If 'command not found: psql' : run : apt-get update
-                                     apt-get install -y postgresql-client
+If 'command not found: psql' : run : sudo apt-get update
+                                     sudo apt-get install -y postgresql-client
 
 ## 3. Data Access Object
 
 payeeDAO contains database query for payee and payeeDAO_test contains relevant tests
 
 ## 4. HTTP API Usage
+
+NOTE: Only payee entity has API as of now
+
 run: go run main.go #entry point
 
 payeeApi.go has the code for API while payeeAPI_test.go has test code
@@ -87,6 +95,24 @@ curl -X POST http://localhost:8080/payees \
 
 expected response: {'id':1}
 
+2. GET request 
+curl -X GET http://localhost:8080/payees/list -H "Content-Type: application/json"
+
+3. GET by id request 
+curl -X GET http://localhost:8080/payees/1 -H "Content-Type: application/json"
+
+4. PUT request
+
+curl -X PUT http://localhost:8080/payees/update/1 \
+-d '{ "name":"ABCD", "code":"123", "account_number":1234567890, "ifsc":"CBIN0123456", "bank":"CBI", "email":"abc@example.com", "mobile":9876543210, "category":"Employee" }'
+
+expected response: {"status":"updated"}
+
+5. DELETE request
+curl -X DELETE http://localhost:8080/payees/delete/1
+
+expected response: {"status":"deleted"}
+
 
 # Run tests
 
@@ -100,10 +126,10 @@ To exit devcontainer: press F1: Dev Containers: Reopen folder locally
 
 Or devcontainer is started throught terminal, use 'exit' to come out of bash.
 Stop container if required by :
-docker stop payoutmanagementsystem_devcontainer-db-1
-docker stop payoutmanagementsystem_devcontainer-app-1
+docker stop <folder-name>_devcontainer-db-1 <folder-name>_devcontainer-app-1
 
-
+Remove the container:
+docker rm <folder-name>_devcontainer-app-1 <folder-name>_devcontainer-db-1
 
 # CI
 
