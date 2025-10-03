@@ -75,52 +75,73 @@ func TestInsertPayeeWithDuplicateValues(t *testing.T) {
 	}()
 
 	tests := []struct {
-		name      string
-		duplicate func() *payee
-		wantErr   error
+		testName string
+		nameArg  string
+		code     string
+		accNo    int
+		ifsc     string
+		bank     string
+		email    string
+		mobile   int
+		category string
+		wantErr  error
 	}{
 		{
-			name: "duplicate beneficiary code",
-			duplicate: func() *payee {
-				p, err := NewPayee("Abc", "136", 1234567800123456, "CBIN0123459", "CBI", "abcd@gmail.com", 9127456780, "Employee")
-				require.NoError(t, err)
-				return p
-			},
-			wantErr: ErrDuplicateCode,
+			testName: "duplicate beneficiary code",
+			nameArg:  "Abc",
+			code:     "136",
+			accNo:    1234567800123456,
+			ifsc:     "CBIN0123459",
+			bank:     "CBI",
+			email:    "abcd@gmail.com",
+			mobile:   9127456780,
+			category: "Employee",
+			wantErr:  ErrDuplicateCode,
 		},
 		{
-			name: "duplicate account number",
-			duplicate: func() *payee {
-				p, err := NewPayee("Xyz", "137", 1234567890123456, "CBIN0123460", "CBI", "x@gmail.com", 9123456790, "Employee")
-				require.NoError(t, err)
-				return p
-			},
-			wantErr: ErrDuplicateAccount,
+			testName: "duplicate account number",
+			nameArg:  "Xyz",
+			code:     "137",
+			accNo:    1234567890123456,
+			ifsc:     "CBIN0123460",
+			bank:     "CBI",
+			email:    "x@gmail.com",
+			mobile:   9123456790,
+			category: "Employee",
+			wantErr:  ErrDuplicateAccount,
 		},
 		{
-			name: "duplicate email",
-			duplicate: func() *payee {
-				p, err := NewPayee("Pqr", "138", 1234567890123450, "CBIN0123461", "CBI", "abc@gmail.com", 9123456800, "Employee")
-				require.NoError(t, err)
-				return p
-			},
-			wantErr: ErrDuplicateEmail,
+			testName: "duplicate email",
+			nameArg:  "Pqr",
+			code:     "138",
+			accNo:    1234567890123450,
+			ifsc:     "CBIN0123461",
+			bank:     "CBI",
+			email:    "abc@gmail.com",
+			mobile:   9123456800,
+			category: "Employee",
+			wantErr:  ErrDuplicateEmail,
 		},
 		{
-			name: "duplicate mobile",
-			duplicate: func() *payee {
-				p, err := NewPayee("Xyz", "137", 9876543210987654, "CBIN0123460", "CBI", "xyz@gmail.com", 9123456780, "Employee")
-				require.NoError(t, err)
-				return p
-			},
-			wantErr: ErrDuplicateMobile,
+			testName: "duplicate mobile",
+			nameArg:  "Xyz",
+			code:     "137",
+			accNo:    9876543210987654,
+			ifsc:     "CBIN0123460",
+			bank:     "CBI",
+			email:    "xyz@gmail.com",
+			mobile:   9123456780,
+			category: "Employee",
+			wantErr:  ErrDuplicateMobile,
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			duplicatePayee := tt.duplicate()
-			_, err := store.Insert(ctx, duplicatePayee)
+		t.Run(tt.testName, func(t *testing.T) {
+			dup, err := NewPayee(tt.nameArg, tt.code, tt.accNo, tt.ifsc, tt.bank, tt.email, tt.mobile, tt.category)
+			require.NoError(t, err)
+
+			_, err = store.Insert(ctx, dup)
 			require.ErrorIs(t, err, tt.wantErr)
 		})
 	}
