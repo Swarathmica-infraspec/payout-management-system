@@ -252,20 +252,39 @@ func TestPayeeGetOneAPI(t *testing.T) {
 	}
 	body, _ := json.Marshal(payload)
 
-	req1 := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
-	w1 := httptest.NewRecorder()
-	mux.ServeHTTP(w1, req1)
-	assert.Equal(t, http.StatusCreated, w1.Code)
-	req2 := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
-	w2 := httptest.NewRecorder()
-	mux.ServeHTTP(w2, req2)
+	reqCreate := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
+	wCreate := httptest.NewRecorder()
+	mux.ServeHTTP(wCreate, reqCreate)
 
-	assert.Equal(t, http.StatusConflict, w2.Code)
+	assert.Equal(t, http.StatusCreated, wCreate.Code)
 
-	expected := `{"error":"DB insertion failed: pq: duplicate key value violates unique constraint \"payees_beneficiary_code_key\""}`
+	type CreateResp struct {
+		ID int `json:"id"`
+	}
+	var createResp CreateResp
+	err := json.Unmarshal(wCreate.Body.Bytes(), &createResp)
+	assert.NoError(t, err)
 
-	assert.JSONEq(t, expected, w2.Body.String())
+	url := "/payees/" + strconv.Itoa(createResp.ID)
+	reqGet := httptest.NewRequest(http.MethodGet, url, nil)
+	wGet := httptest.NewRecorder()
+	mux.ServeHTTP(wGet, reqGet)
 
+	assert.Equal(t, http.StatusOK, wGet.Code)
+
+	var getResp PayeeGETResponse
+	err = json.Unmarshal(wGet.Body.Bytes(), &getResp)
+	assert.NoError(t, err)
+
+	assert.Equal(t, createResp.ID, getResp.ID)
+	assert.Equal(t, payload["name"], getResp.BeneficiaryName)
+	assert.Equal(t, payload["code"], getResp.BeneficiaryCode)
+	assert.Equal(t, payload["account_number"], getResp.AccNo)
+	assert.Equal(t, payload["ifsc"], getResp.IFSC)
+	assert.Equal(t, payload["bank"], getResp.BankName)
+	assert.Equal(t, payload["email"], getResp.Email)
+	assert.Equal(t, payload["mobile"], getResp.Mobile)
+	assert.Equal(t, payload["category"], getResp.PayeeCategory)
 }
 
 func TestPayeeGetOneAPINotFound(t *testing.T) {
