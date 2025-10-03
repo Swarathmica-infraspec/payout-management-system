@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	payee "payoutmanagementsystem/payee"
+	payee "github.com/Swarathmica-infraspec/payout-management-system/payee"
 
 	_ "github.com/lib/pq"
 )
