@@ -14,7 +14,7 @@ import (
 func setupTestDB(t *testing.T) *sql.DB {
 	dsn := os.Getenv("TEST_DATABASE_URL")
 
-	db, err := sql.Open("postgres", dsn)
+	db, err := sql.Open("pgx", dsn)
 	require.NoError(t, err, "failed to connect to DB")
 	err = db.Ping()
 	require.NoError(t, err, "failed to ping DB")
