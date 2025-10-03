@@ -6,7 +6,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/lib/pq"
+	"github.com/jackc/pgx/v5/pgconn"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type PayeeRepository interface {
@@ -45,8 +46,8 @@ func (r *payeeDB) Insert(ctx context.Context, p *payee) (int, error) {
 		p.payeeCategory,
 	).Scan(&id)
 	if err != nil {
-		if pgErr, ok := err.(*pq.Error); ok {
-			switch pgErr.Constraint {
+		if pgErr, ok := err.(*pgconn.PgError); ok {
+			switch pgErr.ConstraintName {
 			case "payees_beneficiary_code_key":
 				return 0, ErrDuplicateCode
 			case "payees_account_number_key":
