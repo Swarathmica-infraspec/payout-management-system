@@ -107,12 +107,15 @@ func TestPayeePostAPIUniqueConstraints(t *testing.T) {
 		"mobile":         9123456780,
 		"category":       "Employee",
 	}
-	body, _ := json.Marshal(original)
-
-	req1 := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
-	w1 := httptest.NewRecorder()
-	mux.ServeHTTP(w1, req1)
-	assert.Equal(t, http.StatusCreated, w1.Code)
+	createPayee := func(payload map[string]interface{}) *httptest.ResponseRecorder {
+		body, _ := json.Marshal(payload)
+		req := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+		mux.ServeHTTP(w, req)
+		return w
+	}
+	w := createPayee(original)
+	assert.Equal(t, http.StatusCreated, w.Code)
 
 	tests := []struct {
 		name     string
@@ -184,11 +187,7 @@ func TestPayeePostAPIUniqueConstraints(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			body, _ := json.Marshal(tt.payload)
-			req := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
-			w := httptest.NewRecorder()
-			mux.ServeHTTP(w, req)
-
+			w := createPayee(tt.payload)
 			assert.Equal(t, tt.wantCode, w.Code)
 			assert.JSONEq(t, tt.wantJSON, w.Body.String())
 		})
