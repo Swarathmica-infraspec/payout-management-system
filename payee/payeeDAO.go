@@ -3,6 +3,10 @@ package payee
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
+
+	"github.com/lib/pq"
 )
 
 type PayeeRepository interface {
@@ -17,6 +21,13 @@ type payeeDB struct {
 func PayeeDB(db *sql.DB) *payeeDB {
 	return &payeeDB{db: db}
 }
+
+var (
+	ErrDuplicateCode    = errors.New("duplicate beneficiary code")
+	ErrDuplicateAccount = errors.New("duplicate account number")
+	ErrDuplicateEmail   = errors.New("duplicate email")
+	ErrDuplicateMobile  = errors.New("duplicate mobile")
+)
 
 func (r *payeeDB) Insert(context context.Context, p *payee) (int, error) {
 	query := `
@@ -33,7 +44,22 @@ func (r *payeeDB) Insert(context context.Context, p *payee) (int, error) {
 		p.mobile,
 		p.payeeCategory,
 	).Scan(&id)
-	return id, err
+	if err != nil {
+		if pgErr, ok := err.(*pq.Error); ok {
+			switch pgErr.Constraint {
+			case "payees_beneficiary_code_key":
+				return 0, ErrDuplicateCode
+			case "payees_account_number_key":
+				return 0, ErrDuplicateAccount
+			case "payees_email_key":
+				return 0, ErrDuplicateEmail
+			case "payees_mobile_key":
+				return 0, ErrDuplicateMobile
+			}
+			return 0, fmt.Errorf("insert payee: %w", err)
+		}
+	}
+	return id, nil
 }
 
 func (r *payeeDB) GetByID(context context.Context, id int) (*payee, error) {

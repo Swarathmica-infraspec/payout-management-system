@@ -26,6 +26,8 @@ func TestInsertPayee(t *testing.T) {
 	store := PayeeDB(db)
 	ctx := context.Background()
 
+	_, _ = db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
+
 	p, err := NewPayee("Abc", "136", 1234567890123456, "CBIN0123459", "CBI", "abc@gmail.com", 9123456780, "Employee")
 	require.NoError(t, err, "failed to create payee")
 
@@ -56,11 +58,101 @@ func TestInsertPayee(t *testing.T) {
 	assert.Equal(t, p.mobile, mobile)
 	assert.Equal(t, p.payeeCategory, category)
 }
+func TestInsertPayeeWithDuplicateValues(t *testing.T) {
+	db := setupTestDB(t)
+	store := PayeeDB(db)
+	ctx := context.Background()
+
+	_, _ = db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
+	original, err := NewPayee("Abc", "136", 1234567890123456, "CBIN0123459", "CBI", "abc@gmail.com", 9123456780, "Employee")
+	require.NoError(t, err, "failed to create original payee")
+
+	id, err := store.Insert(ctx, original)
+	require.NoError(t, err, "failed to insert original payee")
+	defer func() {
+		_, err := db.Exec("DELETE FROM payees WHERE id = $1", id)
+		assert.NoError(t, err, "failed to clean up original payee")
+	}()
+
+	tests := []struct {
+		testName string
+		nameArg  string
+		code     string
+		accNo    int
+		ifsc     string
+		bank     string
+		email    string
+		mobile   int
+		category string
+		wantErr  error
+	}{
+		{
+			testName: "duplicate beneficiary code",
+			nameArg:  "Abc",
+			code:     "136",
+			accNo:    1234567800123456,
+			ifsc:     "CBIN0123459",
+			bank:     "CBI",
+			email:    "abcd@gmail.com",
+			mobile:   9127456780,
+			category: "Employee",
+			wantErr:  ErrDuplicateCode,
+		},
+		{
+			testName: "duplicate account number",
+			nameArg:  "Xyz",
+			code:     "137",
+			accNo:    1234567890123456,
+			ifsc:     "CBIN0123460",
+			bank:     "CBI",
+			email:    "x@gmail.com",
+			mobile:   9123456790,
+			category: "Employee",
+			wantErr:  ErrDuplicateAccount,
+		},
+		{
+			testName: "duplicate email",
+			nameArg:  "Pqr",
+			code:     "138",
+			accNo:    1234567890123450,
+			ifsc:     "CBIN0123461",
+			bank:     "CBI",
+			email:    "abc@gmail.com",
+			mobile:   9123456800,
+			category: "Employee",
+			wantErr:  ErrDuplicateEmail,
+		},
+		{
+			testName: "duplicate mobile",
+			nameArg:  "Xyz",
+			code:     "137",
+			accNo:    9876543210987654,
+			ifsc:     "CBIN0123460",
+			bank:     "CBI",
+			email:    "xyz@gmail.com",
+			mobile:   9123456780,
+			category: "Employee",
+			wantErr:  ErrDuplicateMobile,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			dup, err := NewPayee(tt.nameArg, tt.code, tt.accNo, tt.ifsc, tt.bank, tt.email, tt.mobile, tt.category)
+			require.NoError(t, err)
+
+			_, err = store.Insert(ctx, dup)
+			require.ErrorIs(t, err, tt.wantErr)
+		})
+	}
+}
 
 func TestGetPayeeByID(t *testing.T) {
 	db := setupTestDB(t)
 	store := PayeeDB(db)
 	ctx := context.Background()
+
+	_, _ = db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
 
 	var id int
 	err := db.QueryRow(`
