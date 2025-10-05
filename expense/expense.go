@@ -33,7 +33,8 @@ func NewExpense(title string, amount float64, dateIncurred string, category stri
 	if amount <= 0 {
 		return nil, ErrInvalidAmount
 	}
-	if !checkDate(dateIncurred) {
+	err := checkDate(dateIncurred)
+	if err != nil {
 		return nil, ErrInvalidDate
 	}
 	if category == "" {
@@ -56,14 +57,17 @@ func NewExpense(title string, amount float64, dateIncurred string, category stri
 	}, nil
 }
 
-func checkDate(dateStr string) bool {
+func checkDate(dateStr string) error {
 	date, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {
-		return false
+		return ErrInvalidDate
 	}
 
 	today := time.Now().Truncate(24 * time.Hour)
-	return !date.Before(today)
+	if date.After(today) {
+		return ErrInvalidDate
+	}
+	return nil
 }
 
 func checkReceiptURI(uri string) bool {

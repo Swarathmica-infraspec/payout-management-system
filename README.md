@@ -63,8 +63,8 @@ psql -h db -U $POSTGRES_USER -d $POSTGRES_DB -f expense/expense_db.sql
 
 It will prompt for password. Give your postgres password. (or refer to .env)
 
-If 'command not found: psql' : run : apt-get update
-                                     apt-get install -y postgresql-client
+If 'command not found: psql' : run : sudo apt-get update
+                                     sudo apt-get install -y postgresql-client
 
 ## 3. Data Access Object
 
@@ -127,10 +127,10 @@ To exit devcontainer: press F1: Dev Containers: Reopen folder locally
 
 Or devcontainer is started throught terminal, use 'exit' to come out of bash.
 Stop container if required by :
-docker stop payoutmanagementsystem_devcontainer-db-1
-docker stop payoutmanagementsystem_devcontainer-app-1
+docker stop <folder-name>_devcontainer-db-1 <folder-name>_devcontainer-app-1
 
-
+Remove the container:
+docker rm <folder-name>_devcontainer-app-1 <folder-name>_devcontainer-db-1
 
 # CI
 

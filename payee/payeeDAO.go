@@ -3,7 +3,12 @@ package payee
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 	"log"
+
+	"github.com/jackc/pgx/v5/pgconn"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type PayeeRepository interface {
@@ -11,7 +16,7 @@ type PayeeRepository interface {
 	GetByID(context context.Context, id int) (*payee, error)
 	List(context context.Context) ([]payee, error)
 	Update(ctx context.Context, p *payee) (*payee, error)
-	Delete(ctx context.Context, id int) error
+	SoftDelete(ctx context.Context, id int) error
 }
 
 type payeeDB struct {
@@ -21,6 +26,13 @@ type payeeDB struct {
 func PayeeDB(db *sql.DB) *payeeDB {
 	return &payeeDB{db: db}
 }
+
+var (
+	ErrDuplicateCode    = errors.New("duplicate beneficiary code")
+	ErrDuplicateAccount = errors.New("duplicate account number")
+	ErrDuplicateEmail   = errors.New("duplicate email")
+	ErrDuplicateMobile  = errors.New("duplicate mobile")
+)
 
 func (r *payeeDB) Insert(context context.Context, p *payee) (int, error) {
 	query := `
@@ -37,14 +49,29 @@ func (r *payeeDB) Insert(context context.Context, p *payee) (int, error) {
 		p.mobile,
 		p.payeeCategory,
 	).Scan(&id)
-	return id, err
+	if err != nil {
+		if pgErr, ok := err.(*pgconn.PgError); ok {
+			switch pgErr.ConstraintName {
+			case "payees_beneficiary_code_key":
+				return 0, ErrDuplicateCode
+			case "payees_account_number_key":
+				return 0, ErrDuplicateAccount
+			case "payees_email_key":
+				return 0, ErrDuplicateEmail
+			case "payees_mobile_key":
+				return 0, ErrDuplicateMobile
+			}
+			return 0, fmt.Errorf("insert payee: %w", err)
+		}
+	}
+	return id, nil
 }
 
 func (r *payeeDB) GetByID(context context.Context, id int) (*payee, error) {
 	query := `
         SELECT beneficiary_name, beneficiary_code, account_number,
                ifsc_code, bank_name, email, mobile, payee_category
-        FROM payees WHERE id=$1`
+        FROM payees WHERE id=$1 AND is_deleted = FALSE`
 	row := r.db.QueryRowContext(context, query, id)
 
 	var p payee
@@ -67,8 +94,7 @@ func (r *payeeDB) GetByID(context context.Context, id int) (*payee, error) {
 func (s *payeeDB) List(context context.Context) ([]payee, error) {
 	rows, err := s.db.QueryContext(context, `
         SELECT id, beneficiary_name, beneficiary_code, account_number, ifsc_code, bank_name, email, mobile, payee_category
-        FROM payees
-        ORDER BY id ASC
+        FROM payees WHERE is_deleted = FALSE ORDER BY id ASC
     `)
 	if err != nil {
 		return nil, err
@@ -139,7 +165,7 @@ func (s *payeeDB) Update(ctx context.Context, p *payee) (*payee, error) {
 
 	return &updatedPayee, nil
 }
-func (r *payeeDB) Delete(context context.Context, id int) error {
-	_, err := r.db.ExecContext(context, "DELETE FROM payees WHERE id=$1", id)
+func (r *payeeDB) SoftDelete(ctx context.Context, id int) error {
+	_, err := r.db.ExecContext(ctx, "UPDATE payees SET is_deleted = TRUE WHERE id = $1", id)
 	return err
 }
