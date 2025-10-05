@@ -32,14 +32,14 @@ var invalidExpenseTests = []struct {
 	expectedErr  error
 	errMsg       string
 }{
-	{"TestInvalidExpenseWithEmptyTitle", "", 450.00, futureDate(baseDate, 1), "Food", "Team lunch", 10, "https://receipts.com/lunch.jpg", ErrInvalidTitle, "expense title cannot be empty"},
-	{"TestInvalidExpenseOfAmount0", "Travel", 0, futureDate(baseDate, 1), "Travel", "Bus fare", 11, "", ErrInvalidAmount, "expense amount must be greater than zero"},
+	{"TestInvalidExpenseWithEmptyTitle", "", 450.00, pastDate(baseDate, 1), "Food", "Team lunch", 10, "https://receipts.com/lunch.jpg", ErrInvalidTitle, "expense title cannot be empty"},
+	{"TestInvalidExpenseOfAmount0", "Travel", 0, pastDate(baseDate, 1), "Travel", "Bus fare", 11, "", ErrInvalidAmount, "expense amount must be greater than zero"},
 	{"TestInvalidExpenseWithWrongDate", "Snacks", 55, "2025-08-32", "Food", "Evening snacks", 12, "", ErrInvalidDate, "invalid date format: date exceeds 31"},
 	{"TestInvalidExpenseWithWrongMonth", "Snacks", 55, "2025-13-30", "Food", "Evening snacks", 12, "", ErrInvalidDate, "invalid date format: month exceeds 12"},
-	{"TestInvalidExpenseWithPastDate", "Lunch", 100, pastDate(baseDate, 1), "Food", "Past expense", 10, "/path/receipt.jpg", ErrInvalidDate, "date incurred cannot be in the past"},
-	{"TestInvalidExpenseWithWrongCategory", "Paper", 20, futureDate(baseDate, 1), "", "For printer", 13, "", ErrInvalidCategory, "expense category cannot be empty"},
-	{"TestInvalidExpenseWithInvalidPayeeID", "Hotel", 2100, futureDate(baseDate, 1), "Accommodation", "Stay", -1, "", ErrInvalidPayeeID, "payee ID cannot be negative"},
-	{"TestInvalidExpenseWithInvalidReceiptURI", "Stationery", 200, futureDate(baseDate, 1), "Office", "Pens", 14, "bill", ErrInvalidReceiptURI, "invalid receipt URI"},
+	{"TestInvalidExpenseWithFutureDate", "Lunch", 100, futureDate(baseDate, 1), "Food", "Past expense", 10, "/path/receipt.jpg", ErrInvalidDate, "date incurred cannot be in the future"},
+	{"TestInvalidExpenseWithWrongCategory", "Paper", 20, pastDate(baseDate, 1), "", "For printer", 13, "", ErrInvalidCategory, "expense category cannot be empty"},
+	{"TestInvalidExpenseWithInvalidPayeeID", "Hotel", 2100, pastDate(baseDate, 1), "Accommodation", "Stay", -1, "", ErrInvalidPayeeID, "payee ID cannot be negative"},
+	{"TestInvalidExpenseWithInvalidReceiptURI", "Stationery", 200, pastDate(baseDate, 1), "Office", "Pens", 14, "bill", ErrInvalidReceiptURI, "invalid receipt URI"},
 }
 
 func TestInvalidExpense(t *testing.T) {
@@ -55,7 +55,7 @@ func TestInvalidExpense(t *testing.T) {
 func TestValidExpense(t *testing.T) {
 	title := "Lunch"
 	amount := 450.00
-	dateIncurred := futureDate(time.Now(), 1)
+	dateIncurred := pastDate(time.Now(), 1)
 	category := "Food"
 	notes := "Team lunch"
 	payeeID := 10
