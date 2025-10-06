@@ -61,7 +61,7 @@ func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
 
 			w.WriteHeader(status)
 			if status == http.StatusConflict {
-				_ = json.NewEncoder(w).Encode(map[string]string{"error": "Payee already exists with the same: " + errMsg})
+				_ = json.NewEncoder(w).Encode(map[string]string{"error": "Payee with the same " + errMsg + " already exists"})
 			} else {
 				_ = json.NewEncoder(w).Encode(map[string]string{"error": "Something went wrong"})
 				log.Printf("Internal error: %v", err)
