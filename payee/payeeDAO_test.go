@@ -31,18 +31,13 @@ func TestInsertPayee(t *testing.T) {
 	store := PayeeDB(db)
 	ctx := context.Background()
 
-	_, _ = db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
+	defer clearPayees(t, db)
 
 	p, err := NewPayee("Abc", "136", 1234567890123456, "CBIN0123459", "CBI", "abc@gmail.com", 9123456780, "Employee")
 	require.NoError(t, err, "failed to create payee")
 
 	id, err := store.Insert(ctx, p)
 	require.NoError(t, err, "failed to insert payee")
-
-	defer func() {
-		_, err := db.Exec("DELETE FROM payees WHERE id = $1", id)
-		assert.NoError(t, err, "failed to clean up payee")
-	}()
 
 	var code, name, bank, ifsc, email, category string
 	var accNo int
@@ -68,16 +63,13 @@ func TestInsertPayeeWithDuplicateValues(t *testing.T) {
 	store := PayeeDB(db)
 	ctx := context.Background()
 
-	_, _ = db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
+	defer clearPayees(t, db)
+
 	original, err := NewPayee("Abc", "136", 1234567890123456, "CBIN0123459", "CBI", "abc@gmail.com", 9123456780, "Employee")
 	require.NoError(t, err, "failed to create original payee")
 
-	id, err := store.Insert(ctx, original)
+	_, err = store.Insert(ctx, original)
 	require.NoError(t, err, "failed to insert original payee")
-	defer func() {
-		_, err := db.Exec("DELETE FROM payees WHERE id = $1", id)
-		assert.NoError(t, err, "failed to clean up original payee")
-	}()
 
 	tests := []struct {
 		testName string
@@ -157,7 +149,7 @@ func TestGetPayeeByID(t *testing.T) {
 	store := PayeeDB(db)
 	ctx := context.Background()
 
-	_, _ = db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
+	defer clearPayees(t, db)
 
 	var id int
 	err := db.QueryRow(`
@@ -166,10 +158,6 @@ func TestGetPayeeByID(t *testing.T) {
 		RETURNING id`).Scan(&id)
 
 	require.NoError(t, err, "failed to insert payee")
-	defer func() {
-		_, err := db.Exec("DELETE FROM payees WHERE id = $1", id)
-		assert.NoError(t, err, "failed to clean up payee")
-	}()
 
 	got, err := store.GetByID(ctx, id)
 
@@ -201,12 +189,8 @@ func TestListPayees(t *testing.T) {
 	p, err := NewPayee("Xyz", "456", 1234567890123456, "HDFC0001213", "HDFC", "xyz@gmail.com", 9876543210, "Vendor")
 	require.NoError(t, err, "validation failed")
 
-	id, err := store.Insert(context.Background(), p)
+	_, err = store.Insert(context.Background(), p)
 	require.NoError(t, err, "Insertion failed")
-	defer func() {
-		_, err := db.Exec("DELETE FROM payees WHERE id = $1", id)
-		assert.NoError(t, err, "failed to clean up payee")
-	}()
 
 	payees, err := store.List(context.Background())
 	require.NoError(t, err, "failed to list payees")
@@ -240,7 +224,80 @@ func TestUpdatePayee(t *testing.T) {
 	assert.Equal(t, updatedName, updated.beneficiaryName)
 }
 
-func TestDeletePayee(t *testing.T) {
+func TestUpdatePayeeWithDuplicateValues(t *testing.T) {
+	db := setupTestDB(t)
+	store := PayeeDB(db)
+	ctx := context.Background()
+	defer clearPayees(t, db)
+
+	p1, err := NewPayee("Abc", "111", 1234567890123456, "CBIN0001234", "CBI", "abc@gmail.com", 9000000001, "Employee")
+	require.NoError(t, err)
+	_, err = store.Insert(ctx, p1)
+	require.NoError(t, err)
+
+	p2, err := NewPayee("Bcd", "222", 6543210987654321, "HDFC0001223", "HDFC", "bcd@gmail.com", 9000000002, "Vendor")
+	require.NoError(t, err)
+	id2, err := store.Insert(ctx, p2)
+	require.NoError(t, err)
+
+	tests := []struct {
+		testName string
+		targetID int
+		updateFn func(p *payee)
+		wantErr  error
+	}{
+		{
+			testName: "duplicate beneficiary code",
+			targetID: id2,
+			updateFn: func(p *payee) {
+				p.beneficiaryCode = "111"
+			},
+			wantErr: ErrDuplicateCode,
+		},
+		{
+			testName: "duplicate account number",
+			targetID: id2,
+			updateFn: func(p *payee) {
+				p.accNo = 1234567890123456
+			},
+			wantErr: ErrDuplicateAccount,
+		},
+		{
+			testName: "duplicate email",
+			targetID: id2,
+			updateFn: func(p *payee) {
+				p.email = "abc@gmail.com"
+			},
+			wantErr: ErrDuplicateEmail,
+		},
+		{
+			testName: "duplicate mobile",
+			targetID: id2,
+			updateFn: func(p *payee) {
+				p.mobile = 9000000001
+			},
+			wantErr: ErrDuplicateMobile,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			original, err := store.GetByID(ctx, tt.targetID)
+			require.NoError(t, err)
+
+			tt.updateFn(original)
+
+			_, err = store.Update(ctx, original)
+
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+func TestSoftDeletePayee(t *testing.T) {
 	ctx := context.Background()
 	db := setupTestDB(t)
 	defer clearPayees(t, db)
