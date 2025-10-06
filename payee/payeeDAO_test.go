@@ -298,7 +298,7 @@ func TestUpdatePayeeWithDuplicateValues(t *testing.T) {
 		})
 	}
 }
-func TestDeletePayee(t *testing.T) {
+func TestSoftDeletePayee(t *testing.T) {
 	ctx := context.Background()
 	db := setupTestDB(t)
 	defer clearPayees(t, db)
