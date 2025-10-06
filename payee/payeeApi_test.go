@@ -304,3 +304,106 @@ func TestPayeeGetOneAPINotFound(t *testing.T) {
 	assert.JSONEq(t, expected, w.Body.String())
 
 }
+func TestPayeeGetAPIWithFilters(t *testing.T) {
+	mux := setupMux(t)
+
+	payees := []map[string]interface{}{
+		{
+			"name":           "Alice",
+			"code":           "A001",
+			"account_number": 1111112222223333,
+			"ifsc":           "HDFC0018976",
+			"bank":           "HDFC",
+			"email":          "alice@example.com",
+			"mobile":         9000000001,
+			"category":       "Vendor",
+		},
+		{
+			"name":           "Bob",
+			"code":           "B001",
+			"account_number": 2222223333334444,
+			"ifsc":           "SBIN0023456",
+			"bank":           "SBI",
+			"email":          "bob@example.com",
+			"mobile":         9000000002,
+			"category":       "Employee",
+		},
+		{
+			"name":           "Charlie",
+			"code":           "C001",
+			"account_number": 3333334444445555,
+			"ifsc":           "HDFC0034567",
+			"bank":           "HDFC",
+			"email":          "charlie@example.com",
+			"mobile":         9000000003,
+			"category":       "Vendor",
+		},
+	}
+
+	for _, p := range payees {
+		body, _ := json.Marshal(p)
+		req := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+		mux.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusCreated, w.Code)
+	}
+
+	tests := []struct {
+		name       string
+		query      string
+		wantLength int
+		wantNames  []string
+	}{
+		{
+			name:       "no filters",
+			query:      "",
+			wantLength: 3,
+			wantNames:  []string{"Alice", "Bob", "Charlie"},
+		},
+		{
+			name:       "filter by bank HDFC",
+			query:      "?bank=HDFC",
+			wantLength: 2,
+			wantNames:  []string{"Alice", "Charlie"},
+		},
+		{
+			name:       "filter by category Employee",
+			query:      "?category=Employee",
+			wantLength: 1,
+			wantNames:  []string{"Bob"},
+		},
+		{
+			name:       "filter by name Alice",
+			query:      "?name=Alice",
+			wantLength: 1,
+			wantNames:  []string{"Alice"},
+		},
+		{
+			name:       "filter by bank HDFC & category Vendor",
+			query:      "?bank=HDFC&category=Vendor",
+			wantLength: 2,
+			wantNames:  []string{"Alice", "Charlie"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/payees/list"+tt.query, nil)
+			w := httptest.NewRecorder()
+			mux.ServeHTTP(w, req)
+
+			assert.Equal(t, http.StatusOK, w.Code)
+
+			var resp []PayeeGETResponse
+			err := json.Unmarshal(w.Body.Bytes(), &resp)
+			assert.NoError(t, err)
+			assert.Len(t, resp, tt.wantLength)
+
+			var names []string
+			for _, p := range resp {
+				names = append(names, p.BeneficiaryName)
+			}
+			assert.ElementsMatch(t, tt.wantNames, names)
+		})
+	}
+}

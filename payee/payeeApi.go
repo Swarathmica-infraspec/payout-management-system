@@ -87,10 +87,16 @@ func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
 
 func PayeeGetAPI(store PayeeRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 
-		payees, err := store.List(context.Background())
+		opts := FilterList{
+			Name:     r.URL.Query().Get("name"),
+			Category: r.URL.Query().Get("category"),
+			Bank:     r.URL.Query().Get("bank"),
+		}
+
+		payees, err := store.List(context.Background(), opts)
 		if err != nil {
-			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
 			_ = json.NewEncoder(w).Encode(map[string]string{"error": "DB query failed"})
 			return
@@ -111,7 +117,6 @@ func PayeeGetAPI(store PayeeRepository) http.HandlerFunc {
 			})
 		}
 
-		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		_ = json.NewEncoder(w).Encode(resp)
 	}
