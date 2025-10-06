@@ -12,10 +12,11 @@ import (
 )
 
 type PayeeRepository interface {
-	Insert(context context.Context, p *payee) (int, error)
-	GetByID(context context.Context, id int) (*payee, error)
-	List(context context.Context) ([]payee, error)
+	Insert(ctx context.Context, p *payee) (int, error)
+	GetByID(ctx context.Context, id int) (*payee, error)
+	List(ctx context.Context) ([]payee, error)
 	Update(ctx context.Context, p *payee) (*payee, error)
+	
 }
 
 type payeeDB struct {
@@ -33,12 +34,12 @@ var (
 	ErrDuplicateMobile  = errors.New("duplicate mobile")
 )
 
-func (r *payeeDB) Insert(context context.Context, p *payee) (int, error) {
+func (r *payeeDB) Insert(ctx context.Context, p *payee) (int, error) {
 	query := `
         INSERT INTO payees (beneficiary_name, beneficiary_code, account_number,ifsc_code, bank_name, email, mobile, payee_category)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`
 	var id int
-	err := r.db.QueryRowContext(context, query,
+	err := r.db.QueryRowContext(ctx, query,
 		p.beneficiaryName,
 		p.beneficiaryCode,
 		p.accNo,
@@ -62,16 +63,17 @@ func (r *payeeDB) Insert(context context.Context, p *payee) (int, error) {
 			}
 			return 0, fmt.Errorf("insert payee: %w", err)
 		}
+		return 0, err
 	}
 	return id, nil
 }
 
-func (r *payeeDB) GetByID(context context.Context, id int) (*payee, error) {
+func (r *payeeDB) GetByID(ctx context.Context, id int) (*payee, error) {
 	query := `
         SELECT beneficiary_name, beneficiary_code, account_number,
                ifsc_code, bank_name, email, mobile, payee_category
         FROM payees WHERE id=$1`
-	row := r.db.QueryRowContext(context, query, id)
+	row := r.db.QueryRowContext(ctx, query, id)
 
 	var p payee
 	err := row.Scan(
@@ -86,18 +88,18 @@ func (r *payeeDB) GetByID(context context.Context, id int) (*payee, error) {
 	)
 	p.id = id
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get payee by id %d: %w", id, err)
 	}
 	return &p, nil
 }
-func (s *payeeDB) List(context context.Context) ([]payee, error) {
-	rows, err := s.db.QueryContext(context, `
+func (r *payeeDB) List(ctx context.Context) ([]payee, error) {
+	rows, err := r.db.QueryContext(ctx, `
         SELECT id, beneficiary_name, beneficiary_code, account_number, ifsc_code, bank_name, email, mobile, payee_category
         FROM payees
         ORDER BY id ASC
     `)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("List payee: %w", err)
 	}
 	defer func() {
 		if err := rows.Close(); err != nil {
@@ -117,6 +119,9 @@ func (s *payeeDB) List(context context.Context) ([]payee, error) {
 			return nil, err
 		}
 		payees = append(payees, p)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
 	return payees, nil
