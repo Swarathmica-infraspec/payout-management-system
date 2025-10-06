@@ -186,150 +186,97 @@ func TestListPayees(t *testing.T) {
 	store := PayeeDB(db)
 	defer clearPayees(t, db)
 
-	p, err := NewPayee("Xyz", "456", 1234567890123456, "HDFC0001213", "HDFC", "xyz@gmail.com", 9876543210, "Vendor")
-	require.NoError(t, err, "validation failed")
-
-	_, err = store.Insert(context.Background(), p)
-	require.NoError(t, err, "Insertion failed")
-
-	payees, err := store.List(context.Background())
-	require.NoError(t, err, "failed to list payees")
-
-	assert.NotEmpty(t, payees, "expected at least one payee")
-
-}
-
-func TestListPayeesWithFilter(t *testing.T) {
-	db := setupTestDB(t)
-	store := PayeeDB(db)
-	defer clearPayees(t, db)
-
-	p, err := NewPayee("Xyz", "456", 1234567890123456, "HDFC0001213", "HDFC", "xyz@gmail.com", 9876543210, "Vendor")
-	require.NoError(t, err, "validation failed")
-
-	_, err = store.Insert(context.Background(), p)
-	require.NoError(t, err, "Insertion failed")
-
-	payeesByName, err := store.List(context.Background(), FilterList{Name: "Xyz"})
-	require.NoError(t, err, "failed to list payees by name")
-	assert.Len(t, payeesByName, 1)
-	assert.Equal(t, "Xyz", payeesByName[0].beneficiaryName)
-
-	payeesByCategory, err := store.List(context.Background(), FilterList{Category: "Vendor"})
-	require.NoError(t, err, "failed to list payees by category")
-	assert.Len(t, payeesByCategory, 1)
-	assert.Equal(t, "Vendor", payeesByCategory[0].payeeCategory)
-
-	payeesByBank, err := store.List(context.Background(), FilterList{Bank: "HDFC"})
-	require.NoError(t, err, "failed to list payees by bank")
-	assert.Len(t, payeesByBank, 1)
-	assert.Equal(t, "HDFC", payeesByBank[0].bankName)
-}
-
-func TestPayeeListSorting(t *testing.T) {
-	db := setupTestDB(t)
-	store := PayeeDB(db)
-	defer clearPayees(t, db)
-
 	p1, _ := NewPayee("Alice", "A001", 1114567891234567, "HDFC0012345", "HDFC", "a@example.com", 9000000001, "Vendor")
 	p2, _ := NewPayee("Bob", "B001", 2223456789012345, "SBIN0023478", "SBI", "b@example.com", 9000000002, "Employee")
 	p3, _ := NewPayee("Charlie", "C001", 3334567890123456, "HDFC0033456", "HDFC", "c@example.com", 9000000003, "Vendor")
 
-	_, _ = store.Insert(context.Background(), p3)
 	_, _ = store.Insert(context.Background(), p1)
 	_, _ = store.Insert(context.Background(), p2)
+	_, _ = store.Insert(context.Background(), p3)
 
 	tests := []struct {
-		name      string
-		opts      FilterList
-		wantOrder []string
+		name       string
+		opts       FilterList
+		wantNames  []string
+		wantIDs    []int
+		minResults int
 	}{
+		{
+			name:       "list all payees",
+			opts:       FilterList{},
+			minResults: 1,
+		},
+		{
+			name:      "filter by name",
+			opts:      FilterList{Name: "Alice"},
+			wantNames: []string{"Alice"},
+		},
+		{
+			name:      "filter by category",
+			opts:      FilterList{Category: "Vendor"},
+			wantNames: []string{"Alice", "Charlie"},
+		},
+		{
+			name:      "filter by bank",
+			opts:      FilterList{Bank: "SBI"},
+			wantNames: []string{"Bob"},
+		},
 		{
 			name:      "sort by id ASC",
 			opts:      FilterList{SortBy: "id", SortOrder: "ASC"},
-			wantOrder: []string{"Charlie", "Alice", "Bob"},
+			wantNames: []string{"Alice", "Bob", "Charlie"},
 		},
 		{
 			name:      "sort by name ASC",
 			opts:      FilterList{SortBy: "name", SortOrder: "ASC"},
-			wantOrder: []string{"Alice", "Bob", "Charlie"},
+			wantNames: []string{"Alice", "Bob", "Charlie"},
 		},
 		{
 			name:      "sort by name DESC",
 			opts:      FilterList{SortBy: "name", SortOrder: "DESC"},
-			wantOrder: []string{"Charlie", "Bob", "Alice"},
+			wantNames: []string{"Charlie", "Bob", "Alice"},
 		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result, err := store.List(context.Background(), tt.opts)
-			assert.NoError(t, err)
-
-			var names []string
-			for _, p := range result {
-				names = append(names, p.beneficiaryName)
-			}
-
-			assert.Equal(t, tt.wantOrder, names)
-		})
-	}
-}
-
-func TestListPayeesPagination(t *testing.T) {
-	db := setupTestDB(t)
-	repo := &payeeDB{db: db}
-	ctx := context.Background()
-
-	p1, _ := NewPayee("Alice", "A001", 1114567891234567, "HDFC0012345", "HDFC", "a@example.com", 9000000001, "Vendor")
-	p2, _ := NewPayee("Bob", "B001", 2223456789012345, "SBIN0023478", "SBI", "b@example.com", 9000000002, "Employee")
-	p3, _ := NewPayee("Charlie", "C001", 3334567890123456, "HDFC0033456", "HDFC", "c@example.com", 9000000003, "Vendor")
-
-	_, _ = store.Insert(context.Background(), p3)
-	_, _ = store.Insert(context.Background(), p1)
-	_, _ = store.Insert(context.Background(), p2)
-
-	tests := []struct {
-		name    string
-		filter  FilterList
-		wantIDs []int
-	}{
 		{
-			name: "limit 1 offset 0 (first payee)",
-			filter: FilterList{
-				SortBy: "id", SortOrder: "ASC",
-				Limit: 1, Offset: 0,
-			},
+			name:    "pagination: limit 1 offset 0 (first payee)",
+			opts:    FilterList{SortBy: "id", SortOrder: "ASC", Limit: 1, Offset: 0},
 			wantIDs: []int{1},
 		},
 		{
-			name: "limit 1 offset 1 (second payee)",
-			filter: FilterList{
-				SortBy: "id", SortOrder: "ASC",
-				Limit: 1, Offset: 1,
-			},
+			name:    "pagination: limit 1 offset 1 (second payee)",
+			opts:    FilterList{SortBy: "id", SortOrder: "ASC", Limit: 1, Offset: 1},
 			wantIDs: []int{2},
 		},
 		{
-			name: "limit 2 offset 1 (second and third payees)",
-			filter: FilterList{
-				SortBy: "id", SortOrder: "ASC",
-				Limit: 2, Offset: 1,
-			},
+			name:    "pagination: limit 2 offset 1 (second and third payees)",
+			opts:    FilterList{SortBy: "id", SortOrder: "ASC", Limit: 2, Offset: 1},
 			wantIDs: []int{2, 3},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := repo.List(ctx, tt.filter)
+			got, err := store.List(context.Background(), tt.opts)
 			require.NoError(t, err)
 
-			var gotIDs []int
-			for _, p := range got {
-				gotIDs = append(gotIDs, p.id)
+			if tt.minResults > 0 {
+				assert.GreaterOrEqual(t, len(got), tt.minResults)
 			}
-			require.Equal(t, tt.wantIDs, gotIDs)
+
+			if len(tt.wantNames) > 0 {
+				var gotNames []string
+				for _, p := range got {
+					gotNames = append(gotNames, p.beneficiaryName)
+				}
+				assert.Equal(t, tt.wantNames, gotNames)
+			}
+
+			if len(tt.wantIDs) > 0 {
+				var gotIDs []int
+				for _, p := range got {
+					gotIDs = append(gotIDs, p.id)
+				}
+				assert.Equal(t, tt.wantIDs, gotIDs)
+			}
 		})
 	}
 }
