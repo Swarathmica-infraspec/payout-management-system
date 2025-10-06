@@ -61,6 +61,7 @@ func (r *payeeDB) Insert(ctx context.Context, p *payee) (int, error) {
 			}
 			return 0, fmt.Errorf("insert payee: %w", err)
 		}
+		return 0, err
 	}
 	return id, nil
 }
