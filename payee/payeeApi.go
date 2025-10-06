@@ -88,11 +88,13 @@ func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
 func PayeeGetAPI(store PayeeRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-
+		query := r.URL.Query()
 		opts := FilterList{
-			Name:     r.URL.Query().Get("name"),
-			Category: r.URL.Query().Get("category"),
-			Bank:     r.URL.Query().Get("bank"),
+			Name:      query.Get("name"),
+			Category:  query.Get("category"),
+			Bank:      query.Get("bank"),
+			SortBy:    query.Get("sort_by"),
+			SortOrder: query.Get("sort_order"),
 		}
 
 		payees, err := store.List(context.Background(), opts)
