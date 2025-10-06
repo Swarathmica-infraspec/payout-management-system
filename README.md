@@ -90,6 +90,12 @@ expected response: {'id':1}
 
 # Run tests
 
+## Unique Constraints
+
+The payees table enforces unique constraints for the column beneficiary_code, account_number, email and mobile to maintain data integrity.
+
+If an insert violates these constraints, the database will return a duplicate key error.
+
 To run tests: (inside docker)
 
 go test -v ./...
