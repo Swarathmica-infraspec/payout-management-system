@@ -225,3 +225,53 @@ func TestListPayeesWithFilter(t *testing.T) {
 	assert.Len(t, payeesByBank, 1)
 	assert.Equal(t, "HDFC", payeesByBank[0].bankName)
 }
+
+func TestPayeeListSorting(t *testing.T) {
+	db := setupTestDB(t)
+	store := PayeeDB(db)
+	defer clearPayees(t, db)
+
+	p1, _ := NewPayee("Alice", "A001", 1114567891234567, "HDFC0012345", "HDFC", "a@example.com", 9000000001, "Vendor")
+	p2, _ := NewPayee("Bob", "B001", 2223456789012345, "SBIN0023478", "SBI", "b@example.com", 9000000002, "Employee")
+	p3, _ := NewPayee("Charlie", "C001", 3334567890123456, "HDFC0033456", "HDFC", "c@example.com", 9000000003, "Vendor")
+
+	_, _ = store.Insert(context.Background(), p3)
+	_, _ = store.Insert(context.Background(), p1)
+	_, _ = store.Insert(context.Background(), p2)
+
+	tests := []struct {
+		name      string
+		opts      FilterList
+		wantOrder []string
+	}{
+		{
+			name:      "sort by id ASC",
+			opts:      FilterList{SortBy: "id", SortOrder: "ASC"},
+			wantOrder: []string{"Charlie", "Alice", "Bob"},
+		},
+		{
+			name:      "sort by name ASC",
+			opts:      FilterList{SortBy: "beneficiary_name", SortOrder: "ASC"},
+			wantOrder: []string{"Alice", "Bob", "Charlie"},
+		},
+		{
+			name:      "sort by name DESC",
+			opts:      FilterList{SortBy: "beneficiary_name", SortOrder: "DESC"},
+			wantOrder: []string{"Charlie", "Bob", "Alice"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := store.List(context.Background(), tt.opts)
+			assert.NoError(t, err)
+
+			var names []string
+			for _, p := range result {
+				names = append(names, p.beneficiaryName)
+			}
+
+			assert.Equal(t, tt.wantOrder, names)
+		})
+	}
+}

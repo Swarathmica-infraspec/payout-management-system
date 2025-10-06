@@ -93,9 +93,11 @@ func (r *payeeDB) GetByID(ctx context.Context, id int) (*payee, error) {
 }
 
 type FilterList struct {
-	Name     string
-	Category string
-	Bank     string
+	Name      string
+	Category  string
+	Bank      string
+	SortBy    string
+	SortOrder string
 }
 
 func (r *payeeDB) List(ctx context.Context, options ...FilterList) ([]payee, error) {
@@ -127,7 +129,16 @@ func (r *payeeDB) List(ctx context.Context, options ...FilterList) ([]payee, err
 		query += " WHERE " + strings.Join(filters, " AND ")
 	}
 
-	query += " ORDER BY id ASC"
+	sortBy := "id"
+	if filterOption.SortBy != "" {
+		sortBy = filterOption.SortBy
+	}
+	sortOrder := "ASC"
+	if strings.ToUpper(filterOption.SortOrder) == "DESC" {
+		sortOrder = "DESC"
+	}
+
+	query += fmt.Sprintf(" ORDER BY %s %s", sortBy, sortOrder)
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
