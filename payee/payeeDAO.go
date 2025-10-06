@@ -118,6 +118,9 @@ func (s *payeeDB) List(ctx context.Context) ([]payee, error) {
 		}
 		payees = append(payees, p)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
 	return payees, nil
 }
