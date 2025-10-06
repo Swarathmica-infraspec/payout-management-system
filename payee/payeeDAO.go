@@ -90,8 +90,8 @@ func (r *payeeDB) GetByID(ctx context.Context, id int) (*payee, error) {
 	}
 	return &p, nil
 }
-func (s *payeeDB) List(ctx context.Context) ([]payee, error) {
-	rows, err := s.db.QueryContext(ctx, `
+func (r *payeeDB) List(ctx context.Context) ([]payee, error) {
+	rows, err := r.db.QueryContext(ctx, `
         SELECT id, beneficiary_name, beneficiary_code, account_number, ifsc_code, bank_name, email, mobile, payee_category
         FROM payees
         ORDER BY id ASC
