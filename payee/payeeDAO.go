@@ -86,7 +86,7 @@ func (r *payeeDB) GetByID(ctx context.Context, id int) (*payee, error) {
 	)
 	p.id = id
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get payee by id %d: %w", id, err)
 	}
 	return &p, nil
 }
@@ -97,7 +97,7 @@ func (s *payeeDB) List(ctx context.Context) ([]payee, error) {
         ORDER BY id ASC
     `)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("List payee: %w", err)
 	}
 	defer func() {
 		if err := rows.Close(); err != nil {
