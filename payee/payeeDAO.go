@@ -137,7 +137,7 @@ func (s *payeeDB) Update(ctx context.Context, p *payee) (*payee, error) {
             email            = $6,
             mobile           = $7,
             payee_category   = $8
-        WHERE id = $9
+        WHERE id = $9 AND is_deleted = FALSE
         RETURNING id, beneficiary_name, beneficiary_code, account_number, ifsc_code, bank_name, email, mobile, payee_category
     `
 

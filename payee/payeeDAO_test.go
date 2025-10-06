@@ -224,7 +224,6 @@ func TestUpdatePayee(t *testing.T) {
 	assert.Equal(t, updatedName, updated.beneficiaryName)
 }
 
-
 func TestUpdatePayeeWithDuplicateValues(t *testing.T) {
 	db := setupTestDB(t)
 	store := PayeeDB(db)
