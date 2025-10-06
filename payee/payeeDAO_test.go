@@ -251,12 +251,12 @@ func TestPayeeListSorting(t *testing.T) {
 		},
 		{
 			name:      "sort by name ASC",
-			opts:      FilterList{SortBy: "beneficiary_name", SortOrder: "ASC"},
+			opts:      FilterList{SortBy: "name", SortOrder: "ASC"},
 			wantOrder: []string{"Alice", "Bob", "Charlie"},
 		},
 		{
 			name:      "sort by name DESC",
-			opts:      FilterList{SortBy: "beneficiary_name", SortOrder: "DESC"},
+			opts:      FilterList{SortBy: "name", SortOrder: "DESC"},
 			wantOrder: []string{"Charlie", "Bob", "Alice"},
 		},
 	}

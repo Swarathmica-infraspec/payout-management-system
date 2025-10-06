@@ -128,10 +128,16 @@ func (r *payeeDB) List(ctx context.Context, options ...FilterList) ([]payee, err
 	if len(filters) > 0 {
 		query += " WHERE " + strings.Join(filters, " AND ")
 	}
-
+	columnMap := map[string]string{  //TODO: there's a mismatch between column and parameter name, for now solved using a map
+		"name":     "beneficiary_name",
+		"category": "payee_category",
+		"bank":     "bank_name",
+	}
 	sortBy := "id"
 	if filterOption.SortBy != "" {
-		sortBy = filterOption.SortBy
+		if col, ok := columnMap[filterOption.SortBy]; ok {
+			sortBy = col
+		}
 	}
 	sortOrder := "ASC"
 	if strings.ToUpper(filterOption.SortOrder) == "DESC" {
