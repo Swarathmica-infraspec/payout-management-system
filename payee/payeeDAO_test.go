@@ -230,12 +230,12 @@ func TestUpdatePayeeWithDuplicateValues(t *testing.T) {
 	ctx := context.Background()
 	defer clearPayees(t, db)
 
-	p1, err := NewPayee("Abc", "111", 1234567890123456, "CBIN0001", "CBI", "abc@gmail.com", 9000000001, "Employee")
+	p1, err := NewPayee("Abc", "111", 1234567890123456, "CBIN0001234", "CBI", "abc@gmail.com", 9000000001, "Employee")
 	require.NoError(t, err)
 	_, err = store.Insert(ctx, p1)
 	require.NoError(t, err)
 
-	p2, err := NewPayee("Bcd", "222", 6543210987654321, "HDFC0002", "HDFC", "bcd@gmail.com", 9000000002, "Vendor")
+	p2, err := NewPayee("Bcd", "222", 6543210987654321, "HDFC0001223", "HDFC", "bcd@gmail.com", 9000000002, "Vendor")
 	require.NoError(t, err)
 	id2, err := store.Insert(ctx, p2)
 	require.NoError(t, err)
@@ -266,7 +266,7 @@ func TestUpdatePayeeWithDuplicateValues(t *testing.T) {
 			testName: "duplicate email",
 			targetID: id2,
 			updateFn: func(p *payee) {
-				p.email = "abc@gmail.com" 
+				p.email = "abc@gmail.com"
 			},
 			wantErr: ErrDuplicateEmail,
 		},
@@ -274,11 +274,10 @@ func TestUpdatePayeeWithDuplicateValues(t *testing.T) {
 			testName: "duplicate mobile",
 			targetID: id2,
 			updateFn: func(p *payee) {
-				p.mobile = 9000000001 
+				p.mobile = 9000000001
 			},
 			wantErr: ErrDuplicateMobile,
 		},
-		
 	}
 
 	for _, tt := range tests {

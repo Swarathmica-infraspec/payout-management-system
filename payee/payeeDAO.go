@@ -16,7 +16,6 @@ type PayeeRepository interface {
 	GetByID(ctx context.Context, id int) (*payee, error)
 	List(ctx context.Context) ([]payee, error)
 	Update(ctx context.Context, p *payee) (*payee, error)
-	
 }
 
 type payeeDB struct {
