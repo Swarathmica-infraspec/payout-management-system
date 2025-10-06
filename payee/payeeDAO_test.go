@@ -198,3 +198,30 @@ func TestListPayees(t *testing.T) {
 	assert.NotEmpty(t, payees, "expected at least one payee")
 
 }
+
+func TestListPayeesWithFilter(t *testing.T) {
+	db := setupTestDB(t)
+	store := PayeeDB(db)
+	defer clearPayees(t, db)
+
+	p, err := NewPayee("Xyz", "456", 1234567890123456, "HDFC0001213", "HDFC", "xyz@gmail.com", 9876543210, "Vendor")
+	require.NoError(t, err, "validation failed")
+
+	_, err = store.Insert(context.Background(), p)
+	require.NoError(t, err, "Insertion failed")
+
+	payeesByName, err := store.List(context.Background(), FilterList{Name: "Xyz"})
+	require.NoError(t, err, "failed to list payees by name")
+	assert.Len(t, payeesByName, 1)
+	assert.Equal(t, "Xyz", payeesByName[0].beneficiaryName)
+
+	payeesByCategory, err := store.List(context.Background(), FilterList{Category: "Vendor"})
+	require.NoError(t, err, "failed to list payees by category")
+	assert.Len(t, payeesByCategory, 1)
+	assert.Equal(t, "Vendor", payeesByCategory[0].payeeCategory)
+
+	payeesByBank, err := store.List(context.Background(), FilterList{Bank: "HDFC"})
+	require.NoError(t, err, "failed to list payees by bank")
+	assert.Len(t, payeesByBank, 1)
+	assert.Equal(t, "HDFC", payeesByBank[0].bankName)
+}

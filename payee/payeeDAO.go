@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -14,7 +15,7 @@ import (
 type PayeeRepository interface {
 	Insert(ctx context.Context, p *payee) (int, error)
 	GetByID(ctx context.Context, id int) (*payee, error)
-	List(ctx context.Context) ([]payee, error)
+	List(ctx context.Context, options ...FilterList) ([]payee, error)
 }
 
 type payeeDB struct {
@@ -90,12 +91,45 @@ func (r *payeeDB) GetByID(ctx context.Context, id int) (*payee, error) {
 	}
 	return &p, nil
 }
-func (r *payeeDB) List(ctx context.Context) ([]payee, error) {
-	rows, err := r.db.QueryContext(ctx, `
+
+type FilterList struct {
+	Name     string
+	Category string
+	Bank     string
+}
+
+func (r *payeeDB) List(ctx context.Context, options ...FilterList) ([]payee, error) {
+	query := `
         SELECT id, beneficiary_name, beneficiary_code, account_number, ifsc_code, bank_name, email, mobile, payee_category
         FROM payees
-        ORDER BY id ASC
-    `)
+    `
+	var filterOption FilterList
+	if len(options) > 0 {
+		filterOption = options[0]
+	}
+	var args []interface{}
+	var filters []string
+
+	if filterOption.Name != "" {
+		filters = append(filters, fmt.Sprintf("beneficiary_name = $%d", len(args)+1))
+		args = append(args, filterOption.Name)
+	}
+	if filterOption.Category != "" {
+		filters = append(filters, fmt.Sprintf("payee_category = $%d", len(args)+1))
+		args = append(args, filterOption.Category)
+	}
+	if filterOption.Bank != "" {
+		filters = append(filters, fmt.Sprintf("bank_name = $%d", len(args)+1))
+		args = append(args, filterOption.Bank)
+	}
+
+	if len(filters) > 0 {
+		query += " WHERE " + strings.Join(filters, " AND ")
+	}
+
+	query += " ORDER BY id ASC"
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("List payee: %w", err)
 	}
