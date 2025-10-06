@@ -3,9 +3,9 @@ package payee
 import (
 	"context"
 	"database/sql"
-	"log"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
