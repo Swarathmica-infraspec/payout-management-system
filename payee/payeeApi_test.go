@@ -195,48 +195,6 @@ func TestPayeePostAPIUniqueConstraints(t *testing.T) {
 	}
 }
 
-func TestPayeeGetAPI(t *testing.T) {
-	mux := setupMux(t)
-
-	payload := map[string]interface{}{
-		"name":           "Abdc",
-		"code":           "1262",
-		"account_number": 1234767893,
-		"ifsc":           "CBIN0123456",
-		"bank":           "CBI",
-		"email":          "abcd@example.com",
-		"mobile":         9876543292,
-		"category":       "Employee",
-	}
-	body, _ := json.Marshal(payload)
-	reqCreate := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
-	wCreate := httptest.NewRecorder()
-	mux.ServeHTTP(wCreate, reqCreate)
-	assert.Equal(t, http.StatusCreated, wCreate.Code)
-
-	req := httptest.NewRequest(http.MethodGet, "/payees/list", nil)
-	w := httptest.NewRecorder()
-	mux.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-
-	var resp []PayeeGETResponse
-	err := json.Unmarshal(w.Body.Bytes(), &resp)
-	assert.NoError(t, err)
-	assert.Len(t, resp, 1)
-
-	got := resp[0]
-	assert.Equal(t, payload["name"], got.BeneficiaryName)
-	assert.Equal(t, payload["code"], got.BeneficiaryCode)
-	assert.Equal(t, payload["account_number"], got.AccNo)
-	assert.Equal(t, payload["ifsc"], got.IFSC)
-	assert.Equal(t, payload["bank"], got.BankName)
-	assert.Equal(t, payload["email"], got.Email)
-	assert.Equal(t, payload["mobile"], got.Mobile)
-	assert.Equal(t, payload["category"], got.PayeeCategory)
-
-}
-
 func TestPayeeGetOneAPI(t *testing.T) {
 	mux := setupMux(t)
 
@@ -304,40 +262,15 @@ func TestPayeeGetOneAPINotFound(t *testing.T) {
 	assert.JSONEq(t, expected, w.Body.String())
 
 }
-func TestPayeeGetAPIWithFilters(t *testing.T) {
+
+func TestPayeeGetAPI(t *testing.T) {
 	mux := setupMux(t)
 
 	payees := []map[string]interface{}{
-		{
-			"name":           "Alice",
-			"code":           "A001",
-			"account_number": 1111112222223333,
-			"ifsc":           "HDFC0018976",
-			"bank":           "HDFC",
-			"email":          "alice@example.com",
-			"mobile":         9000000001,
-			"category":       "Vendor",
-		},
-		{
-			"name":           "Bob",
-			"code":           "B001",
-			"account_number": 2222223333334444,
-			"ifsc":           "SBIN0023456",
-			"bank":           "SBI",
-			"email":          "bob@example.com",
-			"mobile":         9000000002,
-			"category":       "Employee",
-		},
-		{
-			"name":           "Charlie",
-			"code":           "C001",
-			"account_number": 3333334444445555,
-			"ifsc":           "HDFC0034567",
-			"bank":           "HDFC",
-			"email":          "charlie@example.com",
-			"mobile":         9000000003,
-			"category":       "Vendor",
-		},
+		{"name": "Alice", "code": "A001", "account_number": 1112345678901324, "ifsc": "HDFC0017890", "bank": "HDFC", "email": "a@example.com", "mobile": 9000000001, "category": "Vendor"},
+		{"name": "Bob", "code": "B001", "account_number": 2225678347532479, "ifsc": "SBIN0022345", "bank": "SBI", "email": "b@example.com", "mobile": 9000000002, "category": "Employee"},
+		{"name": "Charlie", "code": "C001", "account_number": 3335674839247567, "ifsc": "HDFC0033333", "bank": "HDFC", "email": "c@example.com", "mobile": 9000000003, "category": "Vendor"},
+		{"name": "Abdc", "code": "1262", "account_number": 1234767893, "ifsc": "CBIN0123456", "bank": "CBI", "email": "abcd@example.com", "mobile": 9876543292, "category": "Employee"},
 	}
 
 	for _, p := range payees {
@@ -351,39 +284,23 @@ func TestPayeeGetAPIWithFilters(t *testing.T) {
 	tests := []struct {
 		name       string
 		query      string
-		wantLength int
 		wantNames  []string
+		wantLength int
 	}{
-		{
-			name:       "no filters",
-			query:      "",
-			wantLength: 3,
-			wantNames:  []string{"Alice", "Bob", "Charlie"},
-		},
-		{
-			name:       "filter by bank HDFC",
-			query:      "?bank=HDFC",
-			wantLength: 2,
-			wantNames:  []string{"Alice", "Charlie"},
-		},
-		{
-			name:       "filter by category Employee",
-			query:      "?category=Employee",
-			wantLength: 1,
-			wantNames:  []string{"Bob"},
-		},
-		{
-			name:       "filter by name Alice",
-			query:      "?name=Alice",
-			wantLength: 1,
-			wantNames:  []string{"Alice"},
-		},
-		{
-			name:       "filter by bank HDFC & category Vendor",
-			query:      "?bank=HDFC&category=Vendor",
-			wantLength: 2,
-			wantNames:  []string{"Alice", "Charlie"},
-		},
+		{"list all", "", []string{"Alice", "Bob", "Charlie", "Abdc"}, 4},
+
+		{"filter by bank HDFC", "?bank=HDFC", []string{"Alice", "Charlie"}, 2},
+		{"filter by category Employee", "?category=Employee", []string{"Bob", "Abdc"}, 2},
+		{"filter by name Alice", "?name=Alice", []string{"Alice"}, 1},
+		{"filter by bank HDFC & category Vendor", "?bank=HDFC&category=Vendor", []string{"Alice", "Charlie"}, 2},
+
+		{"sort by name ASC", "?sort_by=beneficiary_name&sort_order=ASC", []string{"Abdc", "Alice", "Bob", "Charlie"}, 4},
+		{"sort by name DESC", "?sort_by=beneficiary_name&sort_order=DESC", []string{"Charlie", "Bob", "Alice", "Abdc"}, 4},
+		{"default sort (id ASC)", "", []string{"Alice", "Bob", "Charlie", "Abdc"}, 4},
+
+		{"pagination limit 1 offset 0", "?sort_by=id&sort_order=ASC&limit=1&offset=0", []string{"Alice"}, 1},
+		{"pagination limit 1 offset 1", "?sort_by=id&sort_order=ASC&limit=1&offset=1", []string{"Bob"}, 1},
+		{"pagination limit 2 offset 1", "?sort_by=id&sort_order=ASC&limit=2&offset=1", []string{"Bob", "Charlie"}, 2},
 	}
 
 	for _, tt := range tests {
@@ -399,134 +316,11 @@ func TestPayeeGetAPIWithFilters(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Len(t, resp, tt.wantLength)
 
-			var names []string
+			var gotNames []string
 			for _, p := range resp {
-				names = append(names, p.BeneficiaryName)
+				gotNames = append(gotNames, p.BeneficiaryName)
 			}
-			assert.ElementsMatch(t, tt.wantNames, names)
-		})
-	}
-}
-
-func TestPayeeGetAPIWithSorting(t *testing.T) {
-	mux := setupMux(t)
-
-	payees := []map[string]interface{}{
-		{"name": "Alice", "code": "A001", "account_number": 1112345678901324, "ifsc": "HDFC0017890", "bank": "HDFC", "email": "a@example.com", "mobile": 9000000001, "category": "Vendor"},
-		{"name": "Bob", "code": "B001", "account_number": 2225678347532479, "ifsc": "SBIN0022345", "bank": "SBI", "email": "b@example.com", "mobile": 9000000002, "category": "Employee"},
-		{"name": "Charlie", "code": "C001", "account_number": 3335674839247567, "ifsc": "HDFC0033333", "bank": "HDFC", "email": "c@example.com", "mobile": 9000000003, "category": "Vendor"},
-	}
-
-	for _, p := range payees {
-		body, _ := json.Marshal(p)
-		req := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
-		w := httptest.NewRecorder()
-		mux.ServeHTTP(w, req)
-		assert.Equal(t, http.StatusCreated, w.Code)
-	}
-
-	tests := []struct {
-		name      string
-		query     string
-		wantOrder []string
-	}{
-		{
-			name:      "sort by name ASC",
-			query:     "?sort_by=beneficiary_name&sort_order=ASC",
-			wantOrder: []string{"Alice", "Bob", "Charlie"},
-		},
-		{
-			name:      "sort by name DESC",
-			query:     "?sort_by=beneficiary_name&sort_order=DESC",
-			wantOrder: []string{"Charlie", "Bob", "Alice"},
-		},
-		{
-			name:      "default sort (id ASC)",
-			query:     "",
-			wantOrder: []string{"Alice", "Bob", "Charlie"},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/payees/list"+tt.query, nil)
-			w := httptest.NewRecorder()
-			mux.ServeHTTP(w, req)
-
-			assert.Equal(t, http.StatusOK, w.Code)
-
-			var resp []PayeeGETResponse
-			err := json.Unmarshal(w.Body.Bytes(), &resp)
-			assert.NoError(t, err)
-
-			var names []string
-			for _, p := range resp {
-				names = append(names, p.BeneficiaryName)
-			}
-
-			assert.Equal(t, tt.wantOrder, names)
-		})
-	}
-}
-
-func TestPayeeGetAPIWithPagination(t *testing.T) {
-	mux := setupMux(t)
-
-	// Seed test data
-	payees := []map[string]interface{}{
-		{"name": "Alice", "code": "A001", "account_number": 1112345678901324, "ifsc": "HDFC0017890", "bank": "HDFC", "email": "a@example.com", "mobile": 9000000001, "category": "Vendor"},
-		{"name": "Bob", "code": "B001", "account_number": 2225678347532479, "ifsc": "SBIN0022345", "bank": "SBI", "email": "b@example.com", "mobile": 9000000002, "category": "Employee"},
-		{"name": "Charlie", "code": "C001", "account_number": 3335674839247567, "ifsc": "HDFC0033333", "bank": "HDFC", "email": "c@example.com", "mobile": 9000000003, "category": "Vendor"},
-	}
-
-	for _, p := range payees {
-		body, _ := json.Marshal(p)
-		req := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
-		w := httptest.NewRecorder()
-		mux.ServeHTTP(w, req)
-		assert.Equal(t, http.StatusCreated, w.Code)
-	}
-
-	tests := []struct {
-		name      string
-		query     string
-		wantNames []string
-	}{
-		{
-			name:      "pagination limit 1 offset 0",
-			query:     "?sort_by=id&sort_order=ASC&limit=1&offset=0",
-			wantNames: []string{"Alice"},
-		},
-		{
-			name:      "pagination limit 1 offset 1",
-			query:     "?sort_by=id&sort_order=ASC&limit=1&offset=1",
-			wantNames: []string{"Bob"},
-		},
-		{
-			name:      "pagination limit 2 offset 1",
-			query:     "?sort_by=id&sort_order=ASC&limit=2&offset=1",
-			wantNames: []string{"Bob", "Charlie"},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/payees/list"+tt.query, nil)
-			w := httptest.NewRecorder()
-			mux.ServeHTTP(w, req)
-
-			assert.Equal(t, http.StatusOK, w.Code)
-
-			var resp []PayeeGETResponse
-			err := json.Unmarshal(w.Body.Bytes(), &resp)
-			assert.NoError(t, err)
-
-			var names []string
-			for _, p := range resp {
-				names = append(names, p.BeneficiaryName)
-			}
-
-			assert.Equal(t, tt.wantNames, names)
+			assert.ElementsMatch(t, tt.wantNames, gotNames)
 		})
 	}
 }
