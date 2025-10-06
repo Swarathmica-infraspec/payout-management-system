@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
 type PayeeRequest struct {
@@ -142,48 +141,10 @@ func PayeeGetAPI(store PayeeRepository) http.HandlerFunc {
 	}
 }
 
-func PayeeGetOneAPI(store PayeeRepository) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-		idStr := strings.TrimPrefix(r.URL.Path, "/payees/")
-		id, err := strconv.Atoi(idStr)
-		if err != nil {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": "invalid id"})
-			return
-		}
-
-		p, err := store.GetByID(context.Background(), id)
-		if err != nil {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusNotFound)
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": "record not found"})
-			return
-		}
-
-		resp := PayeeGETResponse{
-			ID:              p.id,
-			BeneficiaryName: p.beneficiaryName,
-			BeneficiaryCode: p.beneficiaryCode,
-			AccNo:           p.accNo,
-			IFSC:            p.ifsc,
-			BankName:        p.bankName,
-			Email:           p.email,
-			Mobile:          p.mobile,
-			PayeeCategory:   p.payeeCategory,
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(resp)
-	}
-}
 func SetupRouter(store PayeeRepository) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/payees", PayeePostAPI(store))
 	mux.HandleFunc("/payees/list", PayeeGetAPI(store))
-	mux.HandleFunc("/payees/", PayeeGetOneAPI(store))
 
 	return mux
 }

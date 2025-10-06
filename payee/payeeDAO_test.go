@@ -144,43 +144,6 @@ func TestInsertPayeeWithDuplicateValues(t *testing.T) {
 	}
 }
 
-func TestGetPayeeByID(t *testing.T) {
-	db := setupTestDB(t)
-	store := PayeeDB(db)
-	ctx := context.Background()
-
-	defer clearPayees(t, db)
-
-	var id int
-	err := db.QueryRow(`
-		INSERT INTO payees (beneficiary_name, beneficiary_code, account_number, ifsc_code, bank_name, email, mobile, payee_category)
-		VALUES ('Abc','136',1234567890123456,'CBIN0123459','CBI','abc@gmail.com',9123456780,'Employee')
-		RETURNING id`).Scan(&id)
-
-	require.NoError(t, err, "failed to insert payee")
-
-	got, err := store.GetByID(ctx, id)
-
-	name := "Abc"
-	code := "136"
-	accNo := 1234567890123456
-	ifsc := "CBIN0123459"
-	bank := "CBI"
-	email := "abc@gmail.com"
-	mobile := 9123456780
-	category := "Employee"
-
-	require.NoError(t, err, "failed to fetch payee")
-
-	assert.Equal(t, name, got.beneficiaryName)
-	assert.Equal(t, code, got.beneficiaryCode)
-	assert.Equal(t, accNo, got.accNo)
-	assert.Equal(t, ifsc, got.ifsc)
-	assert.Equal(t, bank, got.bankName)
-	assert.Equal(t, email, got.email)
-	assert.Equal(t, mobile, got.mobile)
-	assert.Equal(t, category, got.payeeCategory)
-}
 func TestListPayees(t *testing.T) {
 	db := setupTestDB(t)
 	store := PayeeDB(db)

@@ -14,7 +14,6 @@ import (
 
 type PayeeRepository interface {
 	Insert(ctx context.Context, p *payee) (int, error)
-	GetByID(ctx context.Context, id int) (*payee, error)
 	List(ctx context.Context, options ...FilterList) ([]payee, error)
 }
 
@@ -65,31 +64,6 @@ func (r *payeeDB) Insert(ctx context.Context, p *payee) (int, error) {
 		return 0, err
 	}
 	return id, nil
-}
-
-func (r *payeeDB) GetByID(ctx context.Context, id int) (*payee, error) {
-	query := `
-        SELECT beneficiary_name, beneficiary_code, account_number,
-               ifsc_code, bank_name, email, mobile, payee_category
-        FROM payees WHERE id=$1`
-	row := r.db.QueryRowContext(ctx, query, id)
-
-	var p payee
-	err := row.Scan(
-		&p.beneficiaryName,
-		&p.beneficiaryCode,
-		&p.accNo,
-		&p.ifsc,
-		&p.bankName,
-		&p.email,
-		&p.mobile,
-		&p.payeeCategory,
-	)
-	p.id = id
-	if err != nil {
-		return nil, fmt.Errorf("get payee by id %d: %w", id, err)
-	}
-	return &p, nil
 }
 
 type FilterList struct {

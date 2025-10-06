@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"strconv"
 	"testing"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -193,74 +192,6 @@ func TestPayeePostAPIUniqueConstraints(t *testing.T) {
 			assert.JSONEq(t, tt.wantJSON, w.Body.String())
 		})
 	}
-}
-
-func TestPayeeGetOneAPI(t *testing.T) {
-	mux := setupMux(t)
-
-	payload := map[string]interface{}{
-		"name":           "Abdc",
-		"code":           "1262",
-		"account_number": 1234767893,
-		"ifsc":           "CBIN0123456",
-		"bank":           "CBI",
-		"email":          "abcd@example.com",
-		"mobile":         9876543292,
-		"category":       "Employee",
-	}
-	body, _ := json.Marshal(payload)
-
-	reqCreate := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
-	wCreate := httptest.NewRecorder()
-	mux.ServeHTTP(wCreate, reqCreate)
-
-	assert.Equal(t, http.StatusCreated, wCreate.Code)
-
-	type CreateResp struct {
-		ID int `json:"id"`
-	}
-	var createResp CreateResp
-	err := json.Unmarshal(wCreate.Body.Bytes(), &createResp)
-	assert.NoError(t, err)
-
-	url := "/payees/" + strconv.Itoa(createResp.ID)
-	reqGet := httptest.NewRequest(http.MethodGet, url, nil)
-	wGet := httptest.NewRecorder()
-	mux.ServeHTTP(wGet, reqGet)
-
-	assert.Equal(t, http.StatusOK, wGet.Code)
-
-	var getResp PayeeGETResponse
-	err = json.Unmarshal(wGet.Body.Bytes(), &getResp)
-	assert.NoError(t, err)
-
-	assert.Equal(t, createResp.ID, getResp.ID)
-	assert.Equal(t, payload["name"], getResp.BeneficiaryName)
-	assert.Equal(t, payload["code"], getResp.BeneficiaryCode)
-	assert.Equal(t, payload["account_number"], getResp.AccNo)
-	assert.Equal(t, payload["ifsc"], getResp.IFSC)
-	assert.Equal(t, payload["bank"], getResp.BankName)
-	assert.Equal(t, payload["email"], getResp.Email)
-	assert.Equal(t, payload["mobile"], getResp.Mobile)
-	assert.Equal(t, payload["category"], getResp.PayeeCategory)
-}
-
-func TestPayeeGetOneAPINotFound(t *testing.T) {
-	mux := setupMux(t)
-
-	nonExistentID := 9999
-	url := "/payees/" + strconv.Itoa(nonExistentID)
-
-	req := httptest.NewRequest(http.MethodGet, url, nil)
-	w := httptest.NewRecorder()
-
-	mux.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusNotFound, w.Code)
-
-	expected := `{"error":"record not found"}`
-	assert.JSONEq(t, expected, w.Body.String())
-
 }
 
 func TestPayeeGetAPI(t *testing.T) {
