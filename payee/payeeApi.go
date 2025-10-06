@@ -3,6 +3,7 @@ package payee
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 )
 
@@ -62,7 +63,8 @@ func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
 			if status == http.StatusConflict {
 				_ = json.NewEncoder(w).Encode(map[string]string{"error": "Payee already exists with the same: " + errMsg})
 			} else {
-				_ = json.NewEncoder(w).Encode(map[string]string{"error": errMsg})
+				_ = json.NewEncoder(w).Encode(map[string]string{"error": "Something went wrong"})
+				log.Printf("Internal error: %v", err)
 			}
 			return
 		}
