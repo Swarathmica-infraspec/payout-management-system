@@ -275,3 +275,61 @@ func TestPayeeListSorting(t *testing.T) {
 		})
 	}
 }
+
+func TestListPayeesPagination(t *testing.T) {
+	db := setupTestDB(t)
+	repo := &payeeDB{db: db}
+	ctx := context.Background()
+
+	p1, _ := NewPayee("Alice", "A001", 1114567891234567, "HDFC0012345", "HDFC", "a@example.com", 9000000001, "Vendor")
+	p2, _ := NewPayee("Bob", "B001", 2223456789012345, "SBIN0023478", "SBI", "b@example.com", 9000000002, "Employee")
+	p3, _ := NewPayee("Charlie", "C001", 3334567890123456, "HDFC0033456", "HDFC", "c@example.com", 9000000003, "Vendor")
+
+	_, _ = store.Insert(context.Background(), p3)
+	_, _ = store.Insert(context.Background(), p1)
+	_, _ = store.Insert(context.Background(), p2)
+
+	tests := []struct {
+		name    string
+		filter  FilterList
+		wantIDs []int
+	}{
+		{
+			name: "limit 1 offset 0 (first payee)",
+			filter: FilterList{
+				SortBy: "id", SortOrder: "ASC",
+				Limit: 1, Offset: 0,
+			},
+			wantIDs: []int{1},
+		},
+		{
+			name: "limit 1 offset 1 (second payee)",
+			filter: FilterList{
+				SortBy: "id", SortOrder: "ASC",
+				Limit: 1, Offset: 1,
+			},
+			wantIDs: []int{2},
+		},
+		{
+			name: "limit 2 offset 1 (second and third payees)",
+			filter: FilterList{
+				SortBy: "id", SortOrder: "ASC",
+				Limit: 2, Offset: 1,
+			},
+			wantIDs: []int{2, 3},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := repo.List(ctx, tt.filter)
+			require.NoError(t, err)
+
+			var gotIDs []int
+			for _, p := range got {
+				gotIDs = append(gotIDs, p.id)
+			}
+			require.Equal(t, tt.wantIDs, gotIDs)
+		})
+	}
+}

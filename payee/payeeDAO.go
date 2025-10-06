@@ -98,6 +98,8 @@ type FilterList struct {
 	Bank      string
 	SortBy    string
 	SortOrder string
+	Limit     int
+	Offset    int
 }
 
 func (r *payeeDB) List(ctx context.Context, options ...FilterList) ([]payee, error) {
@@ -128,7 +130,7 @@ func (r *payeeDB) List(ctx context.Context, options ...FilterList) ([]payee, err
 	if len(filters) > 0 {
 		query += " WHERE " + strings.Join(filters, " AND ")
 	}
-	columnMap := map[string]string{  //TODO: there's a mismatch between column and parameter name, for now solved using a map
+	columnMap := map[string]string{ //TODO: there's a mismatch between column and parameter name, for now solved using a map
 		"name":     "beneficiary_name",
 		"category": "payee_category",
 		"bank":     "bank_name",
@@ -145,6 +147,10 @@ func (r *payeeDB) List(ctx context.Context, options ...FilterList) ([]payee, err
 	}
 
 	query += fmt.Sprintf(" ORDER BY %s %s", sortBy, sortOrder)
+
+	if filterOption.Limit > 0 {
+		query += fmt.Sprintf(" LIMIT %d OFFSET %d", filterOption.Limit, filterOption.Offset)
+	}
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
