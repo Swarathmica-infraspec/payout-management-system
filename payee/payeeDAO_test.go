@@ -240,3 +240,78 @@ func TestUpdatePayee(t *testing.T) {
 	}
 	assert.Equal(t, updatedName, updated.beneficiaryName)
 }
+
+func TestUpdatePayeeWithDuplicateValues(t *testing.T) {
+	db := setupTestDB(t)
+	store := PayeeDB(db)
+	ctx := context.Background()
+	defer clearPayees(t, db)
+
+	p1, err := NewPayee("Abc", "111", 1234567890123456, "CBIN0001", "CBI", "abc@gmail.com", 9000000001, "Employee")
+	require.NoError(t, err)
+	_, err = store.Insert(ctx, p1)
+	require.NoError(t, err)
+
+	p2, err := NewPayee("Bravo", "222", 6543210987654321, "HDFC0002", "HDFC", "bravo@gmail.com", 9000000002, "Vendor")
+	require.NoError(t, err)
+	id2, err := store.Insert(ctx, p2)
+	require.NoError(t, err)
+
+	tests := []struct {
+		testName string
+		targetID int
+		updateFn func(p *payee)
+		wantErr  error
+	}{
+		{
+			testName: "duplicate beneficiary code",
+			targetID: id2,
+			updateFn: func(p *payee) {
+				p.beneficiaryCode = "111"
+			},
+			wantErr: ErrDuplicateCode,
+		},
+		{
+			testName: "duplicate account number",
+			targetID: id2,
+			updateFn: func(p *payee) {
+				p.accNo = 1234567890123456
+			},
+			wantErr: ErrDuplicateAccount,
+		},
+		{
+			testName: "duplicate email",
+			targetID: id2,
+			updateFn: func(p *payee) {
+				p.email = "alpha@gmail.com" 
+			},
+			wantErr: ErrDuplicateEmail,
+		},
+		{
+			testName: "duplicate mobile",
+			targetID: id2,
+			updateFn: func(p *payee) {
+				p.mobile = 9000000001 
+			},
+			wantErr: ErrDuplicateMobile,
+		},
+		
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			original, err := store.GetByID(ctx, tt.targetID)
+			require.NoError(t, err)
+
+			tt.updateFn(original)
+
+			_, err = store.Update(ctx, original)
+
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}

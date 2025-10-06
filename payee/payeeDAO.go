@@ -165,6 +165,19 @@ func (s *payeeDB) Update(ctx context.Context, p *payee) (*payee, error) {
 		&updatedPayee.payeeCategory,
 	)
 	if err != nil {
+		if pgErr, ok := err.(*pgconn.PgError); ok {
+			switch pgErr.ConstraintName {
+			case "payees_beneficiary_code_key":
+				return nil, ErrDuplicateCode
+			case "payees_account_number_key":
+				return nil, ErrDuplicateAccount
+			case "payees_email_key":
+				return nil, ErrDuplicateEmail
+			case "payees_mobile_key":
+				return nil, ErrDuplicateMobile
+			}
+			return nil, fmt.Errorf("insert payee: %w", err)
+		}
 		return nil, err
 	}
 
