@@ -89,12 +89,30 @@ func PayeeGetAPI(store PayeeRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		query := r.URL.Query()
+
+		limit := 10
+		offset := 0
+
+		if l := query.Get("limit"); l != "" {
+			if parsed, err := strconv.Atoi(l); err == nil {
+				limit = parsed
+			}
+		}
+
+		if o := query.Get("offset"); o != "" {
+			if parsed, err := strconv.Atoi(o); err == nil {
+				offset = parsed
+			}
+		}
+
 		opts := FilterList{
 			Name:      query.Get("name"),
 			Category:  query.Get("category"),
 			Bank:      query.Get("bank"),
 			SortBy:    query.Get("sort_by"),
 			SortOrder: query.Get("sort_order"),
+			Limit:     limit,
+			Offset:    offset,
 		}
 
 		payees, err := store.List(context.Background(), opts)

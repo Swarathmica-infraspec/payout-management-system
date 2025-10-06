@@ -468,3 +468,65 @@ func TestPayeeGetAPIWithSorting(t *testing.T) {
 		})
 	}
 }
+
+func TestPayeeGetAPIWithPagination(t *testing.T) {
+	mux := setupMux(t)
+
+	// Seed test data
+	payees := []map[string]interface{}{
+		{"name": "Alice", "code": "A001", "account_number": 1112345678901324, "ifsc": "HDFC0017890", "bank": "HDFC", "email": "a@example.com", "mobile": 9000000001, "category": "Vendor"},
+		{"name": "Bob", "code": "B001", "account_number": 2225678347532479, "ifsc": "SBIN0022345", "bank": "SBI", "email": "b@example.com", "mobile": 9000000002, "category": "Employee"},
+		{"name": "Charlie", "code": "C001", "account_number": 3335674839247567, "ifsc": "HDFC0033333", "bank": "HDFC", "email": "c@example.com", "mobile": 9000000003, "category": "Vendor"},
+	}
+
+	for _, p := range payees {
+		body, _ := json.Marshal(p)
+		req := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+		mux.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusCreated, w.Code)
+	}
+
+	tests := []struct {
+		name      string
+		query     string
+		wantNames []string
+	}{
+		{
+			name:      "pagination limit 1 offset 0",
+			query:     "?sort_by=id&sort_order=ASC&limit=1&offset=0",
+			wantNames: []string{"Alice"},
+		},
+		{
+			name:      "pagination limit 1 offset 1",
+			query:     "?sort_by=id&sort_order=ASC&limit=1&offset=1",
+			wantNames: []string{"Bob"},
+		},
+		{
+			name:      "pagination limit 2 offset 1",
+			query:     "?sort_by=id&sort_order=ASC&limit=2&offset=1",
+			wantNames: []string{"Bob", "Charlie"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/payees/list"+tt.query, nil)
+			w := httptest.NewRecorder()
+			mux.ServeHTTP(w, req)
+
+			assert.Equal(t, http.StatusOK, w.Code)
+
+			var resp []PayeeGETResponse
+			err := json.Unmarshal(w.Body.Bytes(), &resp)
+			assert.NoError(t, err)
+
+			var names []string
+			for _, p := range resp {
+				names = append(names, p.BeneficiaryName)
+			}
+
+			assert.Equal(t, tt.wantNames, names)
+		})
+	}
+}
