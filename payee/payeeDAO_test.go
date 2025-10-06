@@ -39,11 +39,6 @@ func TestInsertPayee(t *testing.T) {
 	id, err := store.Insert(ctx, p)
 	require.NoError(t, err, "failed to insert payee")
 
-	defer func() {
-		_, err := db.Exec("DELETE FROM payees WHERE id = $1", id)
-		assert.NoError(t, err, "failed to clean up payee")
-	}()
-
 	var code, name, bank, ifsc, email, category string
 	var accNo int
 	var mobile int
@@ -73,12 +68,8 @@ func TestInsertPayeeWithDuplicateValues(t *testing.T) {
 	original, err := NewPayee("Abc", "136", 1234567890123456, "CBIN0123459", "CBI", "abc@gmail.com", 9123456780, "Employee")
 	require.NoError(t, err, "failed to create original payee")
 
-	id, err := store.Insert(ctx, original)
+	_, err = store.Insert(ctx, original)
 	require.NoError(t, err, "failed to insert original payee")
-	defer func() {
-		_, err := db.Exec("DELETE FROM payees WHERE id = $1", id)
-		assert.NoError(t, err, "failed to clean up original payee")
-	}()
 
 	tests := []struct {
 		testName string
@@ -167,10 +158,6 @@ func TestGetPayeeByID(t *testing.T) {
 		RETURNING id`).Scan(&id)
 
 	require.NoError(t, err, "failed to insert payee")
-	defer func() {
-		_, err := db.Exec("DELETE FROM payees WHERE id = $1", id)
-		assert.NoError(t, err, "failed to clean up payee")
-	}()
 
 	got, err := store.GetByID(ctx, id)
 
@@ -202,12 +189,8 @@ func TestListPayees(t *testing.T) {
 	p, err := NewPayee("Xyz", "456", 1234567890123456, "HDFC0001213", "HDFC", "xyz@gmail.com", 9876543210, "Vendor")
 	require.NoError(t, err, "validation failed")
 
-	id, err := store.Insert(context.Background(), p)
+	_, err = store.Insert(context.Background(), p)
 	require.NoError(t, err, "Insertion failed")
-	defer func() {
-		_, err := db.Exec("DELETE FROM payees WHERE id = $1", id)
-		assert.NoError(t, err, "failed to clean up payee")
-	}()
 
 	payees, err := store.List(context.Background())
 	require.NoError(t, err, "failed to list payees")
