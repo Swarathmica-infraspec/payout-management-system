@@ -26,7 +26,8 @@ func TestInsertPayee(t *testing.T) {
 	store := PayeeDB(db)
 	ctx := context.Background()
 
-	_, _ = db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
+	_, err := db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
+	require.NoError(t, err, "failed to truncate table")
 
 	p, err := NewPayee("Abc", "136", 1234567890123456, "CBIN0123459", "CBI", "abc@gmail.com", 9123456780, "Employee")
 	require.NoError(t, err, "failed to create payee")
@@ -63,7 +64,9 @@ func TestInsertPayeeWithDuplicateValues(t *testing.T) {
 	store := PayeeDB(db)
 	ctx := context.Background()
 
-	_, _ = db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
+	_, err := db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
+	require.NoError(t, err, "failed to truncate table")
+
 	original, err := NewPayee("Abc", "136", 1234567890123456, "CBIN0123459", "CBI", "abc@gmail.com", 9123456780, "Employee")
 	require.NoError(t, err, "failed to create original payee")
 
@@ -152,10 +155,11 @@ func TestGetPayeeByID(t *testing.T) {
 	store := PayeeDB(db)
 	ctx := context.Background()
 
-	_, _ = db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
+	_, err := db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
+	require.NoError(t, err, "failed to truncate table")
 
 	var id int
-	err := db.QueryRow(`
+	err = db.QueryRow(`
 		INSERT INTO payees (beneficiary_name, beneficiary_code, account_number, ifsc_code, bank_name, email, mobile, payee_category)
 		VALUES ('Abc','136',1234567890123456,'CBIN0123459','CBI','abc@gmail.com',9123456780,'Employee')
 		RETURNING id`).Scan(&id)
