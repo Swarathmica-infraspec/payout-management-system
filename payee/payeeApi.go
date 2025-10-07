@@ -31,6 +31,32 @@ func respondSuccess(w http.ResponseWriter, status int, data any) {
 		log.Printf("Failed to encode success response: %v", err)
 	}
 }
+func mapInsertError(err error) (int, string) {
+	switch err {
+	case ErrDuplicateCode:
+		return http.StatusConflict, "Payee with the same beneficiary code already exists"
+	case ErrDuplicateAccount:
+		return http.StatusConflict, "Payee with the same account number already exists"
+	case ErrDuplicateEmail:
+		return http.StatusConflict, "Payee with the same email already exists"
+	case ErrDuplicateMobile:
+		return http.StatusConflict, "Payee with the same mobile already exists"
+	default:
+		return http.StatusInternalServerError, "Something went wrong"
+	}
+}
+
+func handleInsertError(w http.ResponseWriter, err error) {
+	status, message := mapInsertError(err)
+
+	if status == http.StatusInternalServerError {
+		log.Printf("Internal error: %v", err)
+		respondError(w, status, "Something went wrong")
+		return
+	}
+
+	respondError(w, status, message)
+}
 
 func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -50,39 +76,7 @@ func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
 
 		id, err := store.Insert(context.Background(), p)
 		if err != nil {
-
-			var errMsg string
-			var status int
-
-			switch err {
-			case ErrDuplicateCode:
-				errMsg = "beneficiary code"
-				status = http.StatusConflict
-			case ErrDuplicateAccount:
-				errMsg = "account number"
-				status = http.StatusConflict
-			case ErrDuplicateEmail:
-				errMsg = "email"
-				status = http.StatusConflict
-			case ErrDuplicateMobile:
-				errMsg = "mobile"
-				status = http.StatusConflict
-			default:
-				errMsg = "internal server error"
-				status = http.StatusInternalServerError
-			}
-
-			w.WriteHeader(status)
-			if status == http.StatusConflict {
-				if err := json.NewEncoder(w).Encode(map[string]string{"error": "Payee with the same " + errMsg + " already exists"}); err != nil {
-					log.Printf("Failed to encode response (column value repetition): %v", err)
-				}
-			} else {
-				if err := json.NewEncoder(w).Encode(map[string]string{"error": "Something went wrong"}); err != nil {
-					log.Printf("Failed to encode response (conflict due to server error): %v", err)
-				}
-				log.Printf("Internal error: %v", err)
-			}
+			handleInsertError(w, err)
 			return
 		}
 
