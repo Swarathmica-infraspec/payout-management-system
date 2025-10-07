@@ -128,7 +128,7 @@ func TestInsertPayeeWithDuplicateValues(t *testing.T) {
 		{
 			testName: "duplicate mobile",
 			nameArg:  "Xyz",
-			code:     "137",
+			code:     "139",
 			accNo:    9876543210987654,
 			ifsc:     "CBIN0123460",
 			bank:     "CBI",
