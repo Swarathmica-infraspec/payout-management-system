@@ -24,14 +24,18 @@ func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": "Invalid JSON body"})
+			if err := json.NewEncoder(w).Encode(map[string]string{"error": "Invalid JSON body"}); err != nil {
+				log.Printf("Failed to encode response (invalid JSON body): %v", err)
+			}
 			return
 		}
 
 		p, err := NewPayee(data.Name, data.Code, data.AccNo, data.IFSC, data.Bank, data.Email, data.Mobile, data.Category)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": "Invalid payee data"})
+			if err := json.NewEncoder(w).Encode(map[string]string{"error": "Invalid payee data"}); err != nil {
+				log.Printf("Failed to encode response (invalid payee data): %v", err)
+			}
 			return
 		}
 
@@ -61,15 +65,21 @@ func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
 
 			w.WriteHeader(status)
 			if status == http.StatusConflict {
-				_ = json.NewEncoder(w).Encode(map[string]string{"error": "Payee with the same " + errMsg + " already exists"})
+				if err := json.NewEncoder(w).Encode(map[string]string{"error": "Payee with the same " + errMsg + " already exists"}); err != nil {
+					log.Printf("Failed to encode response (column value repetition): %v", err)
+				}
 			} else {
-				_ = json.NewEncoder(w).Encode(map[string]string{"error": "Something went wrong"})
+				if err := json.NewEncoder(w).Encode(map[string]string{"error": "Something went wrong"}); err != nil {
+					log.Printf("Failed to encode response (conflict due to server error): %v", err)
+				}
 				log.Printf("Internal error: %v", err)
 			}
 			return
 		}
 		w.WriteHeader(http.StatusCreated)
-		_ = json.NewEncoder(w).Encode(map[string]any{"id": id})
+		if err := json.NewEncoder(w).Encode(map[string]any{"id": id}); err != nil {
+			log.Printf("Failed to encode response: %v", err)
+		}
 	}
 }
 
