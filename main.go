@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	payee "github.com/Swarathmica-infraspec/payout-management-system/payee"
 
@@ -26,6 +27,10 @@ func initStore() (payee.PayeeRepository, *sql.DB) {
 	if err := db.Ping(); err != nil {
 		log.Fatal("Failed to ping DB:", err)
 	}
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(5)
+	db.SetConnMaxLifetime(5 * time.Minute)
+	db.SetConnMaxIdleTime(1 * time.Minute)
 
 	repo := payee.PayeeDB(db)
 	return repo, db
