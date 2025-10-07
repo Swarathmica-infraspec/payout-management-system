@@ -25,6 +25,13 @@ func respondError(w http.ResponseWriter, status int, message string) {
 	}
 }
 
+func respondSuccess(w http.ResponseWriter, status int, data any) {
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		log.Printf("Failed to encode success response: %v", err)
+	}
+}
+
 func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var data PayeeRequest
@@ -78,10 +85,8 @@ func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
 			}
 			return
 		}
-		w.WriteHeader(http.StatusCreated)
-		if err := json.NewEncoder(w).Encode(map[string]any{"id": id}); err != nil {
-			log.Printf("Failed to encode response: %v", err)
-		}
+
+		respondSuccess(w, http.StatusCreated, map[string]any{"id": id})
 	}
 }
 
