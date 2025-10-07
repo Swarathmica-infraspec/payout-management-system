@@ -18,25 +18,27 @@ type PayeeRequest struct {
 	Category string `json:"category"`
 }
 
+func respondError(w http.ResponseWriter, status int, message string) {
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(map[string]string{"error": message}); err != nil {
+		log.Printf("Failed to encode error response: %v", err)
+	}
+}
+
 func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var data PayeeRequest
+
 		w.Header().Set("Content-Type", "application/json")
+
 		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			if err := json.NewEncoder(w).Encode(map[string]string{"error": "Invalid JSON body"}); err != nil {
-				log.Printf("Failed to encode response (invalid JSON body): %v", err)
-			}
+			respondError(w, http.StatusBadRequest, "Invalid JSON body")
 			return
 		}
 
 		p, err := NewPayee(data.Name, data.Code, data.AccNo, data.IFSC, data.Bank, data.Email, data.Mobile, data.Category)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			if err := json.NewEncoder(w).Encode(map[string]string{"error": "Invalid payee data"}); err != nil {
-				log.Printf("Failed to encode response (invalid payee data): %v", err)
-			}
-			return
+			respondError(w, http.StatusBadRequest, "Invalid payee data")
 		}
 
 		id, err := store.Insert(context.Background(), p)
