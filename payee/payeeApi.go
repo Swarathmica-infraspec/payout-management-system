@@ -29,6 +29,8 @@ type PayeeGETResponse struct {
 	Email           string `json:"email"`
 	Mobile          int    `json:"mobile"`
 	PayeeCategory   string `json:"payee_category"`
+}
+
 func respondError(w http.ResponseWriter, status int, message string) {
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(map[string]string{"error": message}); err != nil {
