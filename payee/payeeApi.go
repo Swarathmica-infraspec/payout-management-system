@@ -99,7 +99,6 @@ func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
 	}
 }
 
-// parseFilterList extracts filtering, sorting and pagination parameters from the request.
 func parseFilterList(r *http.Request) FilterList {
 	query := r.URL.Query()
 	limit := 10
@@ -107,28 +106,50 @@ func parseFilterList(r *http.Request) FilterList {
 
 	if l := query.Get("limit"); l != "" {
 		if parsed, err := strconv.Atoi(l); err == nil {
-			limit = parsed
+			if parsed < 1 {
+				limit = 10
+			} else if parsed > 100 {
+				limit = 100
+			} else {
+				limit = parsed
+			}
 		}
 	}
 
 	if o := query.Get("offset"); o != "" {
 		if parsed, err := strconv.Atoi(o); err == nil {
-			offset = parsed
+			if parsed < 0 {
+				offset = 0
+			} else {
+				offset = parsed
+			}
 		}
+	}
+
+	sortBy := query.Get("sort_by")
+	allowedSortFields := map[string]bool{
+		"name": true, "bank": true, "category": true, "id": true,
+	}
+	if sortBy != "" && !allowedSortFields[sortBy] {
+		sortBy = ""
+	}
+
+	sortOrder := query.Get("sort_order")
+	if sortOrder != "asc" && sortOrder != "desc" {
+		sortOrder = "asc"
 	}
 
 	return FilterList{
 		Name:      query.Get("name"),
 		Category:  query.Get("category"),
 		Bank:      query.Get("bank"),
-		SortBy:    query.Get("sort_by"),
-		SortOrder: query.Get("sort_order"),
+		SortBy:    sortBy,
+		SortOrder: sortOrder,
 		Limit:     limit,
 		Offset:    offset,
 	}
 }
 
-// payeesToGETResponses converts internal payee models to API responses
 func payeesToGETResponses(payees []payee) []PayeeGETResponse {
 	resp := make([]PayeeGETResponse, 0, len(payees))
 	for _, p := range payees {
