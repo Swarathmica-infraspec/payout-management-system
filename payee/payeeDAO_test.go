@@ -163,8 +163,6 @@ func TestListPayees(t *testing.T) {
 	require.NoError(t, err, "failed to insert payee p2")
 	_, err = store.Insert(context.Background(), p3)
 	require.NoError(t, err, "failed to insert payee p3")
-	_, err = store.Insert(context.Background(), p3)
-	require.NoError(t, err, "failed to insert duplicate payee p3")
 
 	tests := []struct {
 		name       string
