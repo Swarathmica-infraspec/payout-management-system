@@ -6,15 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/jackc/pgx/v5/pgconn"
-	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type PayeeRepository interface {
 	Insert(ctx context.Context, p *payee) (int, error)
-	GetByID(ctx context.Context, id int) (*payee, error)
-	List(ctx context.Context) ([]payee, error)
+	List(ctx context.Context, options ...FilterList) ([]payee, error)
 	Update(ctx context.Context, p *payee) (*payee, error)
 }
 
@@ -67,36 +66,74 @@ func (r *payeeDB) Insert(ctx context.Context, p *payee) (int, error) {
 	return id, nil
 }
 
-func (r *payeeDB) GetByID(ctx context.Context, id int) (*payee, error) {
-	query := `
-        SELECT beneficiary_name, beneficiary_code, account_number,
-               ifsc_code, bank_name, email, mobile, payee_category
-        FROM payees WHERE id=$1`
-	row := r.db.QueryRowContext(ctx, query, id)
-
-	var p payee
-	err := row.Scan(
-		&p.beneficiaryName,
-		&p.beneficiaryCode,
-		&p.accNo,
-		&p.ifsc,
-		&p.bankName,
-		&p.email,
-		&p.mobile,
-		&p.payeeCategory,
-	)
-	p.id = id
-	if err != nil {
-		return nil, fmt.Errorf("get payee by id %d: %w", id, err)
-	}
-	return &p, nil
+type FilterList struct {
+	Name      string
+	Category  string
+	Bank      string
+	SortBy    string
+	SortOrder string
+	Limit     int
+	Offset    int
 }
-func (r *payeeDB) List(ctx context.Context) ([]payee, error) {
-	rows, err := r.db.QueryContext(ctx, `
+
+func (r *payeeDB) List(ctx context.Context, options ...FilterList) ([]payee, error) {
+	query := `
         SELECT id, beneficiary_name, beneficiary_code, account_number, ifsc_code, bank_name, email, mobile, payee_category
         FROM payees
-        ORDER BY id ASC
-    `)
+    `
+	var filterOption FilterList
+	if len(options) > 0 {
+		filterOption = options[0]
+	}
+	var args []interface{}
+	var filters []string
+
+	if filterOption.Name != "" {
+		filters = append(filters, fmt.Sprintf("beneficiary_name = $%d", len(args)+1))
+		args = append(args, filterOption.Name)
+	}
+	if filterOption.Category != "" {
+		filters = append(filters, fmt.Sprintf("payee_category = $%d", len(args)+1))
+		args = append(args, filterOption.Category)
+	}
+	if filterOption.Bank != "" {
+		filters = append(filters, fmt.Sprintf("bank_name = $%d", len(args)+1))
+		args = append(args, filterOption.Bank)
+	}
+
+	if len(filters) > 0 {
+		query += " WHERE " + strings.Join(filters, " AND ")
+	}
+	columnMap := map[string]string{ //TODO: there's a mismatch between column and parameter name, for now solved using a map
+		"name":     "beneficiary_name",
+		"category": "payee_category",
+		"bank":     "bank_name",
+	}
+	sortBy := "id"
+	if filterOption.SortBy != "" {
+		if col, ok := columnMap[filterOption.SortBy]; ok {
+			sortBy = col
+		}
+	}
+	sortOrder := "ASC"
+	if strings.ToUpper(filterOption.SortOrder) == "DESC" {
+		sortOrder = "DESC"
+	}
+
+	query += fmt.Sprintf(" ORDER BY %s %s", sortBy, sortOrder)
+
+	if filterOption.Limit < 0 || filterOption.Offset < 0 {
+		return nil, fmt.Errorf("List payee: invalid pagination parameters (Limit: %d, Offset: %d)", filterOption.Limit, filterOption.Offset)
+	}
+	if filterOption.Limit > 1000 {
+		return nil, fmt.Errorf("List payee: Limit exceeds maximum allowed value of 1000")
+	}
+
+	if filterOption.Limit > 0 {
+		query += fmt.Sprintf(" LIMIT %d OFFSET %d", filterOption.Limit, filterOption.Offset)
+	}
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("List payee: %w", err)
 	}
@@ -175,9 +212,9 @@ func (s *payeeDB) Update(ctx context.Context, p *payee) (*payee, error) {
 			case "payees_mobile_key":
 				return nil, ErrDuplicateMobile
 			}
-			return nil, fmt.Errorf("insert payee: %w", err)
+			return nil, fmt.Errorf("database constraint violation: %w", err)
 		}
-		return nil, err
+		return nil, fmt.Errorf("update payee: %w", err)
 	}
 
 	return &updatedPayee, nil
