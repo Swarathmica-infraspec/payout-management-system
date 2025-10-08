@@ -96,7 +96,7 @@ curl -X GET "http://localhost:8080/payees/list?sort_by=name&sort_order=DESC&cate
 Filtering can be done by:
 curl -X GET "http://localhost:8080/payees/list?name=Abc" -H "Content-Type: application/json"
 
-NOTE: filtering supported columns : beneficiary_name, bank and category
+NOTE: filtering supported columns : name, bank and category
 
 
 # Run tests
