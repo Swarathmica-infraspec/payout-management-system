@@ -103,7 +103,12 @@ func (r *payeeDB) List(ctx context.Context, options ...FilterList) ([]payee, err
 	if len(filters) > 0 {
 		query += " WHERE " + strings.Join(filters, " AND ")
 	}
-	columnMap := map[string]string{ //TODO: there's a mismatch between column and parameter name, for now solved using a map
+
+	// columnMap maps API filter parameter names to database column names.
+	// This is necessary because the parameter names (used in FilterList and API requests)
+	// follow a different naming convention than the database schema.
+	// For example, "name" (parameter) maps to "beneficiary_name" (DB column).
+	columnMap := map[string]string{
 		"name":     "beneficiary_name",
 		"category": "payee_category",
 		"bank":     "bank_name",
