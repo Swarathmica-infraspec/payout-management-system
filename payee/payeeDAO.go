@@ -121,6 +121,13 @@ func (r *payeeDB) List(ctx context.Context, options ...FilterList) ([]payee, err
 
 	query += fmt.Sprintf(" ORDER BY %s %s", sortBy, sortOrder)
 
+	if filterOption.Limit < 0 || filterOption.Offset < 0 {
+		return nil, fmt.Errorf("List payee: invalid pagination parameters (Limit: %d, Offset: %d)", filterOption.Limit, filterOption.Offset)
+	}
+	if filterOption.Limit > 1000 {
+		return nil, fmt.Errorf("List payee: Limit exceeds maximum allowed value of 1000")
+	}
+
 	if filterOption.Limit > 0 {
 		query += fmt.Sprintf(" LIMIT %d OFFSET %d", filterOption.Limit, filterOption.Offset)
 	}
