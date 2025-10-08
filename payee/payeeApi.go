@@ -135,8 +135,8 @@ func parseFilterList(r *http.Request) FilterList {
 	}
 
 	sortOrder := query.Get("sort_order")
-	if sortOrder != "asc" && sortOrder != "desc" {
-		sortOrder = "asc"
+	if sortOrder != "ASC" && sortOrder != "DESC" {
+		sortOrder = "ASC"
 	}
 
 	return FilterList{
