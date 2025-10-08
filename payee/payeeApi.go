@@ -32,6 +32,7 @@ type PayeeGETResponse struct {
 }
 
 func respondError(w http.ResponseWriter, status int, message string) {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(map[string]string{"error": message}); err != nil {
 		log.Printf("Failed to encode error response: %v", err)
@@ -39,6 +40,7 @@ func respondError(w http.ResponseWriter, status int, message string) {
 }
 
 func respondSuccess(w http.ResponseWriter, status int, data any) {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		log.Printf("Failed to encode success response: %v", err)
@@ -97,60 +99,65 @@ func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
 	}
 }
 
+// parseFilterList extracts filtering, sorting and pagination parameters from the request.
+func parseFilterList(r *http.Request) FilterList {
+	query := r.URL.Query()
+	limit := 10
+	offset := 0
+
+	if l := query.Get("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil {
+			limit = parsed
+		}
+	}
+
+	if o := query.Get("offset"); o != "" {
+		if parsed, err := strconv.Atoi(o); err == nil {
+			offset = parsed
+		}
+	}
+
+	return FilterList{
+		Name:      query.Get("name"),
+		Category:  query.Get("category"),
+		Bank:      query.Get("bank"),
+		SortBy:    query.Get("sort_by"),
+		SortOrder: query.Get("sort_order"),
+		Limit:     limit,
+		Offset:    offset,
+	}
+}
+
+// payeesToGETResponses converts internal payee models to API responses
+func payeesToGETResponses(payees []payee) []PayeeGETResponse {
+	resp := make([]PayeeGETResponse, 0, len(payees))
+	for _, p := range payees {
+		resp = append(resp, PayeeGETResponse{
+			ID:              p.id,
+			BeneficiaryName: p.beneficiaryName,
+			BeneficiaryCode: p.beneficiaryCode,
+			AccNo:           p.accNo,
+			IFSC:            p.ifsc,
+			BankName:        p.bankName,
+			Email:           p.email,
+			Mobile:          p.mobile,
+			PayeeCategory:   p.payeeCategory,
+		})
+	}
+	return resp
+}
+
 func PayeeGetAPI(store PayeeRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		query := r.URL.Query()
-
-		limit := 10
-		offset := 0
-
-		if l := query.Get("limit"); l != "" {
-			if parsed, err := strconv.Atoi(l); err == nil {
-				limit = parsed
-			}
-		}
-
-		if o := query.Get("offset"); o != "" {
-			if parsed, err := strconv.Atoi(o); err == nil {
-				offset = parsed
-			}
-		}
-
-		opts := FilterList{
-			Name:      query.Get("name"),
-			Category:  query.Get("category"),
-			Bank:      query.Get("bank"),
-			SortBy:    query.Get("sort_by"),
-			SortOrder: query.Get("sort_order"),
-			Limit:     limit,
-			Offset:    offset,
-		}
+		opts := parseFilterList(r)
 
 		payees, err := store.List(context.Background(), opts)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": "DB query failed"})
+			respondError(w, http.StatusInternalServerError, "DB query failed")
 			return
 		}
 
-		var resp []PayeeGETResponse
-		for _, p := range payees {
-			resp = append(resp, PayeeGETResponse{
-				ID:              p.id,
-				BeneficiaryName: p.beneficiaryName,
-				BeneficiaryCode: p.beneficiaryCode,
-				AccNo:           p.accNo,
-				IFSC:            p.ifsc,
-				BankName:        p.bankName,
-				Email:           p.email,
-				Mobile:          p.mobile,
-				PayeeCategory:   p.payeeCategory,
-			})
-		}
-
-		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(resp)
+		respondSuccess(w, http.StatusOK, payeesToGETResponses(payees))
 	}
 }
 
