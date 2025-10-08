@@ -194,6 +194,14 @@ func TestPayeePostAPIUniqueConstraints(t *testing.T) {
 	}
 }
 
+func contains(list []string, s string) bool {
+	for _, v := range list {
+		if v == s {
+			return true
+		}
+	}
+	return false
+}
 func TestPayeeGetAPI(t *testing.T) {
 	mux := setupMux(t)
 
@@ -225,8 +233,8 @@ func TestPayeeGetAPI(t *testing.T) {
 		{"filter by name Alice", "?name=Alice", []string{"Alice"}, 1},
 		{"filter by bank HDFC & category Vendor", "?bank=HDFC&category=Vendor", []string{"Alice", "Charlie"}, 2},
 
-		{"sort by name ASC", "?sort_by=beneficiary_name&sort_order=ASC", []string{"Abdc", "Alice", "Bob", "Charlie"}, 4},
-		{"sort by name DESC", "?sort_by=beneficiary_name&sort_order=DESC", []string{"Charlie", "Bob", "Alice", "Abdc"}, 4},
+		{"sort by name ASC", "?sort_by=name&sort_order=ASC", []string{"Abdc", "Alice", "Bob", "Charlie"}, 4},
+		{"sort by name DESC", "?sort_by=name&sort_order=DESC", []string{"Charlie", "Bob", "Alice", "Abdc"}, 4},
 		{"default sort (id ASC)", "", []string{"Alice", "Bob", "Charlie", "Abdc"}, 4},
 
 		{"pagination limit 1 offset 0", "?sort_by=id&sort_order=ASC&limit=1&offset=0", []string{"Alice"}, 1},
@@ -251,7 +259,18 @@ func TestPayeeGetAPI(t *testing.T) {
 			for _, p := range resp {
 				gotNames = append(gotNames, p.BeneficiaryName)
 			}
-			assert.ElementsMatch(t, tt.wantNames, gotNames)
+			// order has to be checked for sort-related tests
+			sortTests := []string{
+				"sort by name ASC",
+				"sort by name DESC",
+				"default sort (id ASC)",
+			}
+
+			if contains(sortTests, tt.name) {
+				assert.Equal(t, tt.wantNames, gotNames)
+			} else {
+				assert.ElementsMatch(t, tt.wantNames, gotNames)
+			}
 		})
 	}
 }
