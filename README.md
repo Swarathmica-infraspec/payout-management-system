@@ -99,10 +99,6 @@ curl -X GET "http://localhost:8080/payees/list?name=Abc" -H "Content-Type: appli
 NOTE: filtering supported columns : beneficiary_name, bank and category
 
 
-3. GET by id request 
-curl -X GET http://localhost:8080/payees/1 -H "Content-Type: application/json"
-
-
 # Run tests
 
 ## Unique Constraints
