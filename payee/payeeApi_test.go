@@ -323,10 +323,9 @@ func TestPayeeUpdateAPI(t *testing.T) {
 	expectedUpdateResp := `{"status":"updated"}`
 	assert.JSONEq(t, expectedUpdateResp, w2.Body.String(), "update response should match JSON")
 
-	req3 := httptest.NewRequest(http.MethodGet, "/payees/"+strconv.Itoa(inserted.ID), nil)
+	req3 := httptest.NewRequest(http.MethodGet, "/payees/list?code=131", nil)
 	w3 := httptest.NewRecorder()
 	mux.ServeHTTP(w3, req3)
-
 	assert.Equal(t, http.StatusOK, w3.Code, "GET after update should return 200 OK")
 
 	var got PayeeGETResponse
