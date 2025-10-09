@@ -250,7 +250,9 @@ func TestUpdatePayee(t *testing.T) {
 
 	store := PayeeDB(db)
 
-	p, _ := NewPayee("Abc", "123", 1234567890123456, "CBIN0124345", "CBI", "abc@gmail.com", 9123456780, "Employee")
+	p, err := NewPayee("Abc", "123", 1234567890123456, "CBIN0124345", "CBI", "abc@gmail.com", 9123456780, "Employee")
+	require.NoError(t, err, "failed to create payee for update test")
+
 	id, err := store.Insert(ctx, p)
 	require.NoError(t, err, "Insertion failed")
 
