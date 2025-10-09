@@ -149,13 +149,20 @@ func TestListPayees(t *testing.T) {
 	store := PayeeDB(db)
 	defer clearPayees(t, db)
 
-	p1, _ := NewPayee("Alice", "A001", 1114567891234567, "HDFC0012345", "HDFC", "a@example.com", 9000000001, "Vendor")
-	p2, _ := NewPayee("Bob", "B001", 2223456789012345, "SBIN0023478", "SBI", "b@example.com", 9000000002, "Employee")
-	p3, _ := NewPayee("Charlie", "C001", 3334567890123456, "HDFC0033456", "HDFC", "c@example.com", 9000000003, "Vendor")
+	p1, err := NewPayee("Alice", "A001", 1114567891234567, "HDFC0012345", "HDFC", "a@example.com", 9000000001, "Vendor")
+	require.NoError(t, err, "failed to create payee p1")
+	p2, err := NewPayee("Bob", "B001", 2223456789012345, "SBIN0023478", "SBI", "b@example.com", 9000000002, "Employee")
+	require.NoError(t, err)
+	require.NoError(t, err, "failed to create payee p2")
+	p3, err := NewPayee("Charlie", "C001", 3334567890123456, "HDFC0033456", "HDFC", "c@example.com", 9000000003, "Vendor")
+	require.NoError(t, err, "failed to create payee p3")
 
-	_, _ = store.Insert(context.Background(), p1)
-	_, _ = store.Insert(context.Background(), p2)
-	_, _ = store.Insert(context.Background(), p3)
+	_, err = store.Insert(context.Background(), p1)
+	require.NoError(t, err, "failed to insert payee p1")
+	_, err = store.Insert(context.Background(), p2)
+	require.NoError(t, err, "failed to insert payee p2")
+	_, err = store.Insert(context.Background(), p3)
+	require.NoError(t, err, "failed to insert payee p3")
 
 	tests := []struct {
 		name       string
