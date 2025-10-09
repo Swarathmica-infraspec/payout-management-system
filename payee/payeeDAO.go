@@ -72,6 +72,7 @@ type FilterList struct {
 	Bank      string
 	SortBy    string
 	SortOrder string
+	Code      string
 	Limit     int
 	Offset    int
 }
@@ -91,6 +92,10 @@ func (r *payeeDB) List(ctx context.Context, options ...FilterList) ([]payee, err
 	if filterOption.Name != "" {
 		filters = append(filters, fmt.Sprintf("beneficiary_name = $%d", len(args)+1))
 		args = append(args, filterOption.Name)
+	}
+	if filterOption.Code != "" {
+		filters = append(filters, fmt.Sprintf("beneficiary_code = $%d", len(args)+1))
+		args = append(args, filterOption.Code)
 	}
 	if filterOption.Category != "" {
 		filters = append(filters, fmt.Sprintf("payee_category = $%d", len(args)+1))

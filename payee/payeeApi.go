@@ -142,6 +142,7 @@ func parseFilterList(r *http.Request) FilterList {
 
 	return FilterList{
 		Name:      query.Get("name"),
+		Code:      query.Get("code"),
 		Category:  query.Get("category"),
 		Bank:      query.Get("bank"),
 		SortBy:    sortBy,
@@ -176,6 +177,14 @@ func PayeeGetAPI(store PayeeRepository) http.HandlerFunc {
 		payees, err := store.List(context.Background(), opts)
 		if err != nil {
 			respondError(w, http.StatusInternalServerError, "DB query failed")
+			return
+		}
+
+		// If caller requested by code and exactly one result is returned,
+		// return a single JSON object (legacy test expects an object).
+		if opts.Code != "" && len(payees) == 1 {
+			resp := payeesToGETResponses(payees)[0]
+			respondSuccess(w, http.StatusOK, resp)
 			return
 		}
 
