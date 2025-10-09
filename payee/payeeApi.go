@@ -196,40 +196,33 @@ func PayeeUpdateAPI(store PayeeRepository) http.HandlerFunc {
 		idStr := strings.TrimPrefix(r.URL.Path, "/payees/update/")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": "invalid ID"})
+			respondError(w, http.StatusBadRequest, "invalid ID")
 			return
 		}
 
 		var req PayeeRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": "invalid request body: " + err.Error()})
+			respondError(w, http.StatusBadRequest, "Invalid JSON body")
 			return
 		}
 
-		p, err := NewPayee(req.Name, req.Code, req.AccNo, req.IFSC, req.Bank, req.Email, req.Mobile, req.Category)
+		p, err := NewPayee(
+			req.Name, req.Code, req.AccNo, req.IFSC,
+			req.Bank, req.Email, req.Mobile, req.Category,
+		)
 		if err != nil {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": "validation failed: " + err.Error()})
+			respondError(w, http.StatusBadRequest, "Invalid payee data")
 			return
 		}
 		p.id = id
 
 		_, err = store.Update(context.Background(), p)
 		if err != nil {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": "DB update failed: " + err.Error()})
+			handleInsertError(w, err)
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(map[string]string{"status": "updated"})
+		respondSuccess(w, http.StatusOK, map[string]string{"status": "updated"})
 	}
 }
 func SetupRouter(store PayeeRepository) *http.ServeMux {
