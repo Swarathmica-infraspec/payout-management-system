@@ -80,15 +80,17 @@ type FilterList struct {
 
 func (r *payeeDB) List(ctx context.Context, options ...FilterList) ([]payee, error) {
 	query := `
-        SELECT id, beneficiary_name, beneficiary_code, account_number, ifsc_code, bank_name, email, mobile, payee_category
-        FROM payees WHERE is_deleted = FALSE ORDER BY id ASC
-    `
+		SELECT id, beneficiary_name, beneficiary_code, account_number, ifsc_code, bank_name, email, mobile, payee_category
+		FROM payees
+	`
 	var filterOption FilterList
 	if len(options) > 0 {
 		filterOption = options[0]
 	}
 	var args []interface{}
 	var filters []string
+
+	filters = append(filters, "is_deleted = FALSE")
 
 	if filterOption.Name != "" {
 		filters = append(filters, fmt.Sprintf("beneficiary_name = $%d", len(args)+1))
