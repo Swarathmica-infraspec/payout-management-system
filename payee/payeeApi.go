@@ -246,32 +246,28 @@ func PayeeUpdateAPI(store PayeeRepository) http.HandlerFunc {
 func PayeeDeleteAPI(store PayeeRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodDelete {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": "method not allowed"})
+			respondError(w, http.StatusMethodNotAllowed, "method not allowed")
 			return
 		}
 
 		idStr := strings.TrimPrefix(r.URL.Path, "/payees/delete/")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": "invalid ID"})
+			respondError(w, http.StatusBadRequest, "invalid ID")
 			return
 		}
 
-		err = store.SoftDelete(context.Background(), id)
-		if err != nil {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": "DB delete failed: " + err.Error()})
+		if err := store.SoftDelete(r.Context(), id); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				respondError(w, http.StatusNotFound, "Payee not found")
+				return
+			}
+			log.Printf("Soft delete failed: %v", err)
+			respondError(w, http.StatusInternalServerError, "Failed to delete payee")
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(map[string]string{"status": "deleted"})
+		respondSuccess(w, http.StatusOK, map[string]string{"status": "deleted"})
 	}
 }
 
