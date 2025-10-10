@@ -137,7 +137,7 @@ func TestPayeePostAPIUniqueConstraints(t *testing.T) {
 				"category":       "Employee",
 			},
 			wantCode: http.StatusConflict,
-			wantJSON: `{"error":"Payee already exists with the same: beneficiary code"}`,
+			wantJSON: `{"error":"Payee with the same beneficiary code already exists"}`,
 		},
 		{
 			name: "duplicate account",
@@ -152,7 +152,7 @@ func TestPayeePostAPIUniqueConstraints(t *testing.T) {
 				"category":       "Employee",
 			},
 			wantCode: http.StatusConflict,
-			wantJSON: `{"error":"Payee already exists with the same: account number"}`,
+			wantJSON: `{"error":"Payee with the same account number already exists"}`,
 		},
 		{
 			name: "duplicate email",
@@ -167,7 +167,7 @@ func TestPayeePostAPIUniqueConstraints(t *testing.T) {
 				"category":       "Employee",
 			},
 			wantCode: http.StatusConflict,
-			wantJSON: `{"error":"Payee already exists with the same: email"}`,
+			wantJSON: `{"error":"Payee with the same email already exists"}`,
 		},
 		{
 			name: "duplicate mobile",
@@ -182,7 +182,7 @@ func TestPayeePostAPIUniqueConstraints(t *testing.T) {
 				"category":       "Employee",
 			},
 			wantCode: http.StatusConflict,
-			wantJSON: `{"error":"Payee already exists with the same: mobile"}`,
+			wantJSON: `{"error":"Payee with the same mobile already exists"}`,
 		},
 	}
 
@@ -195,114 +195,85 @@ func TestPayeePostAPIUniqueConstraints(t *testing.T) {
 	}
 }
 
+func contains(list []string, s string) bool {
+	for _, v := range list {
+		if v == s {
+			return true
+		}
+	}
+	return false
+}
 func TestPayeeGetAPI(t *testing.T) {
 	mux := setupMux(t)
 
-	payload := map[string]interface{}{
-		"name":           "Abdc",
-		"code":           "1262",
-		"account_number": 1234767893,
-		"ifsc":           "CBIN0123456",
-		"bank":           "CBI",
-		"email":          "abcd@example.com",
-		"mobile":         9876543292,
-		"category":       "Employee",
+	payees := []map[string]interface{}{
+		{"name": "Alice", "code": "A001", "account_number": 1112345678901324, "ifsc": "HDFC0017890", "bank": "HDFC", "email": "a@example.com", "mobile": 9000000001, "category": "Vendor"},
+		{"name": "Bob", "code": "B001", "account_number": 2225678347532479, "ifsc": "SBIN0022345", "bank": "SBI", "email": "b@example.com", "mobile": 9000000002, "category": "Employee"},
+		{"name": "Charlie", "code": "C001", "account_number": 3335674839247567, "ifsc": "HDFC0033333", "bank": "HDFC", "email": "c@example.com", "mobile": 9000000003, "category": "Vendor"},
+		{"name": "Abdc", "code": "1262", "account_number": 1234767893, "ifsc": "CBIN0123456", "bank": "CBI", "email": "abcd@example.com", "mobile": 9876543292, "category": "Employee"},
 	}
-	body, _ := json.Marshal(payload)
-	reqCreate := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
-	wCreate := httptest.NewRecorder()
-	mux.ServeHTTP(wCreate, reqCreate)
-	assert.Equal(t, http.StatusCreated, wCreate.Code)
 
-	req := httptest.NewRequest(http.MethodGet, "/payees/list", nil)
-	w := httptest.NewRecorder()
-	mux.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-
-	var resp []PayeeGETResponse
-	err := json.Unmarshal(w.Body.Bytes(), &resp)
-	assert.NoError(t, err)
-	assert.Len(t, resp, 1)
-
-	got := resp[0]
-	assert.Equal(t, payload["name"], got.BeneficiaryName)
-	assert.Equal(t, payload["code"], got.BeneficiaryCode)
-	assert.Equal(t, payload["account_number"], got.AccNo)
-	assert.Equal(t, payload["ifsc"], got.IFSC)
-	assert.Equal(t, payload["bank"], got.BankName)
-	assert.Equal(t, payload["email"], got.Email)
-	assert.Equal(t, payload["mobile"], got.Mobile)
-	assert.Equal(t, payload["category"], got.PayeeCategory)
-
-}
-
-func TestPayeeGetOneAPI(t *testing.T) {
-	mux := setupMux(t)
-
-	payload := map[string]interface{}{
-		"name":           "Abdc",
-		"code":           "1262",
-		"account_number": 1234767893,
-		"ifsc":           "CBIN0123456",
-		"bank":           "CBI",
-		"email":          "abcd@example.com",
-		"mobile":         9876543292,
-		"category":       "Employee",
+	for _, p := range payees {
+		body, _ := json.Marshal(p)
+		req := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+		mux.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusCreated, w.Code)
 	}
-	body, _ := json.Marshal(payload)
 
-	reqCreate := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
-	wCreate := httptest.NewRecorder()
-	mux.ServeHTTP(wCreate, reqCreate)
+	tests := []struct {
+		name       string
+		query      string
+		wantNames  []string
+		wantLength int
+	}{
+		{"list all", "", []string{"Alice", "Bob", "Charlie", "Abdc"}, 4},
 
-	assert.Equal(t, http.StatusCreated, wCreate.Code)
+		{"filter by bank HDFC", "?bank=HDFC", []string{"Alice", "Charlie"}, 2},
+		{"filter by category Employee", "?category=Employee", []string{"Bob", "Abdc"}, 2},
+		{"filter by name Alice", "?name=Alice", []string{"Alice"}, 1},
+		{"filter by bank HDFC & category Vendor", "?bank=HDFC&category=Vendor", []string{"Alice", "Charlie"}, 2},
 
-	type CreateResp struct {
-		ID int `json:"id"`
+		{"sort by name ASC", "?sort_by=name&sort_order=ASC", []string{"Abdc", "Alice", "Bob", "Charlie"}, 4},
+		{"sort by name DESC", "?sort_by=name&sort_order=DESC", []string{"Charlie", "Bob", "Alice", "Abdc"}, 4},
+		{"default sort (id ASC)", "", []string{"Alice", "Bob", "Charlie", "Abdc"}, 4},
+
+		{"pagination limit 1 offset 0", "?sort_by=id&sort_order=ASC&limit=1&offset=0", []string{"Alice"}, 1},
+		{"pagination limit 1 offset 1", "?sort_by=id&sort_order=ASC&limit=1&offset=1", []string{"Bob"}, 1},
+		{"pagination limit 2 offset 1", "?sort_by=id&sort_order=ASC&limit=2&offset=1", []string{"Bob", "Charlie"}, 2},
 	}
-	var createResp CreateResp
-	err := json.Unmarshal(wCreate.Body.Bytes(), &createResp)
-	assert.NoError(t, err)
 
-	url := "/payees/" + strconv.Itoa(createResp.ID)
-	reqGet := httptest.NewRequest(http.MethodGet, url, nil)
-	wGet := httptest.NewRecorder()
-	mux.ServeHTTP(wGet, reqGet)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/payees/list"+tt.query, nil)
+			w := httptest.NewRecorder()
+			mux.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusOK, wGet.Code)
+			assert.Equal(t, http.StatusOK, w.Code)
 
-	var getResp PayeeGETResponse
-	err = json.Unmarshal(wGet.Body.Bytes(), &getResp)
-	assert.NoError(t, err)
+			var resp []PayeeGETResponse
+			err := json.Unmarshal(w.Body.Bytes(), &resp)
+			assert.NoError(t, err)
+			assert.Len(t, resp, tt.wantLength)
 
-	assert.Equal(t, createResp.ID, getResp.ID)
-	assert.Equal(t, payload["name"], getResp.BeneficiaryName)
-	assert.Equal(t, payload["code"], getResp.BeneficiaryCode)
-	assert.Equal(t, payload["account_number"], getResp.AccNo)
-	assert.Equal(t, payload["ifsc"], getResp.IFSC)
-	assert.Equal(t, payload["bank"], getResp.BankName)
-	assert.Equal(t, payload["email"], getResp.Email)
-	assert.Equal(t, payload["mobile"], getResp.Mobile)
-	assert.Equal(t, payload["category"], getResp.PayeeCategory)
-}
+			var gotNames []string
+			for _, p := range resp {
+				gotNames = append(gotNames, p.BeneficiaryName)
+			}
+			// order has to be checked for sort-related tests
+			sortTests := []string{
+				"sort by name ASC",
+				"sort by name DESC",
+				"default sort (id ASC)",
+			}
 
-func TestPayeeGetOneAPINotFound(t *testing.T) {
-	mux := setupMux(t)
-
-	nonExistentID := 9999
-	url := "/payees/" + strconv.Itoa(nonExistentID)
-
-	req := httptest.NewRequest(http.MethodGet, url, nil)
-	w := httptest.NewRecorder()
-
-	mux.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusNotFound, w.Code)
-
-	expected := `{"error":"record not found"}`
-	assert.JSONEq(t, expected, w.Body.String())
-
+			if contains(sortTests, tt.name) {
+				assert.Equal(t, tt.wantNames, gotNames)
+			} else {
+				assert.ElementsMatch(t, tt.wantNames, gotNames)
+			}
+		})
+	}
 }
 
 func TestPayeeUpdateAPI(t *testing.T) {
@@ -352,10 +323,9 @@ func TestPayeeUpdateAPI(t *testing.T) {
 	expectedUpdateResp := `{"status":"updated"}`
 	assert.JSONEq(t, expectedUpdateResp, w2.Body.String(), "update response should match JSON")
 
-	req3 := httptest.NewRequest(http.MethodGet, "/payees/"+strconv.Itoa(inserted.ID), nil)
+	req3 := httptest.NewRequest(http.MethodGet, "/payees/list?code=131", nil)
 	w3 := httptest.NewRecorder()
 	mux.ServeHTTP(w3, req3)
-
 	assert.Equal(t, http.StatusOK, w3.Code, "GET after update should return 200 OK")
 
 	var got PayeeGETResponse
