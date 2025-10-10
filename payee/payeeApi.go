@@ -227,7 +227,7 @@ func PayeeUpdateAPI(store PayeeRepository) http.HandlerFunc {
 			respondError(w, http.StatusBadRequest, "Invalid JSON body")
 			return
 		}
-		_, err = performUpdate(r.Context(), store, id, req)
+		updatedPayee, err := performUpdate(r.Context(), store, id, req)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				respondError(w, http.StatusNotFound, "Payee not found")
@@ -239,6 +239,7 @@ func PayeeUpdateAPI(store PayeeRepository) http.HandlerFunc {
 
 		respondSuccess(w, http.StatusOK, map[string]any{
 			"status": "updated",
+			"payee":  updatedPayee,
 		})
 	}
 }
