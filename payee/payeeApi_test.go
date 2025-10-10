@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strconv"
 	"testing"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -192,4 +193,197 @@ func TestPayeePostAPIUniqueConstraints(t *testing.T) {
 			assert.JSONEq(t, tt.wantJSON, w.Body.String())
 		})
 	}
+}
+
+func contains(list []string, s string) bool {
+	for _, v := range list {
+		if v == s {
+			return true
+		}
+	}
+	return false
+}
+func TestPayeeGetAPI(t *testing.T) {
+	mux := setupMux(t)
+
+	payees := []map[string]interface{}{
+		{"name": "Alice", "code": "A001", "account_number": 1112345678901324, "ifsc": "HDFC0017890", "bank": "HDFC", "email": "a@example.com", "mobile": 9000000001, "category": "Vendor"},
+		{"name": "Bob", "code": "B001", "account_number": 2225678347532479, "ifsc": "SBIN0022345", "bank": "SBI", "email": "b@example.com", "mobile": 9000000002, "category": "Employee"},
+		{"name": "Charlie", "code": "C001", "account_number": 3335674839247567, "ifsc": "HDFC0033333", "bank": "HDFC", "email": "c@example.com", "mobile": 9000000003, "category": "Vendor"},
+		{"name": "Abdc", "code": "1262", "account_number": 1234767893, "ifsc": "CBIN0123456", "bank": "CBI", "email": "abcd@example.com", "mobile": 9876543292, "category": "Employee"},
+	}
+
+	for _, p := range payees {
+		body, _ := json.Marshal(p)
+		req := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+		mux.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusCreated, w.Code)
+	}
+
+	tests := []struct {
+		name       string
+		query      string
+		wantNames  []string
+		wantLength int
+	}{
+		{"list all", "", []string{"Alice", "Bob", "Charlie", "Abdc"}, 4},
+
+		{"filter by bank HDFC", "?bank=HDFC", []string{"Alice", "Charlie"}, 2},
+		{"filter by category Employee", "?category=Employee", []string{"Bob", "Abdc"}, 2},
+		{"filter by name Alice", "?name=Alice", []string{"Alice"}, 1},
+		{"filter by bank HDFC & category Vendor", "?bank=HDFC&category=Vendor", []string{"Alice", "Charlie"}, 2},
+
+		{"sort by name ASC", "?sort_by=name&sort_order=ASC", []string{"Abdc", "Alice", "Bob", "Charlie"}, 4},
+		{"sort by name DESC", "?sort_by=name&sort_order=DESC", []string{"Charlie", "Bob", "Alice", "Abdc"}, 4},
+		{"default sort (id ASC)", "", []string{"Alice", "Bob", "Charlie", "Abdc"}, 4},
+
+		{"pagination limit 1 offset 0", "?sort_by=id&sort_order=ASC&limit=1&offset=0", []string{"Alice"}, 1},
+		{"pagination limit 1 offset 1", "?sort_by=id&sort_order=ASC&limit=1&offset=1", []string{"Bob"}, 1},
+		{"pagination limit 2 offset 1", "?sort_by=id&sort_order=ASC&limit=2&offset=1", []string{"Bob", "Charlie"}, 2},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/payees/list"+tt.query, nil)
+			w := httptest.NewRecorder()
+			mux.ServeHTTP(w, req)
+
+			assert.Equal(t, http.StatusOK, w.Code)
+
+			var resp []PayeeGETResponse
+			err := json.Unmarshal(w.Body.Bytes(), &resp)
+			assert.NoError(t, err)
+			assert.Len(t, resp, tt.wantLength)
+
+			var gotNames []string
+			for _, p := range resp {
+				gotNames = append(gotNames, p.BeneficiaryName)
+			}
+			// order has to be checked for sort-related tests
+			sortTests := []string{
+				"sort by name ASC",
+				"sort by name DESC",
+				"default sort (id ASC)",
+			}
+
+			if contains(sortTests, tt.name) {
+				assert.Equal(t, tt.wantNames, gotNames)
+			} else {
+				assert.ElementsMatch(t, tt.wantNames, gotNames)
+			}
+		})
+	}
+}
+
+func TestPayeeUpdateAPI(t *testing.T) {
+	mux := setupMux(t)
+
+	payee := map[string]interface{}{
+		"name":           "def",
+		"code":           "131",
+		"account_number": 1234567090,
+		"ifsc":           "SBIN0001111",
+		"bank":           "SBI",
+		"email":          "def@example.com",
+		"mobile":         9876513210,
+		"category":       "Employee",
+	}
+	body, _ := json.Marshal(payee)
+	req := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusCreated, w.Code, "first POST should succeed")
+
+	type PostResponse struct {
+		ID int `json:"id"`
+	}
+	var inserted PostResponse
+	err := json.Unmarshal(w.Body.Bytes(), &inserted)
+	assert.NoError(t, err, "failed to unmarshal create response")
+
+	updatePayee := map[string]interface{}{
+		"name":           "ghhi",
+		"code":           "131",
+		"account_number": 1234567990,
+		"ifsc":           "SBIN0002222",
+		"bank":           "SBI Updated",
+		"email":          "ghhi@example.com",
+		"mobile":         9806517210,
+		"category":       "Vendor",
+	}
+	updateBody, _ := json.Marshal(updatePayee)
+	req2 := httptest.NewRequest(http.MethodPut, "/payees/update/"+strconv.Itoa(inserted.ID), bytes.NewBuffer(updateBody))
+	w2 := httptest.NewRecorder()
+	mux.ServeHTTP(w2, req2)
+
+	assert.Equal(t, http.StatusOK, w2.Code, "update should return 200 OK")
+
+	expectedUpdateResp := `{"status":"updated"}`
+	assert.JSONEq(t, expectedUpdateResp, w2.Body.String(), "update response should match JSON")
+
+	req3 := httptest.NewRequest(http.MethodGet, "/payees/list?code=131", nil)
+	w3 := httptest.NewRecorder()
+	mux.ServeHTTP(w3, req3)
+	assert.Equal(t, http.StatusOK, w3.Code, "GET after update should return 200 OK")
+
+	var got PayeeGETResponse
+	err = json.Unmarshal(w3.Body.Bytes(), &got)
+	assert.NoError(t, err, "failed to unmarshal get response")
+
+	assert.Equal(t, updatePayee["name"], got.BeneficiaryName, "name should match updated value")
+	assert.Equal(t, updatePayee["code"], got.BeneficiaryCode, "code should match updated value")
+	assert.Equal(t, updatePayee["account_number"], got.AccNo, "account number should match updated value")
+	assert.Equal(t, updatePayee["ifsc"], got.IFSC, "IFSC should match updated value")
+	assert.Equal(t, updatePayee["bank"], got.BankName, "bank should match updated value")
+	assert.Equal(t, updatePayee["email"], got.Email, "email should match updated value")
+	assert.Equal(t, updatePayee["mobile"], got.Mobile, "mobile should match updated value")
+	assert.Equal(t, updatePayee["category"], got.PayeeCategory, "category should match updated value")
+}
+
+func TestPayeeDeleteAPI(t *testing.T) {
+	mux := setupMux(t)
+
+	payee := map[string]interface{}{
+		"name":           "adef",
+		"code":           "1211",
+		"account_number": 1134567090,
+		"ifsc":           "SBIN0001111",
+		"bank":           "SBI",
+		"email":          "adef@example.com",
+		"mobile":         9876503210,
+		"category":       "Employee",
+	}
+	body, _ := json.Marshal(payee)
+
+	req := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusCreated, w.Code, "POST to create payee should succeed")
+
+	type PostResponse struct {
+		ID int `json:"id"`
+	}
+	var inserted PostResponse
+	err := json.Unmarshal(w.Body.Bytes(), &inserted)
+	assert.NoError(t, err, "failed to unmarshal create response")
+
+	url := "/payees/delete/" + strconv.Itoa(inserted.ID)
+	req2 := httptest.NewRequest(http.MethodDelete, url, nil)
+	w2 := httptest.NewRecorder()
+	mux.ServeHTTP(w2, req2)
+
+	assert.Equal(t, http.StatusOK, w2.Code, "DELETE should return 200 OK")
+
+	expectedDeleteResp := `{"status":"deleted"}`
+	assert.JSONEq(t, expectedDeleteResp, w2.Body.String(), "DELETE response should match JSON")
+
+	urlGet := "/payees/" + strconv.Itoa(inserted.ID)
+	req3 := httptest.NewRequest(http.MethodGet, urlGet, nil)
+	w3 := httptest.NewRecorder()
+	mux.ServeHTTP(w3, req3)
+
+	assert.Equal(t, http.StatusNotFound, w3.Code, "GET after delete should return 404 Not Found")
 }
