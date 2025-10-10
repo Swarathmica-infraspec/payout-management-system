@@ -21,24 +21,23 @@ func setupTestDB(t *testing.T) *sql.DB {
 	return db
 }
 
+func clearPayees(t *testing.T, db *sql.DB) {
+	_, err := db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
+	require.NoError(t, err, "failed to clear DB")
+}
+
 func TestInsertPayee(t *testing.T) {
 	db := setupTestDB(t)
 	store := PayeeDB(db)
 	ctx := context.Background()
 
-	_, err := db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
-	require.NoError(t, err, "failed to truncate table")
+	defer clearPayees(t, db)
 
 	p, err := NewPayee("Abc", "136", 1234567890123456, "CBIN0123459", "CBI", "abc@gmail.com", 9123456780, "Employee")
 	require.NoError(t, err, "failed to create payee")
 
 	id, err := store.Insert(ctx, p)
 	require.NoError(t, err, "failed to insert payee")
-
-	defer func() {
-		_, err := db.Exec("DELETE FROM payees WHERE id = $1", id)
-		assert.NoError(t, err, "failed to clean up payee")
-	}()
 
 	var code, name, bank, ifsc, email, category string
 	var accNo int
@@ -64,18 +63,13 @@ func TestInsertPayeeWithDuplicateValues(t *testing.T) {
 	store := PayeeDB(db)
 	ctx := context.Background()
 
-	_, err := db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
-	require.NoError(t, err, "failed to truncate table")
+	defer clearPayees(t, db)
 
 	original, err := NewPayee("Abc", "136", 1234567890123456, "CBIN0123459", "CBI", "abc@gmail.com", 9123456780, "Employee")
 	require.NoError(t, err, "failed to create original payee")
 
-	id, err := store.Insert(ctx, original)
+	_, err = store.Insert(ctx, original)
 	require.NoError(t, err, "failed to insert original payee")
-	defer func() {
-		_, err := db.Exec("DELETE FROM payees WHERE id = $1", id)
-		assert.NoError(t, err, "failed to clean up original payee")
-	}()
 
 	tests := []struct {
 		testName string
@@ -150,45 +144,109 @@ func TestInsertPayeeWithDuplicateValues(t *testing.T) {
 	}
 }
 
-func TestGetPayeeByID(t *testing.T) {
+func TestListPayees(t *testing.T) {
 	db := setupTestDB(t)
 	store := PayeeDB(db)
-	ctx := context.Background()
+	defer clearPayees(t, db)
 
-	_, err := db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
-	require.NoError(t, err, "failed to truncate table")
+	p1, err := NewPayee("Alice", "A001", 1114567891234567, "HDFC0012345", "HDFC", "a@example.com", 9000000001, "Vendor")
+	require.NoError(t, err, "failed to create payee p1")
+	p2, err := NewPayee("Bob", "B001", 2223456789012345, "SBIN0023478", "SBI", "b@example.com", 9000000002, "Employee")
+	require.NoError(t, err)
+	require.NoError(t, err, "failed to create payee p2")
+	p3, err := NewPayee("Charlie", "C001", 3334567890123456, "HDFC0033456", "HDFC", "c@example.com", 9000000003, "Vendor")
+	require.NoError(t, err, "failed to create payee p3")
 
-	var id int
-	err = db.QueryRow(`
-		INSERT INTO payees (beneficiary_name, beneficiary_code, account_number, ifsc_code, bank_name, email, mobile, payee_category)
-		VALUES ('Abc','136',1234567890123456,'CBIN0123459','CBI','abc@gmail.com',9123456780,'Employee')
-		RETURNING id`).Scan(&id)
+	_, err = store.Insert(context.Background(), p1)
+	require.NoError(t, err, "failed to insert payee p1")
+	_, err = store.Insert(context.Background(), p2)
+	require.NoError(t, err, "failed to insert payee p2")
+	_, err = store.Insert(context.Background(), p3)
+	require.NoError(t, err, "failed to insert payee p3")
 
-	require.NoError(t, err, "failed to insert payee")
-	defer func() {
-		_, err := db.Exec("DELETE FROM payees WHERE id = $1", id)
-		assert.NoError(t, err, "failed to clean up payee")
-	}()
+	tests := []struct {
+		name       string
+		opts       FilterList
+		wantNames  []string
+		wantIDs    []int
+		minResults int
+	}{
+		{
+			name:       "list all payees",
+			opts:       FilterList{},
+			minResults: 1,
+		},
+		{
+			name:      "filter by name",
+			opts:      FilterList{Name: "Alice"},
+			wantNames: []string{"Alice"},
+		},
+		{
+			name:      "filter by category",
+			opts:      FilterList{Category: "Vendor"},
+			wantNames: []string{"Alice", "Charlie"},
+		},
+		{
+			name:      "filter by bank",
+			opts:      FilterList{Bank: "SBI"},
+			wantNames: []string{"Bob"},
+		},
+		{
+			name:      "sort by id ASC",
+			opts:      FilterList{SortBy: "id", SortOrder: "ASC"},
+			wantNames: []string{"Alice", "Bob", "Charlie"},
+		},
+		{
+			name:      "sort by name ASC",
+			opts:      FilterList{SortBy: "name", SortOrder: "ASC"},
+			wantNames: []string{"Alice", "Bob", "Charlie"},
+		},
+		{
+			name:      "sort by name DESC",
+			opts:      FilterList{SortBy: "name", SortOrder: "DESC"},
+			wantNames: []string{"Charlie", "Bob", "Alice"},
+		},
+		{
+			name:    "pagination: limit 1 offset 0 (first payee)",
+			opts:    FilterList{SortBy: "id", SortOrder: "ASC", Limit: 1, Offset: 0},
+			wantIDs: []int{1},
+		},
+		{
+			name:    "pagination: limit 1 offset 1 (second payee)",
+			opts:    FilterList{SortBy: "id", SortOrder: "ASC", Limit: 1, Offset: 1},
+			wantIDs: []int{2},
+		},
+		{
+			name:    "pagination: limit 2 offset 1 (second and third payees)",
+			opts:    FilterList{SortBy: "id", SortOrder: "ASC", Limit: 2, Offset: 1},
+			wantIDs: []int{2, 3},
+		},
+	}
 
-	got, err := store.GetByID(ctx, id)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := store.List(context.Background(), tt.opts)
+			require.NoError(t, err)
 
-	name := "Abc"
-	code := "136"
-	accNo := 1234567890123456
-	ifsc := "CBIN0123459"
-	bank := "CBI"
-	email := "abc@gmail.com"
-	mobile := 9123456780
-	category := "Employee"
+			if tt.minResults > 0 {
+				assert.GreaterOrEqual(t, len(got), tt.minResults)
+			}
 
-	require.NoError(t, err, "failed to fetch payee")
+			if len(tt.wantNames) > 0 {
+				var gotNames []string
+				for _, p := range got {
+					gotNames = append(gotNames, p.beneficiaryName)
+				}
+				assert.Equal(t, tt.wantNames, gotNames)
+			}
 
-	assert.Equal(t, name, got.beneficiaryName)
-	assert.Equal(t, code, got.beneficiaryCode)
-	assert.Equal(t, accNo, got.accNo)
-	assert.Equal(t, ifsc, got.ifsc)
-	assert.Equal(t, bank, got.bankName)
-	assert.Equal(t, email, got.email)
-	assert.Equal(t, mobile, got.mobile)
-	assert.Equal(t, category, got.payeeCategory)
+			if len(tt.wantIDs) > 0 {
+				var gotIDs []int
+				for _, p := range got {
+					gotIDs = append(gotIDs, p.id)
+				}
+				assert.Equal(t, tt.wantIDs, gotIDs)
+			}
+		})
+	}
 }

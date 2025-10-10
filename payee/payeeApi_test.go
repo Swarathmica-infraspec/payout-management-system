@@ -193,3 +193,84 @@ func TestPayeePostAPIUniqueConstraints(t *testing.T) {
 		})
 	}
 }
+
+func contains(list []string, s string) bool {
+	for _, v := range list {
+		if v == s {
+			return true
+		}
+	}
+	return false
+}
+func TestPayeeGetAPI(t *testing.T) {
+	mux := setupMux(t)
+
+	payees := []map[string]interface{}{
+		{"name": "Alice", "code": "A001", "account_number": 1112345678901324, "ifsc": "HDFC0017890", "bank": "HDFC", "email": "a@example.com", "mobile": 9000000001, "category": "Vendor"},
+		{"name": "Bob", "code": "B001", "account_number": 2225678347532479, "ifsc": "SBIN0022345", "bank": "SBI", "email": "b@example.com", "mobile": 9000000002, "category": "Employee"},
+		{"name": "Charlie", "code": "C001", "account_number": 3335674839247567, "ifsc": "HDFC0033333", "bank": "HDFC", "email": "c@example.com", "mobile": 9000000003, "category": "Vendor"},
+		{"name": "Abdc", "code": "1262", "account_number": 1234767893, "ifsc": "CBIN0123456", "bank": "CBI", "email": "abcd@example.com", "mobile": 9876543292, "category": "Employee"},
+	}
+
+	for _, p := range payees {
+		body, _ := json.Marshal(p)
+		req := httptest.NewRequest(http.MethodPost, "/payees", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+		mux.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusCreated, w.Code)
+	}
+
+	tests := []struct {
+		name       string
+		query      string
+		wantNames  []string
+		wantLength int
+	}{
+		{"list all", "", []string{"Alice", "Bob", "Charlie", "Abdc"}, 4},
+
+		{"filter by bank HDFC", "?bank=HDFC", []string{"Alice", "Charlie"}, 2},
+		{"filter by category Employee", "?category=Employee", []string{"Bob", "Abdc"}, 2},
+		{"filter by name Alice", "?name=Alice", []string{"Alice"}, 1},
+		{"filter by bank HDFC & category Vendor", "?bank=HDFC&category=Vendor", []string{"Alice", "Charlie"}, 2},
+
+		{"sort by name ASC", "?sort_by=name&sort_order=ASC", []string{"Abdc", "Alice", "Bob", "Charlie"}, 4},
+		{"sort by name DESC", "?sort_by=name&sort_order=DESC", []string{"Charlie", "Bob", "Alice", "Abdc"}, 4},
+		{"default sort (id ASC)", "", []string{"Alice", "Bob", "Charlie", "Abdc"}, 4},
+
+		{"pagination limit 1 offset 0", "?sort_by=id&sort_order=ASC&limit=1&offset=0", []string{"Alice"}, 1},
+		{"pagination limit 1 offset 1", "?sort_by=id&sort_order=ASC&limit=1&offset=1", []string{"Bob"}, 1},
+		{"pagination limit 2 offset 1", "?sort_by=id&sort_order=ASC&limit=2&offset=1", []string{"Bob", "Charlie"}, 2},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/payees/list"+tt.query, nil)
+			w := httptest.NewRecorder()
+			mux.ServeHTTP(w, req)
+
+			assert.Equal(t, http.StatusOK, w.Code)
+
+			var resp []PayeeGETResponse
+			err := json.Unmarshal(w.Body.Bytes(), &resp)
+			assert.NoError(t, err)
+			assert.Len(t, resp, tt.wantLength)
+
+			var gotNames []string
+			for _, p := range resp {
+				gotNames = append(gotNames, p.BeneficiaryName)
+			}
+			// order has to be checked for sort-related tests
+			sortTests := []string{
+				"sort by name ASC",
+				"sort by name DESC",
+				"default sort (id ASC)",
+			}
+
+			if contains(sortTests, tt.name) {
+				assert.Equal(t, tt.wantNames, gotNames)
+			} else {
+				assert.ElementsMatch(t, tt.wantNames, gotNames)
+			}
+		})
+	}
+}

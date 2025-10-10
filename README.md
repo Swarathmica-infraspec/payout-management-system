@@ -87,6 +87,17 @@ curl -X POST http://localhost:8080/payees \
 
 expected response: {'id':1}
 
+2. GET request 
+curl -X GET http://localhost:8080/payees/list -H "Content-Type: application/json"
+
+Sorting can be done by :
+curl -X GET "http://localhost:8080/payees/list?sort_by=name&sort_order=DESC&category=Vendor"   -H "Content-Type: application/json"
+
+Filtering can be done by:
+curl -X GET "http://localhost:8080/payees/list?name=Abc" -H "Content-Type: application/json"
+
+NOTE: filtering supported columns : name, bank and category
+
 
 # Run tests
 
