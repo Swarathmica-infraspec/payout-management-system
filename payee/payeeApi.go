@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type PayeeRequest struct {
@@ -134,7 +135,7 @@ func parseFilterList(r *http.Request) FilterList {
 		sortBy = ""
 	}
 
-	sortOrder := query.Get("sort_order")
+	sortOrder := strings.ToUpper(query.Get("sort_order"))
 	if sortOrder != "ASC" && sortOrder != "DESC" {
 		sortOrder = "ASC"
 	}
