@@ -2,7 +2,9 @@ package payee
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
@@ -72,6 +74,27 @@ func handleInsertError(w http.ResponseWriter, err error) {
 	}
 
 	respondError(w, status, message)
+}
+
+func handleUpdateError(w http.ResponseWriter, err error) {
+	status, message := mapInsertError(err)
+
+	if status == http.StatusInternalServerError {
+		log.Printf("Internal error during update: %v", err)
+		respondError(w, status, "Failed to update payee")
+		return
+	}
+
+	respondError(w, status, "Payee update conflict: "+message)
+}
+
+func performUpdate(ctx context.Context, store PayeeRepository, id int, req PayeeRequest) (*payee, error) {
+	p, err := NewPayee(req.Name, req.Code, req.AccNo, req.IFSC, req.Bank, req.Email, req.Mobile, req.Category)
+	if err != nil {
+		return nil, err
+	}
+	p.id = id
+	return store.Update(ctx, p)
 }
 
 func PayeePostAPI(store PayeeRepository) http.HandlerFunc {
@@ -199,30 +222,24 @@ func PayeeUpdateAPI(store PayeeRepository) http.HandlerFunc {
 			respondError(w, http.StatusBadRequest, "invalid ID")
 			return
 		}
-
 		var req PayeeRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			respondError(w, http.StatusBadRequest, "Invalid JSON body")
 			return
 		}
-
-		p, err := NewPayee(
-			req.Name, req.Code, req.AccNo, req.IFSC,
-			req.Bank, req.Email, req.Mobile, req.Category,
-		)
+		_, err = performUpdate(r.Context(), store, id, req)
 		if err != nil {
-			respondError(w, http.StatusBadRequest, "Invalid payee data")
-			return
-		}
-		p.id = id
-
-		_, err = store.Update(context.Background(), p)
-		if err != nil {
-			handleInsertError(w, err)
+			if errors.Is(err, sql.ErrNoRows) {
+				respondError(w, http.StatusNotFound, "Payee not found")
+				return
+			}
+			handleUpdateError(w, err)
 			return
 		}
 
-		respondSuccess(w, http.StatusOK, map[string]string{"status": "updated"})
+		respondSuccess(w, http.StatusOK, map[string]any{
+			"status": "updated",
+		})
 	}
 }
 func SetupRouter(store PayeeRepository) *http.ServeMux {
