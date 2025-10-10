@@ -232,8 +232,8 @@ func (s *payeeDB) Update(ctx context.Context, p *payee) (*payee, error) {
 
 	return &updatedPayee, nil
 }
+
 func (r *payeeDB) SoftDelete(ctx context.Context, id int) error {
-func (r *payeeRepo) SoftDelete(ctx context.Context, id int64) error {
     res, err := r.db.ExecContext(
         ctx,
        "UPDATE payees SET is_deleted = TRUE WHERE id = $1 AND is_deleted = FALSE",
@@ -250,5 +250,4 @@ func (r *payeeRepo) SoftDelete(ctx context.Context, id int64) error {
         return sql.ErrNoRows
     }
     return nil
-}
 }
