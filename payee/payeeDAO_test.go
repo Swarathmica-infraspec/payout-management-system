@@ -21,24 +21,23 @@ func setupTestDB(t *testing.T) *sql.DB {
 	return db
 }
 
+func clearPayees(t *testing.T, db *sql.DB) {
+	_, err := db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
+	require.NoError(t, err, "failed to clear DB")
+}
+
 func TestInsertPayee(t *testing.T) {
 	db := setupTestDB(t)
 	store := PayeeDB(db)
 	ctx := context.Background()
 
-	_, err := db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
-	require.NoError(t, err, "failed to truncate table")
+	defer clearPayees(t, db)
 
 	p, err := NewPayee("Abc", "136", 1234567890123456, "CBIN0123459", "CBI", "abc@gmail.com", 9123456780, "Employee")
 	require.NoError(t, err, "failed to create payee")
 
 	id, err := store.Insert(ctx, p)
 	require.NoError(t, err, "failed to insert payee")
-
-	defer func() {
-		_, err := db.Exec("DELETE FROM payees WHERE id = $1", id)
-		assert.NoError(t, err, "failed to clean up payee")
-	}()
 
 	var code, name, bank, ifsc, email, category string
 	var accNo int
@@ -64,18 +63,13 @@ func TestInsertPayeeWithDuplicateValues(t *testing.T) {
 	store := PayeeDB(db)
 	ctx := context.Background()
 
-	_, err := db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
-	require.NoError(t, err, "failed to truncate table")
+	defer clearPayees(t, db)
 
 	original, err := NewPayee("Abc", "136", 1234567890123456, "CBIN0123459", "CBI", "abc@gmail.com", 9123456780, "Employee")
 	require.NoError(t, err, "failed to create original payee")
 
-	id, err := store.Insert(ctx, original)
+	_, err = store.Insert(ctx, original)
 	require.NoError(t, err, "failed to insert original payee")
-	defer func() {
-		_, err := db.Exec("DELETE FROM payees WHERE id = $1", id)
-		assert.NoError(t, err, "failed to clean up original payee")
-	}()
 
 	tests := []struct {
 		testName string
@@ -150,45 +144,221 @@ func TestInsertPayeeWithDuplicateValues(t *testing.T) {
 	}
 }
 
-func TestGetPayeeByID(t *testing.T) {
+func TestListPayees(t *testing.T) {
+	db := setupTestDB(t)
+	store := PayeeDB(db)
+	defer clearPayees(t, db)
+
+	p1, _ := NewPayee("Alice", "A001", 1114567891234567, "HDFC0012345", "HDFC", "a@example.com", 9000000001, "Vendor")
+	p2, _ := NewPayee("Bob", "B001", 2223456789012345, "SBIN0023478", "SBI", "b@example.com", 9000000002, "Employee")
+	p3, _ := NewPayee("Charlie", "C001", 3334567890123456, "HDFC0033456", "HDFC", "c@example.com", 9000000003, "Vendor")
+
+	_, _ = store.Insert(context.Background(), p1)
+	_, _ = store.Insert(context.Background(), p2)
+	_, _ = store.Insert(context.Background(), p3)
+
+	tests := []struct {
+		name       string
+		opts       FilterList
+		wantNames  []string
+		wantIDs    []int
+		minResults int
+	}{
+		{
+			name:       "list all payees",
+			opts:       FilterList{},
+			minResults: 1,
+		},
+		{
+			name:      "filter by name",
+			opts:      FilterList{Name: "Alice"},
+			wantNames: []string{"Alice"},
+		},
+		{
+			name:      "filter by category",
+			opts:      FilterList{Category: "Vendor"},
+			wantNames: []string{"Alice", "Charlie"},
+		},
+		{
+			name:      "filter by bank",
+			opts:      FilterList{Bank: "SBI"},
+			wantNames: []string{"Bob"},
+		},
+		{
+			name:      "sort by id ASC",
+			opts:      FilterList{SortBy: "id", SortOrder: "ASC"},
+			wantNames: []string{"Alice", "Bob", "Charlie"},
+		},
+		{
+			name:      "sort by name ASC",
+			opts:      FilterList{SortBy: "name", SortOrder: "ASC"},
+			wantNames: []string{"Alice", "Bob", "Charlie"},
+		},
+		{
+			name:      "sort by name DESC",
+			opts:      FilterList{SortBy: "name", SortOrder: "DESC"},
+			wantNames: []string{"Charlie", "Bob", "Alice"},
+		},
+		{
+			name:    "pagination: limit 1 offset 0 (first payee)",
+			opts:    FilterList{SortBy: "id", SortOrder: "ASC", Limit: 1, Offset: 0},
+			wantIDs: []int{1},
+		},
+		{
+			name:    "pagination: limit 1 offset 1 (second payee)",
+			opts:    FilterList{SortBy: "id", SortOrder: "ASC", Limit: 1, Offset: 1},
+			wantIDs: []int{2},
+		},
+		{
+			name:    "pagination: limit 2 offset 1 (second and third payees)",
+			opts:    FilterList{SortBy: "id", SortOrder: "ASC", Limit: 2, Offset: 1},
+			wantIDs: []int{2, 3},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := store.List(context.Background(), tt.opts)
+			require.NoError(t, err)
+
+			if tt.minResults > 0 {
+				assert.GreaterOrEqual(t, len(got), tt.minResults)
+			}
+
+			if len(tt.wantNames) > 0 {
+				var gotNames []string
+				for _, p := range got {
+					gotNames = append(gotNames, p.beneficiaryName)
+				}
+				assert.Equal(t, tt.wantNames, gotNames)
+			}
+
+			if len(tt.wantIDs) > 0 {
+				var gotIDs []int
+				for _, p := range got {
+					gotIDs = append(gotIDs, p.id)
+				}
+				assert.Equal(t, tt.wantIDs, gotIDs)
+			}
+		})
+	}
+}
+func TestUpdatePayee(t *testing.T) {
+	ctx := context.Background()
+	db := setupTestDB(t)
+	defer clearPayees(t, db)
+
+	store := PayeeDB(db)
+
+	p, err := NewPayee("Abc", "123", 1234567890123456, "CBIN0124345", "CBI", "abc@gmail.com", 9123456780, "Employee")
+	require.NoError(t, err, "failed to create payee for update test")
+
+	id, err := store.Insert(ctx, p)
+	require.NoError(t, err, "Insertion failed")
+
+	originalPayee := &payee{}
+
+	err = db.QueryRowContext(ctx, `
+		SELECT id, beneficiary_code, beneficiary_name, account_number, ifsc_code, bank_name, email, mobile, payee_category
+		FROM payees WHERE id = $1`, id).
+		Scan(&originalPayee.id, &originalPayee.beneficiaryCode, &originalPayee.beneficiaryName,
+			&originalPayee.accNo, &originalPayee.ifsc, &originalPayee.bankName,
+			&originalPayee.email, &originalPayee.mobile, &originalPayee.payeeCategory)
+
+	require.NoError(t, err, "failed to fetch original payee")
+
+	updatedName := "cat"
+
+	originalPayee.beneficiaryName = updatedName
+
+	updated, err := store.Update(ctx, originalPayee)
+	require.NoError(t, err, "Update failed")
+
+	if updated.beneficiaryName != updatedName {
+		t.Errorf("expected name %q, got %q", updatedName, updated.beneficiaryName)
+	}
+	assert.Equal(t, updatedName, updated.beneficiaryName)
+}
+
+func TestUpdatePayeeWithDuplicateValues(t *testing.T) {
 	db := setupTestDB(t)
 	store := PayeeDB(db)
 	ctx := context.Background()
+	defer clearPayees(t, db)
 
-	_, err := db.Exec("TRUNCATE payees RESTART IDENTITY CASCADE")
-	require.NoError(t, err, "failed to truncate table")
+	p1, err := NewPayee("Abc", "111", 1234567890123456, "CBIN0001234", "CBI", "abc@gmail.com", 9000000001, "Employee")
+	require.NoError(t, err)
+	_, err = store.Insert(ctx, p1)
+	require.NoError(t, err)
 
-	var id int
-	err = db.QueryRow(`
-		INSERT INTO payees (beneficiary_name, beneficiary_code, account_number, ifsc_code, bank_name, email, mobile, payee_category)
-		VALUES ('Abc','136',1234567890123456,'CBIN0123459','CBI','abc@gmail.com',9123456780,'Employee')
-		RETURNING id`).Scan(&id)
+	p2, err := NewPayee("Bcd", "222", 6543210987654321, "HDFC0001223", "HDFC", "bcd@gmail.com", 9000000002, "Vendor")
+	require.NoError(t, err)
+	id2, err := store.Insert(ctx, p2)
+	require.NoError(t, err)
 
-	require.NoError(t, err, "failed to insert payee")
-	defer func() {
-		_, err := db.Exec("DELETE FROM payees WHERE id = $1", id)
-		assert.NoError(t, err, "failed to clean up payee")
-	}()
+	tests := []struct {
+		testName string
+		targetID int
+		updateFn func(p *payee)
+		wantErr  error
+	}{
+		{
+			testName: "duplicate beneficiary code",
+			targetID: id2,
+			updateFn: func(p *payee) {
+				p.beneficiaryCode = "111"
+			},
+			wantErr: ErrDuplicateCode,
+		},
+		{
+			testName: "duplicate account number",
+			targetID: id2,
+			updateFn: func(p *payee) {
+				p.accNo = 1234567890123456
+			},
+			wantErr: ErrDuplicateAccount,
+		},
+		{
+			testName: "duplicate email",
+			targetID: id2,
+			updateFn: func(p *payee) {
+				p.email = "abc@gmail.com"
+			},
+			wantErr: ErrDuplicateEmail,
+		},
+		{
+			testName: "duplicate mobile",
+			targetID: id2,
+			updateFn: func(p *payee) {
+				p.mobile = 9000000001
+			},
+			wantErr: ErrDuplicateMobile,
+		},
+	}
 
-	got, err := store.GetByID(ctx, id)
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
 
-	name := "Abc"
-	code := "136"
-	accNo := 1234567890123456
-	ifsc := "CBIN0123459"
-	bank := "CBI"
-	email := "abc@gmail.com"
-	mobile := 9123456780
-	category := "Employee"
+			original := &payee{}
 
-	require.NoError(t, err, "failed to fetch payee")
+			err := db.QueryRowContext(ctx, `
+				SELECT id, beneficiary_code, beneficiary_name, account_number, ifsc_code, bank_name, email, mobile, payee_category
+				FROM payees WHERE id = $1`, tt.targetID).
+				Scan(&original.id, &original.beneficiaryCode, &original.beneficiaryName,
+					&original.accNo, &original.ifsc, &original.bankName,
+					&original.email, &original.mobile, &original.payeeCategory)
 
-	assert.Equal(t, name, got.beneficiaryName)
-	assert.Equal(t, code, got.beneficiaryCode)
-	assert.Equal(t, accNo, got.accNo)
-	assert.Equal(t, ifsc, got.ifsc)
-	assert.Equal(t, bank, got.bankName)
-	assert.Equal(t, email, got.email)
-	assert.Equal(t, mobile, got.mobile)
-	assert.Equal(t, category, got.payeeCategory)
+			require.NoError(t, err)
+
+			tt.updateFn(original)
+
+			_, err = store.Update(ctx, original)
+
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }
