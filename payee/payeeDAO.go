@@ -232,17 +232,22 @@ func (s *payeeDB) Update(ctx context.Context, p *payee) (*payee, error) {
 
 	return &updatedPayee, nil
 }
+
 func (r *payeeDB) SoftDelete(ctx context.Context, id int) error {
-	res, err := r.db.ExecContext(ctx, "UPDATE payees SET is_deleted = TRUE WHERE id = $1", id)
-	if err != nil {
-		return fmt.Errorf("soft delete payee: %w", err)
-	}
-	affected, err := res.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("soft delete payee: %w", err)
-	}
-	if affected == 0 {
-		return sql.ErrNoRows
-	}
-	return nil
+    res, err := r.db.ExecContext(
+        ctx,
+       "UPDATE payees SET is_deleted = TRUE WHERE id = $1 AND is_deleted = FALSE",
+        id,
+    )
+    if err != nil {
+        return fmt.Errorf("soft delete payee: %w", err)
+    }
+    affected, err := res.RowsAffected()
+    if err != nil {
+        return fmt.Errorf("soft delete payee: %w", err)
+    }
+    if affected == 0 {
+        return sql.ErrNoRows
+    }
+    return nil
 }
